@@ -24,6 +24,7 @@
         <p><label for="menutype">{LANG_MENU01[type]}:</label>
         {type_select}<span id="menutype-hidden"></span></p>
       </div>
+
       <div id="urldiv" class="required" style="display:none;">
         <p><label for="menuurl">{LANG_MENU01[url]}:</label>
         <input type="text" id="menuurl" name="menuurl" size="48" value="{menuurl}"{xhtml}></p>
@@ -34,10 +35,11 @@
         {target_select}</p>
       </div>
 
-      <div id="phpdiv" class="required" style="display:none;">
-        <p><label for="phpfunction">{LANG_MENU01[php]}:</label>
-        <input type="text" id="phpfunction" name="phpfunction" size="48" value="{phpfunction}"{xhtml}></p>
+      <div id="glfunc" class="optional required" style="display:none;">
+        <p><label for="glfunction">{LANG_MENU01[geeklog_function]}:</label>
+        {glfunction_select}</p>
       </div>
+
       <div id="glcorediv" class="optional required" style="display:none;">
         <p><label for="gltype">{LANG_MENU01[coretype]}:</label>
         {gl_select}</p>
@@ -58,9 +60,9 @@
         {topic_select}</p>
       </div>
 
-      <div id="glfunc" class="optional required" style="display:none;">
-        <p><label for="glfunction">{LANG_MENU01[geeklog_function]}:</label>
-        {glfunction_select}</p>
+      <div id="phpdiv" class="required" style="display:none;">
+        <p><label for="phpfunction">{LANG_MENU01[php]}:</label>
+        <input type="text" id="phpfunction" name="phpfunction" size="48" value="{phpfunction}"{xhtml}></p>
       </div>
 
       <div class="required">
@@ -82,42 +84,45 @@
 
 <script type="text/javascript">
 jQuery(function () {
+    var panels = '#urldiv,#targetdiv,#glfunc,#glcorediv,#plugin,#staticpage,#topic,#phpdiv';
+    var select = jQuery('#menutype');
+    var saveButton = jQuery('#execute');
+
     function syncElementFields() {
-        var type = String(jQuery('#menutype').val() || '');
-        jQuery('#urldiv,#targetdiv,#glcorediv,#plugin,#staticpage,#glfunc,#phpdiv,#topic').hide();
+        var type = String(select.val() || '');
+        jQuery(panels).hide();
 
         switch (type) {
-            case '1':
+            case '1': // Submenu: optional clickable URL
                 jQuery('#urldiv').show();
                 break;
-            case '2':
+            case '2': // Geeklog Action
                 jQuery('#glfunc').show();
                 break;
-            case '3':
+            case '3': // Geeklog Core
                 jQuery('#glcorediv').show();
                 break;
-            case '4':
+            case '4': // Plugin
                 jQuery('#plugin').show();
                 break;
-            case '5':
+            case '5': // Static Page
                 jQuery('#staticpage').show();
                 break;
-            case '6':
+            case '6': // External URL
                 jQuery('#urldiv,#targetdiv').show();
                 break;
-            case '7':
+            case '7': // PHP Function
                 jQuery('#phpdiv').show();
                 break;
-            case '9':
+            case '8': // Label only
+                break;
+            case '9': // Topic
                 jQuery('#topic').show();
                 break;
         }
     }
 
-    var select = jQuery('#menutype');
-    var saveButton = jQuery('#execute');
     select.off('change.menuElementEditor').on('change.menuElementEditor', syncElementFields);
-    syncElementFields();
 
     jQuery.getJSON(
         '{site_admin_url}/plugins/menu/type_options.php',
@@ -130,14 +135,16 @@ jQuery(function () {
 
             select.empty();
             jQuery.each(data.types, function (index, item) {
-                var option = jQuery('<option></option>')
-                    .attr('value', item.id)
-                    .text(item.label);
-                if (parseInt(item.id, 10) === parseInt(data.currentType, 10)) {
-                    option.attr('selected', 'selected');
-                }
-                select.append(option);
+                select.append(
+                    jQuery('<option></option>')
+                        .attr('value', item.id)
+                        .text(item.label)
+                );
             });
+
+            if (data.currentType !== null && typeof data.currentType !== 'undefined') {
+                select.val(String(data.currentType));
+            }
 
             hidden.empty();
             if (data.locked) {
@@ -155,6 +162,8 @@ jQuery(function () {
             syncElementFields();
             saveButton.removeAttr('disabled');
         }
-    );
+    ).fail(function () {
+        saveButton.attr('disabled', 'disabled');
+    });
 });
 </script>
