@@ -76,9 +76,49 @@ function plugin_load_configuration_menu($pi_name)
     return plugin_initconfig_menu();
 }
 
+/**
+ * Add the Menu 1.3.0 global configuration to an existing installation.
+ *
+ * This helper is deliberately separate from plugin_upgrade_menu(), which is
+ * already part of functions.inc and owns the complete upgrade sequence
+ * (including persistent-data migration and cache cleanup).
+ *
+ * Existing values are preserved and the legacy Plugin Toolkit sample settings
+ * are removed. The operation is safe to run more than once.
+ *
+ * @return bool
+ */
+function MENU_upgradeConfig130()
+{
+    global $_CONF, $_TABLES, $_MENU_CONF;
+
+    if (!isset($_TABLES['conf_values'])) {
+        return true;
+    }
+
+    require_once $_CONF['path_system'] . 'classes/config.class.php';
+    require_once __DIR__ . '/install_defaults.php';
+
+    if (!MENU_ensureConfig130()) {
+        COM_errorLog('Menu upgrade: unable to initialize 1.3.0 configuration');
+        return false;
+    }
+
+    DB_query(
+        "DELETE FROM {$_TABLES['conf_values']} "
+        . "WHERE group_name = 'menu' "
+        . "AND name IN ('samplesetting1', 'samplesetting2')"
+    );
+
+    $menuConfig = config::get_instance();
+    $_MENU_CONF = $menuConfig->get_config('menu');
+
+    return true;
+}
+
 function plugin_compatible_with_this_version_menu($pi_name)
 {
-    global $_CONF, $_DB_dbms;
+    global $_CONF, $_DB_dbms, $_TABLES;
 
     $dbFile = $_CONF['path'] . 'plugins/' . $pi_name . '/sql/'
             . $_DB_dbms . '_install.php';
@@ -94,74 +134,30 @@ function plugin_compatible_with_this_version_menu($pi_name)
         return false;
     }
 
-    return true;
-}
+    /*
+     * functions.inc already owns plugin_upgrade_menu(). When Geeklog invokes
+     * that upgrade path, this compatibility check is reached only after a
+     * version difference has been detected. Add the 1.3.0 configuration here
+     * before functions.inc records the new plugin version.
+     *
+     * On a fresh install there is no existing plugin row, so no upgrade
+     * migration is performed; plugin_load_configuration_menu() creates the
+     * configuration normally instead.
+     */
+    if (isset($_TABLES['plugins'])) {
+        $installedVersion = DB_getItem(
+            $_TABLES['plugins'],
+            'pi_version',
+            "pi_name = 'menu'"
+        );
 
-/**
- * Upgrade an existing Menu installation to the current code version.
- *
- * Menu 1.3.0 introduces real global configuration settings. The migration is
- * intentionally idempotent: existing 1.3.0 values are never overwritten.
- * Legacy Plugin Toolkit sample settings are removed because they were never
- * runtime settings of the Menu plugin.
- *
- * @return bool|int true on success, Geeklog compatibility message otherwise
- */
-function plugin_upgrade_menu()
-{
-    global $_CONF, $_TABLES, $_MENU_CONF;
-
-    $installedVersion = DB_getItem(
-        $_TABLES['plugins'],
-        'pi_version',
-        "pi_name = 'menu'"
-    );
-
-    $install = plugin_autoinstall_menu('menu');
-    $codeVersion = $install['info']['pi_version'];
-
-    if ($installedVersion === $codeVersion) {
-        return true;
+        if ($installedVersion !== ''
+            && version_compare($installedVersion, '1.3.0', '<')) {
+            if (!MENU_upgradeConfig130()) {
+                return false;
+            }
+        }
     }
-
-    if (!plugin_compatible_with_this_version_menu('menu')) {
-        return 3002;
-    }
-
-    require_once $_CONF['path_system'] . 'classes/config.class.php';
-    require_once __DIR__ . '/install_defaults.php';
-
-    if (!MENU_ensureConfig130()) {
-        COM_errorLog('Menu upgrade: unable to initialize 1.3.0 configuration');
-        return false;
-    }
-
-    // Remove the two Plugin Toolkit placeholders from old installations.
-    DB_query(
-        "DELETE FROM {$_TABLES['conf_values']} "
-        . "WHERE group_name = 'menu' "
-        . "AND name IN ('samplesetting1', 'samplesetting2')"
-    );
-
-    $menuConfig = config::get_instance();
-    $_MENU_CONF = $menuConfig->get_config('menu');
-
-    $version = DB_escapeString($codeVersion);
-    $glVersion = DB_escapeString($install['info']['pi_gl_version']);
-    $homepage = DB_escapeString($install['info']['pi_homepage']);
-
-    DB_query(
-        "UPDATE {$_TABLES['plugins']} SET "
-        . "pi_version = '{$version}', "
-        . "pi_gl_version = '{$glVersion}', "
-        . "pi_homepage = '{$homepage}' "
-        . "WHERE pi_name = 'menu'"
-    );
-
-    COM_errorLog(
-        'Updated menu plugin from v' . $installedVersion . ' to v' . $codeVersion,
-        1
-    );
 
     return true;
 }
