@@ -40,7 +40,11 @@ menu_editor_assert(strpos($runtime, "case '5': $('#staticpage').show();") !== fa
 menu_editor_assert(strpos($runtime, "case '6': $('#urldiv,#targetdiv').show();") !== false, 'runtime must show URL and target for External URL');
 menu_editor_assert(strpos($runtime, "case '7': $('#phpdiv').show();") !== false, 'runtime must show PHP Function field');
 menu_editor_assert(strpos($runtime, "case '9': $('#topic').show();") !== false, 'runtime must show Topic selector for Topic');
-menu_editor_assert(strpos($runtime, "text('[Unavailable] ' + String(subtype))") !== false, 'missing resources must remain identifiable in admin');
+menu_editor_assert(strpos($runtime, "resource = 'plugin'") !== false, 'editor must identify unavailable plugins');
+menu_editor_assert(strpos($runtime, "resource = 'static page'") !== false, 'editor must identify unavailable Static Pages');
+menu_editor_assert(strpos($runtime, "resource = 'topic'") !== false, 'editor must identify unavailable Topics');
+menu_editor_assert(strpos($runtime, "'[Unavailable ' + kind + '] '") !== false, 'missing resources must remain identifiable in admin');
+menu_editor_assert(strpos($runtime, 'data.currentSubtype, data.resource') !== false, 'editor must use authoritative resource status');
 menu_editor_assert(strpos($runtime, 'type_options.php') !== false, 'runtime must load type labels only after Geeklog initialization');
 menu_editor_assert(strpos($runtime, "data.types.length === 0") !== false, 'runtime must reject an empty authoritative type list');
 menu_editor_assert(strpos($runtime, 'select.empty();') !== false, 'runtime must replace the type list after a valid response');
@@ -54,8 +58,13 @@ menu_editor_assert(strpos($edit, 'type_options.php') === false, 'edit template m
 menu_editor_assert(strpos($edit, 'disabled="disabled"') !== false, 'edit save must remain disabled until authoritative runtime initializes');
 
 menu_editor_assert(strpos($typeOptions, "DB_getItem(\$_TABLES['menu'], 'menu_type'") !== false, 'type endpoint must read menu type directly from database');
-menu_editor_assert(strpos($typeOptions, '!isset($Menus[$menuId])') === false, 'type endpoint must not depend on in-memory Menu cache');
+menu_editor_assert(strpos($typeOptions, 'SELECT element_type, element_subtype') !== false, 'type endpoint must read stored type and subtype together');
 menu_editor_assert(strpos($typeOptions, "'currentType' => \$currentType") !== false, 'type endpoint must expose stored current type');
+menu_editor_assert(strpos($typeOptions, "'currentSubtype' => \$currentSubtype") !== false, 'type endpoint must expose stored current subtype');
+menu_editor_assert(strpos($typeOptions, "'resource' => \$resource") !== false, 'type endpoint must expose destination availability');
+menu_editor_assert(strpos($typeOptions, "\$currentType === 4") !== false, 'type endpoint must validate plugin destinations');
+menu_editor_assert(strpos($typeOptions, "\$currentType === 5") !== false, 'type endpoint must validate Static Page destinations');
+menu_editor_assert(strpos($typeOptions, "\$currentType === 9") !== false, 'type endpoint must validate Topic destinations');
 menu_editor_assert(strpos($typeOptions, "'defaultType' => MENU_defaultElementType") !== false, 'type endpoint must expose create default type');
 
 menu_editor_assert(strpos($types, '2, // Geeklog Action') !== false, 'admin order must start with Geeklog Action');
