@@ -55,7 +55,8 @@ function plugin_autoinstall_menu($pi_name)
     );
 
     $features = array(
-        $pi_name . '.admin' => 'Full access to ' . $pi_display_name . ' plugin'
+        $pi_name . '.admin' => 'Full access to ' . $pi_display_name
+                                  . ' plugin'
     );
 
     $mappings = array(
@@ -121,7 +122,16 @@ function plugin_postinstall_menu($pi_name)
     require_once $_CONF['path'] . 'plugins/menu/storage.php';
 
     if (!MENU_ensureDataDirs()) {
+        COM_errorLog('Menu postinstall: unable to create storage directory: ' . MENU_dataDir());
         return false;
+    }
+
+    if (!MENU_usesPreferredDataDir()) {
+        COM_errorLog(
+            'Menu postinstall: preferred storage ' . MENU_preferredDataDir()
+            . ' is not writable; temporarily using legacy storage '
+            . MENU_legacyDataDir()
+        );
     }
 
     return true;
