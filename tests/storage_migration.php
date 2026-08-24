@@ -39,13 +39,19 @@ function menu_test_remove_tree($path)
 
 $root = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'geeklog-menu-storage-' . uniqid('', true);
 $dataRoot = $root . DIRECTORY_SEPARATOR . 'data';
+$htmlRoot = $root . DIRECTORY_SEPARATOR . 'public_html';
 @mkdir($dataRoot, 0755, true);
+@mkdir($htmlRoot . DIRECTORY_SEPARATOR . 'images', 0755, true);
 
 $sites = array('ecologie', 'site2');
 
 foreach ($sites as $site) {
     $_CONF = array(
         'path_data' => $dataRoot . DIRECTORY_SEPARATOR . $site . DIRECTORY_SEPARATOR,
+        'path_html' => $htmlRoot . DIRECTORY_SEPARATOR,
+        'path_images' => $htmlRoot . DIRECTORY_SEPARATOR . 'images' . DIRECTORY_SEPARATOR
+            . $site . DIRECTORY_SEPARATOR,
+        'site_url' => 'https://example.test/' . $site,
     );
 
     $legacy = $_CONF['path_data'] . 'menu_data' . DIRECTORY_SEPARATOR;
@@ -69,6 +75,15 @@ foreach ($sites as $site) {
         file_exists($legacy . 'css' . DIRECTORY_SEPARATOR . 'gl_menu1.css'),
         'legacy CSS was deleted for ' . $site
     );
+
+    $expectedImageDir = $htmlRoot . DIRECTORY_SEPARATOR . 'images' . DIRECTORY_SEPARATOR
+        . $site . DIRECTORY_SEPARATOR . 'menu' . DIRECTORY_SEPARATOR;
+    $expectedImageUrl = 'https://example.test/' . $site . '/images/' . $site . '/menu/';
+
+    menu_test_assert(MENU_imageDir() === $expectedImageDir, 'unexpected image directory for ' . $site);
+    menu_test_assert(MENU_imageUrl() === $expectedImageUrl, 'unexpected image URL for ' . $site);
+    menu_test_assert(MENU_ensureImageDir(), 'image directory creation failed for ' . $site);
+    menu_test_assert(is_dir($expectedImageDir), 'image directory missing for ' . $site);
 
     // Existing target data must win on repeated migrations.
     file_put_contents($target . 'css' . DIRECTORY_SEPARATOR . 'gl_menu1.css', 'target-wins-' . $site);
