@@ -13,6 +13,7 @@ if (!defined('VERSION')) {
 }
 
 require_once __DIR__ . '/compat.php';
+require_once __DIR__ . '/resolved_tree.php';
 
 /**
  * Return the preferred private, site-specific Menu data directory.
