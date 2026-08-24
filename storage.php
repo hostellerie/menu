@@ -100,6 +100,57 @@ function MENU_usesPreferredDataDir()
 }
 
 /**
+ * Return the filesystem directory for public Menu images.
+ *
+ * @return string
+ */
+function MENU_imageDir()
+{
+    global $_CONF;
+
+    $base = isset($_CONF['path_images']) ? rtrim($_CONF['path_images'], "/\\") : '';
+    if ($base === '') {
+        return '';
+    }
+
+    return $base . DIRECTORY_SEPARATOR . 'menu' . DIRECTORY_SEPARATOR;
+}
+
+/**
+ * Return the public URL for Menu images.
+ *
+ * path_images is normally inside path_html. Deriving the URL from the relative
+ * filesystem path preserves multisite layouts such as images/ecologie/menu/.
+ * A conservative /images/menu/ fallback is kept for unusual legacy layouts.
+ *
+ * @return string
+ */
+function MENU_imageUrl()
+{
+    global $_CONF;
+
+    $siteUrl = isset($_CONF['site_url']) ? rtrim($_CONF['site_url'], '/') : '';
+    $pathImages = isset($_CONF['path_images']) ? rtrim($_CONF['path_images'], "/\\") : '';
+    $pathHtml = isset($_CONF['path_html']) ? rtrim($_CONF['path_html'], "/\\") : '';
+
+    if ($siteUrl === '') {
+        return '';
+    }
+
+    if ($pathImages !== '' && $pathHtml !== '') {
+        $imagesNormalized = str_replace('\\', '/', $pathImages);
+        $htmlNormalized = rtrim(str_replace('\\', '/', $pathHtml), '/');
+
+        if (strpos($imagesNormalized, $htmlNormalized . '/') === 0) {
+            $relative = ltrim(substr($imagesNormalized, strlen($htmlNormalized)), '/');
+            return $siteUrl . '/' . $relative . '/menu/';
+        }
+    }
+
+    return $siteUrl . '/images/menu/';
+}
+
+/**
  * Ensure a directory exists.
  *
  * @param string $path
@@ -136,6 +187,16 @@ function MENU_ensureDataDirs()
     return MENU_ensureDirectory($base)
         && MENU_ensureDirectory($base . 'cache' . DIRECTORY_SEPARATOR)
         && MENU_ensureDirectory($base . 'css' . DIRECTORY_SEPARATOR);
+}
+
+/**
+ * Ensure the public Menu image directory exists.
+ *
+ * @return bool
+ */
+function MENU_ensureImageDir()
+{
+    return MENU_ensureDirectory(MENU_imageDir());
 }
 
 /**
