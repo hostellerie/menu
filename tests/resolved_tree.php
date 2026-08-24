@@ -2,7 +2,6 @@
 
 // Resolved tree regression test. Compatible with PHP 5.6+.
 define('VERSION', '2.1.1');
-
 define('LB', "\n");
 
 $_CONF = array(
@@ -13,24 +12,60 @@ $_CONF = array(
     'directoryloginrequired' => 0,
     'profileloginrequired' => 0,
     'searchloginrequired' => 0,
+    'commentsubmission' => 1,
+    'usersubmission' => 1,
+    'sort_admin' => 0,
 );
 $_GROUPS = array(2 => 'Logged-in Users');
 $_REQUEST = array();
 $_PLUGINS = array('staticpages');
-$_TABLES = array();
+$_TABLES = array(
+    'stories' => 'gl_stories',
+    'blocks' => 'gl_blocks',
+    'topics' => 'gl_topics',
+    'users' => 'gl_users',
+    'storysubmission' => 'gl_storysubmission',
+    'commentsubmissions' => 'gl_commentsubmissions',
+);
 $_USER = array('uid' => 2);
+$LANG01 = array(10 => 'Submissions', 11 => 'Stories', 12 => 'Blocks', 13 => 'Topics', 17 => 'Users');
+$LANG29 = array(34 => 'Command & Control');
 $Menus = array();
 
 function COM_getLanguageId() { return ''; }
 function COM_applyFilter($value) { return $value; }
 function COM_isAnonUser() { return false; }
 function COM_buildUrl($url) { return $url; }
+function COM_buildURL($url) { return $url; }
 function COM_getCurrentURL() { return 'https://example.test/'; }
-function SEC_hasRights($rights) { return $rights === 'stats.view'; }
+function COM_numberFormat($number) { return (string) $number; }
+function SEC_hasRights($rights, $mode = '') {
+    if ($mode === 'OR') return true;
+    return in_array($rights, array('stats.view', 'story.edit', 'block.edit', 'topic.edit', 'user.edit', 'group.edit', 'user.mail', 'syndication.edit', 'plugin.edit', 'story.moderate', 'comment.moderate', 'user.edit,user.delete'));
+}
+function SEC_isModerator() { return true; }
 function SEC_inGroup($group) { return $group === 2 || $group === 'Logged-in Users'; }
 function MENU_PLG_getMenuItems() { return array('demo' => 'https://example.test/demo/'); }
 function PLG_getMenuItems() { return array('Demo' => 'https://example.test/demo/'); }
 function PLG_getUserOptions() { return array(); }
+function PLG_getAdminOptions() {
+    $item = new stdClass();
+    $item->adminlabel = 'Demo Admin';
+    $item->adminurl = 'https://example.test/admin/plugins/demo/';
+    $item->numsubmissions = 2;
+    return array($item);
+}
+function PLG_getSubmissionCount() { return 3; }
+function DB_count($table, $field = '', $value = '') {
+    if ($table === 'gl_stories') return 7;
+    if ($table === 'gl_blocks') return 4;
+    if ($table === 'gl_topics') return 3;
+    if ($table === 'gl_users' && $field === 'status') return 1;
+    if ($table === 'gl_users') return 5;
+    if ($table === 'gl_storysubmission') return 2;
+    if ($table === 'gl_commentsubmissions') return 1;
+    return 0;
+}
 
 require_once dirname(__DIR__) . '/resolved_tree.php';
 
@@ -137,7 +172,19 @@ menu_test_assert($tree[1]['children'][0]['url'] === 'https://external.test/', 'n
 menu_test_assert($tree[2]['url'] === 'https://example.test/demo/', 'plugin URL was not resolved');
 menu_test_assert($tree[3]['url'] === 'https://example.test/staticpages/index.php?page=about', 'static page URL was not resolved');
 menu_test_assert($tree[4]['url'] === 'https://example.test/index.php?topic=news', 'topic URL was not resolved');
-menu_test_assert($tree[5]['type'] === 3 && $tree[5]['resolved'] === false, 'complex Geeklog Core node must remain explicit and unresolved');
+menu_test_assert($tree[5]['type'] === 3 && $tree[5]['resolved'] === true, 'Geeklog Admin core node must be resolved');
+menu_test_assert(count($tree[5]['children']) >= 7, 'Geeklog Admin core menu should expose structured children');
+menu_test_assert($tree[5]['children'][0]['label'] === 'Command & Control', 'admin menu must begin with Command & Control');
+menu_test_assert($tree[5]['children'][0]['url'] === 'https://example.test/admin/index.php', 'control center URL was not resolved');
+$adminLabels = array();
+foreach ($tree[5]['children'] as $adminNode) {
+    $adminLabels[] = $adminNode['label'];
+}
+menu_test_assert(in_array('Stories (7)', $adminLabels), 'story admin count was not preserved');
+menu_test_assert(in_array('Blocks (4)', $adminLabels), 'block admin count was not preserved');
+menu_test_assert(in_array('Topics (3)', $adminLabels), 'topic admin count was not preserved');
+menu_test_assert(in_array('Users (4)', $adminLabels), 'user admin count was not preserved');
+menu_test_assert(in_array('Demo Admin (2)', $adminLabels), 'plugin admin option was not resolved');
 menu_test_assert($tree[6]['type'] === 7 && $tree[6]['resolved'] === false, 'PHP callback must not be misrepresented as resolved data');
 menu_test_assert($tree[7]['type'] === 8 && $tree[7]['url'] === '', 'non-link item type 8 was not preserved');
 
