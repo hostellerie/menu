@@ -30,11 +30,9 @@ function MENU_elementEditorIsAdminRequest()
 /**
  * Register the authoritative element editor behavior through Geeklog Scripts.
  *
- * The legacy controller still emits old inline JavaScript and an old server-side
- * select. This runtime deliberately runs last on DOM ready, replaces the select
- * with the authoritative list from type_options.php, and owns field visibility.
- * It keeps the stored type while editing and chooses Geeklog Action for new
- * elements. No template-level JavaScript is required for correctness.
+ * The legacy controller still emits old JavaScript and an old server-side
+ * select. This runtime owns the final field visibility and type list. It keeps
+ * the stored type while editing and chooses Geeklog Action for new elements.
  *
  * @return void
  */
@@ -52,14 +50,15 @@ function MENU_registerElementEditorRuntime()
 
     $endpoint = rtrim($_CONF['site_admin_url'], '/') . '/plugins/menu/type_options.php';
     $endpointJson = json_encode($endpoint);
-    if ($endpointJson === false) {
+    $modeJson = json_encode(MENU_adminCurrentMode());
+    if ($endpointJson === false || $modeJson === false) {
         return;
     }
 
     $js = "jQuery(function($) {\n"
         . "    var select = $('#menutype');\n"
         . "    if (!select.length) { return; }\n"
-        . "    var mode = " . json_encode(MENU_adminCurrentMode()) . ";\n"
+        . "    var mode = " . $modeJson . ";\n"
         . "    var menuId = mode === 'edit' ? $('#menu').val() : $('#menunid').val();\n"
         . "    var mid = mode === 'edit' ? $('#id').val() : 0;\n"
         . "    var panels = '#urldiv,#targetdiv,#glfunc,#glcorediv,#plugin,#staticpage,#topic,#phpdiv';\n"
@@ -79,6 +78,10 @@ function MENU_registerElementEditorRuntime()
         . "    }\n"
         . "    select.off('change.menuElementRuntime').on('change.menuElementRuntime', syncFields);\n"
         . "    $(panels).hide();\n"
+        . "    if (mode === 'new' && select.find('option[value=\"2\"]').length) {\n"
+        . "        select.val('2');\n"
+        . "    }\n"
+        . "    syncFields();\n"
         . "    $.getJSON(" . $endpointJson . ", {menu: menuId, mid: mid})\n"
         . "        .done(function(data) {\n"
         . "            if (!data || !data.types) { syncFields(); return; }\n"
