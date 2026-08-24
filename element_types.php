@@ -63,19 +63,25 @@ function MENU_defaultElementType($types)
  *
  * Horizontal-simple and vertical-simple menus cannot contain submenu holder
  * (type 1) or Geeklog core menu (type 3) elements. Static-page elements are
- * unavailable when the Static Pages plugin is not active.
+ * unavailable when the Static Pages plugin is not active. Topic elements are
+ * unavailable for new items when no topics currently exist.
  *
  * @param int  $menuType
  * @param int  $elementType
  * @param bool $hasStaticPages
+ * @param bool $hasTopics
  * @return bool
  */
-function MENU_elementTypeIsAllowed($menuType, $elementType, $hasStaticPages)
+function MENU_elementTypeIsAllowed($menuType, $elementType, $hasStaticPages, $hasTopics = true)
 {
     $menuType = (int) $menuType;
     $elementType = (int) $elementType;
 
     if (!$hasStaticPages && $elementType === 5) {
+        return false;
+    }
+
+    if (!$hasTopics && $elementType === 9) {
         return false;
     }
 
@@ -98,9 +104,10 @@ function MENU_elementTypeIsAllowed($menuType, $elementType, $hasStaticPages)
  * @param int      $menuType
  * @param bool     $hasStaticPages
  * @param int|null $currentType
+ * @param bool     $hasTopics
  * @return array
  */
-function MENU_getAllowedElementTypes($labels, $menuType, $hasStaticPages, $currentType = null)
+function MENU_getAllowedElementTypes($labels, $menuType, $hasStaticPages, $currentType = null, $hasTopics = true)
 {
     $types = array();
     $currentType = $currentType === null ? null : (int) $currentType;
@@ -111,7 +118,7 @@ function MENU_getAllowedElementTypes($labels, $menuType, $hasStaticPages, $curre
             continue;
         }
 
-        if (MENU_elementTypeIsAllowed($menuType, $typeId, $hasStaticPages)
+        if (MENU_elementTypeIsAllowed($menuType, $typeId, $hasStaticPages, $hasTopics)
             || ($currentType !== null && $typeId === $currentType)) {
             $types[$typeId] = $labels[$typeId];
         }
@@ -123,7 +130,7 @@ function MENU_getAllowedElementTypes($labels, $menuType, $hasStaticPages, $curre
         if (isset($types[$typeId])) {
             continue;
         }
-        if (MENU_elementTypeIsAllowed($menuType, $typeId, $hasStaticPages)
+        if (MENU_elementTypeIsAllowed($menuType, $typeId, $hasStaticPages, $hasTopics)
             || ($currentType !== null && $typeId === $currentType)) {
             $types[$typeId] = $typeLabel;
         }
