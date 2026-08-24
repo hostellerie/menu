@@ -3,7 +3,7 @@
 </script>
 
 <div class="glfform">
-  <form method="post" action="{form_action}">
+  <form method="post" action="{form_action}" id="edititem">
     <input type="hidden" id="menu" name="menu" value="{menu}"{xhtml}>
     <input type="hidden" id="id" name="id" value="{mid}"{xhtml}>
 
@@ -23,43 +23,42 @@
       <div class="required">
         <p><label for="menutype">{LANG_MENU01[type]}:</label>
         {type_select}<span id="menutype-hidden"></span></p>
-        <p id="menutype-status" style="display:none;"></p>
       </div>
-      <div id="urldiv" class="required">
+      <div id="urldiv" class="required" style="display:none;">
         <p><label for="menuurl">{LANG_MENU01[url]}:</label>
         <input type="text" id="menuurl" name="menuurl" size="48" value="{menuurl}"{xhtml}></p>
       </div>
 
-      <div id="targetdiv" class="required">
+      <div id="targetdiv" class="required" style="display:none;">
         <p><label for="urltarget">{LANG_MENU01[target]}:</label>
         {target_select}</p>
       </div>
 
-      <div id="phpdiv" class="required">
+      <div id="phpdiv" class="required" style="display:none;">
         <p><label for="phpfunction">{LANG_MENU01[php]}:</label>
         <input type="text" id="phpfunction" name="phpfunction" size="48" value="{phpfunction}"{xhtml}></p>
       </div>
-      <div id="glcorediv" class="optional required">
+      <div id="glcorediv" class="optional required" style="display:none;">
         <p><label for="gltype">{LANG_MENU01[coretype]}:</label>
         {gl_select}</p>
       </div>
 
-      <div id="plugin" class="optional required">
+      <div id="plugin" class="optional required" style="display:none;">
         <p><label for="pluginname">{LANG_MENU01[plugins]}:</label>
         {plugin_select}</p>
       </div>
 
-      <div id="staticpage" class="optional required">
+      <div id="staticpage" class="optional required" style="display:none;">
         <p><label for="spname">{LANG_MENU01[static_pages]}:</label>
         {sp_select}</p>
       </div>
 
-      <div id="topic" class="optional required">
+      <div id="topic" class="optional required" style="display:none;">
         <p><label for="topicname">{LANG_MENU01[topic]}:</label>
         {topic_select}</p>
       </div>
 
-      <div id="glfunc" class="optional required">
+      <div id="glfunc" class="optional required" style="display:none;">
         <p><label for="glfunction">{LANG_MENU01[geeklog_function]}:</label>
         {glfunction_select}</p>
       </div>
@@ -75,68 +74,87 @@
       </div>
     <div style="text-align:center;padding-top:20px;padding-bottom:10px;">
       <input type="hidden" id="mode" name="mode" value="saveedit"{xhtml}>
-      <input type="submit" id="execute" name="execute" value="{LANG_MENU01[save]}"{xhtml}>&nbsp;&nbsp;
+      <input type="submit" id="execute" name="execute" value="{LANG_MENU01[save]}" disabled="disabled"{xhtml}>&nbsp;&nbsp;
       <input type="submit" id="cancel" name="cancel" value="{LANG_MENU01[cancel]}"{xhtml}>
     </div>
   </form>
 </div>
 
-<script type="text/javascript" src="{site_admin_url}/plugins/menu/js/element-editor.js"></script>
 <script type="text/javascript">
 jQuery(function () {
-    var select = jQuery('#menutype');
-    var save = jQuery('#execute');
-    var status = jQuery('#menutype-status');
+    function syncElementFields() {
+        var type = String(jQuery('#menutype').val() || '');
+        jQuery('#urldiv,#targetdiv,#glcorediv,#plugin,#staticpage,#glfunc,#phpdiv,#topic').hide();
 
-    save.attr('disabled', 'disabled');
-    select.attr('disabled', 'disabled');
-
-    if (window.MENUElementEditor) {
-        window.MENUElementEditor.init();
+        switch (type) {
+            case '1':
+                jQuery('#urldiv').show();
+                break;
+            case '2':
+                jQuery('#glfunc').show();
+                break;
+            case '3':
+                jQuery('#glcorediv').show();
+                break;
+            case '4':
+                jQuery('#plugin').show();
+                break;
+            case '5':
+                jQuery('#staticpage').show();
+                break;
+            case '6':
+                jQuery('#urldiv,#targetdiv').show();
+                break;
+            case '7':
+                jQuery('#phpdiv').show();
+                break;
+            case '9':
+                jQuery('#topic').show();
+                break;
+        }
     }
+
+    var select = jQuery('#menutype');
+    var saveButton = jQuery('#execute');
+    select.off('change.menuElementEditor').on('change.menuElementEditor', syncElementFields);
+    syncElementFields();
 
     jQuery.getJSON(
         '{site_admin_url}/plugins/menu/type_options.php',
-        {menu: '{menu}', mid: '{mid}'}
-    ).done(function (data) {
-        var hidden = jQuery('#menutype-hidden');
-        if (!select.length || !data || !data.types || !data.types.length) {
-            status.text('Unable to load the valid element types. Reload this page before saving.').show();
-            return;
-        }
-
-        select.empty();
-        jQuery.each(data.types, function (index, item) {
-            var option = jQuery('<option></option>')
-                .attr('value', item.id)
-                .text(item.label);
-            if (parseInt(item.id, 10) === parseInt(data.currentType, 10)) {
-                option.attr('selected', 'selected');
+        {menu: '{menu}', mid: '{mid}'},
+        function (data) {
+            var hidden = jQuery('#menutype-hidden');
+            if (!select.length || !data || !data.types) {
+                return;
             }
-            select.append(option);
-        });
 
-        hidden.empty();
-        if (data.locked) {
-            select.attr('disabled', 'disabled');
-            hidden.append(
-                jQuery('<input>')
-                    .attr('type', 'hidden')
-                    .attr('name', 'menutype')
-                    .attr('value', data.currentType)
-            );
-        } else {
-            select.removeAttr('disabled');
+            select.empty();
+            jQuery.each(data.types, function (index, item) {
+                var option = jQuery('<option></option>')
+                    .attr('value', item.id)
+                    .text(item.label);
+                if (parseInt(item.id, 10) === parseInt(data.currentType, 10)) {
+                    option.attr('selected', 'selected');
+                }
+                select.append(option);
+            });
+
+            hidden.empty();
+            if (data.locked) {
+                select.attr('disabled', 'disabled');
+                hidden.append(
+                    jQuery('<input>')
+                        .attr('type', 'hidden')
+                        .attr('name', 'menutype')
+                        .attr('value', data.currentType)
+                );
+            } else {
+                select.removeAttr('disabled');
+            }
+
+            syncElementFields();
+            saveButton.removeAttr('disabled');
         }
-
-        status.hide().empty();
-        save.removeAttr('disabled');
-
-        if (window.MENUElementEditor) {
-            window.MENUElementEditor.syncFields();
-        }
-    }).fail(function () {
-        status.text('Unable to load the valid element types. Reload this page before saving.').show();
-    });
+    );
 });
 </script>
