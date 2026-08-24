@@ -48,5 +48,9 @@ foreach (array($create, $edit) as $template) {
 menu_editor_assert(strpos($create, 'for="pluginname"') !== false, 'create plugin label must target plugin selector');
 menu_editor_assert(strpos($edit, 'for="pluginname"') !== false, 'edit plugin label must target plugin selector');
 menu_editor_assert(strpos($edit, 'for="glfunction"') !== false, 'Geeklog Action label must target glfunction selector');
+menu_editor_assert(strpos($edit, "save.attr('disabled', 'disabled')") !== false, 'edit save must be blocked before authoritative types load');
+menu_editor_assert(strpos($edit, "save.removeAttr('disabled')") !== false, 'edit save must be enabled after authoritative types load');
+menu_editor_assert(strpos($edit, '.fail(function ()') !== false, 'edit type loading failure must be handled');
+menu_editor_assert(strpos($edit, 'Reload this page before saving.') !== false, 'edit type loading failure must explain recovery');
 
 echo "Element editor UI contract tests passed" . PHP_EOL;
