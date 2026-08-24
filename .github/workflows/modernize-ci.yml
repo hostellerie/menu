@@ -46,6 +46,9 @@ jobs:
       - name: Test resolved menu tree API
         run: php tests/resolved_tree.php
 
+      - name: Test theme presentation hand-off
+        run: php tests/theme_presentation.php
+
   package:
     name: Build installable ZIP
     runs-on: ubuntu-latest
