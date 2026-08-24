@@ -49,6 +49,9 @@ jobs:
       - name: Test theme presentation hand-off
         run: php tests/theme_presentation.php
 
+      - name: Test admin security helpers
+        run: php tests/admin_security.php
+
   package:
     name: Build installable ZIP
     runs-on: ubuntu-latest
