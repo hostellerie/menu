@@ -85,12 +85,14 @@ $T->set_var('site_url', $_CONF['site_url']);
 $T->set_var('url1', '');
 $T->set_var('url2', '');
 
+$image_url = MENU_imageUrl();
+
 if (isset($Menus[$menu_id]['config']) && is_array($Menus[$menu_id]['config'])) {
     foreach ($Menus[$menu_id]['config'] as $name => $value) {
         if ($name == 'use_images') {
             if ((int) $value === 1) {
-                $T->set_var('url1', "url({$_CONF['site_url']}/images/menu/{menu_bg_filename}) repeat-x");
-                $T->set_var('url2', "url({$_CONF['site_url']}/images/menu/{menu_hover_filename}) repeat-x");
+                $T->set_var('url1', 'url(' . $image_url . '{menu_bg_filename}) repeat-x');
+                $T->set_var('url2', 'url(' . $image_url . '{menu_hover_filename}) repeat-x');
             }
             continue;
         }
@@ -105,6 +107,18 @@ if (isset($Menus[$menu_id]['config']['menu_alignment'])) {
 $T->set_var('alignment', $alignment === 1 ? 'left' : 'right');
 $T->parse('output', 'style');
 $menu_css = $T->finish($T->get_var('output'));
+
+/*
+ * Older vertical templates contain the historical /images/menu/ URL directly.
+ * Rewrite it in the isolated preview so multisite path_images is respected.
+ */
+if ($image_url !== '') {
+    $menu_css = str_replace(
+        rtrim($_CONF['site_url'], '/') . '/images/menu/',
+        $image_url,
+        $menu_css
+    );
+}
 
 $custom_css = MENU_dataDir() . 'css' . DIRECTORY_SEPARATOR . 'gl_menu' . $menu_id . '.css';
 if (file_exists($custom_css)) {
