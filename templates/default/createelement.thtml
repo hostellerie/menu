@@ -40,7 +40,7 @@
         {gl_select}</p>
       </div>
       <div id="plugin" class="optional">
-        <p><label for="gltype">{LANG_MENU01[plugins]}:</label>
+        <p><label for="pluginname">{LANG_MENU01[plugins]}:</label>
         {plugin_select}</p>
       </div>
 
@@ -68,8 +68,13 @@
   </form>
   </div>
 
+<script type="text/javascript" src="{site_admin_url}/plugins/menu/js/element-editor.js"></script>
 <script type="text/javascript">
 jQuery(function () {
+    if (window.MENUElementEditor) {
+        window.MENUElementEditor.init();
+    }
+
     jQuery.getJSON(
         '{site_admin_url}/plugins/menu/type_options.php',
         {menu: '{menuid}'},
@@ -88,8 +93,8 @@ jQuery(function () {
                 );
             });
 
-            if (typeof toggleFields === 'function') {
-                toggleFields();
+            if (window.MENUElementEditor) {
+                window.MENUElementEditor.syncFields();
             }
         }
     );
