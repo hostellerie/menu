@@ -2,7 +2,7 @@
 
 /* Reminder: always indent with 4 spaces (no tabs). */
 // +---------------------------------------------------------------------------+
-// | Menu Plugin 1.2.8                                                         |
+// | Menu Plugin 1.3.0                                                         |
 // +---------------------------------------------------------------------------+
 // | install_defaults.php                                                      |
 // |                                                                           |
@@ -36,51 +36,32 @@
 */
 
 if (stripos($_SERVER['PHP_SELF'], basename(__FILE__)) !== false) {
-    die ('This file can not be used on its own.');
+    die('This file can not be used on its own.');
 }
 
 /**
-* Menu default settings
+* Initialize Menu plugin configuration.
 *
-* Initial Installation Defaults used when loading the online configuration
-* records.  These settings are only used during the initial installation
-* and not referenced any more once the plugin is installed
-*/
-global $_MENU_DEFAULT;
-$_MENU_DEFAULT = array();
-
-// This is the default for 'samplesetting1'
-$_MENU_DEFAULT['samplesetting1'] = true;
-
-// This is the default for 'samplesetting2'
-$_MENU_DEFAULT['samplesetting2'] = 1;
-
-/**
-* Initialize Menu plugin configuration
+* Menu currently has no runtime settings stored in Geeklog's configuration
+* system. We keep only the structural entries required by the configuration
+* manager. The old Plugin Toolkit samples (samplesetting1 / samplesetting2)
+* are deliberately not created on new installations.
 *
-* Creates the database entries for the configuation if they don't already
-* exist.  Initial values will be taken from $_MENU_DEFAULT.
+* Existing installations may still contain those legacy rows. Their language
+* definitions are retained so Geeklog 2.1.1 and 2.2.2 can render the global
+* configuration page safely until an upgrade migration removes them.
 *
-* @return   boolean     TRUE: success; FALSE: an error occurred
+* @return boolean TRUE on success
 */
 function plugin_initconfig_menu()
 {
-    global $_MENU_CONF, $_MENU_DEFAULT;
-
-    if (is_array($_MENU_CONF) && (count($_MENU_CONF) > 1)) {
-        $_MENU_DEFAULT = array_merge($_MENU_DEFAULT, $_MENU_CONF);
-    }
-
     $me = 'menu';
 
     $c = config::get_instance();
-    if (!$c->group_exists('menu')) {
-        $c->add('sg_main', NULL, 'subgroup', 0, 0, NULL, 0, true, $me, 0);
-        $c->add('tab_main', NULL, 'tab', 0, 0, NULL, 0, true, $me, 0);
-        $c->add('fs_main', NULL, 'fieldset', 0, 0, NULL, 0, true, $me, 0);
-        // The below two lines add two settings to Geeklog's config UI
-        $c->add('samplesetting1', $_MENU_DEFAULT['samplesetting1'], 'select',0, 0, 1, 10, true, $me, 0); // This adds a drop-down box
-        $c->add('samplesetting2', $_MENU_DEFAULT['samplesetting2'], 'text', 0, 0, null, 20, true, $me, 0); // This adds a text input field
+    if (!$c->group_exists($me)) {
+        $c->add('sg_main', null, 'subgroup', 0, 0, null, 0, true, $me, 0);
+        $c->add('tab_main', null, 'tab', 0, 0, null, 0, true, $me, 0);
+        $c->add('fs_main', null, 'fieldset', 0, 0, null, 0, true, $me, 0);
     }
 
     return true;
