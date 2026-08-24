@@ -13,10 +13,13 @@ if (stripos($_SERVER['PHP_SELF'], basename(__FILE__)) !== false) {
     die('This file can not be used on its own.');
 }
 
-require_once __DIR__ . '/config.php';
-
 /**
  * Return plugin autoinstall metadata.
+ *
+ * config.php is loaded inside this function deliberately. This mirrors the
+ * official Geeklog 2.2.2 plugin pattern and ensures $_MENU_PLUGIN is populated
+ * in the declared global scope even when config.php was previously included
+ * from another function scope.
  *
  * @param string $pi_name
  * @return array
@@ -24,6 +27,12 @@ require_once __DIR__ . '/config.php';
 function plugin_autoinstall_menu($pi_name)
 {
     global $_MENU_PLUGIN;
+
+    require_once __DIR__ . '/config.php';
+
+    if (!isset($_MENU_PLUGIN) || !is_array($_MENU_PLUGIN)) {
+        return array();
+    }
 
     return array(
         'info' => array(
