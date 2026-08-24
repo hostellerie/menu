@@ -52,6 +52,7 @@ if (stripos($_SERVER['PHP_SELF'], basename(__FILE__)) !== false) {
  */
 $plugin_path = $_CONF['path'] . 'plugins/menu/';
 require_once $plugin_path . 'storage.php';
+require_once $plugin_path . 'presentation.php';
 $langfile = $plugin_path . 'language/' . $_CONF['language'] . '.php';
 
 if (file_exists($langfile)) {
@@ -233,10 +234,25 @@ function plugin_autouninstall_menu()
 function plugin_getheadercode_menu() {
     global $_CONF, $Menus, $_SCRIPTS;
 
-    $_SCRIPTS->setCSSFile('menu_slicknav', '/menu/css/slicknav.css');
-    $_SCRIPTS->setJavaScriptFile('slicknav', '/menu/js/jquery.slicknav.js');
-
     $menu_header = '';
+    $js = '';
+    $needsLegacyAssets = false;
+
+    if (is_array($Menus)) {
+        foreach ($Menus as $menu) {
+            if (!empty($menu['active'])
+                && !MENU_themeHandlesPresentation(isset($menu['menu_name']) ? $menu['menu_name'] : '')) {
+                $needsLegacyAssets = true;
+                break;
+            }
+        }
+    }
+
+    if ($needsLegacyAssets) {
+        $_SCRIPTS->setCSSFile('menu_slicknav', '/menu/css/slicknav.css');
+        $_SCRIPTS->setJavaScriptFile('slicknav', '/menu/js/jquery.slicknav.js');
+    }
+
     $this_dir = basename(dirname($_SERVER['SCRIPT_NAME']));
     if ($this_dir == 'menu') {
         $menu_header .= '<meta http-equiv="cache-control" content="no-cache" />' . LB;
@@ -246,6 +262,10 @@ function plugin_getheadercode_menu() {
     if (is_array($Menus)) {
         foreach ($Menus AS $menu) {
             if ($menu['active'] == 1) {
+                if (MENU_themeHandlesPresentation(isset($menu['menu_name']) ? $menu['menu_name'] : '')) {
+                    continue;
+                }
+
                 $cacheInstance = 'menu_css_' . $menu['menu_id'] . '__' . $_CONF['theme'];
                 $retval = MENU_CACHE_check_instance($cacheInstance, 0);
 
@@ -323,9 +343,13 @@ function plugin_getheadercode_menu() {
                     $menu_header .= LB . '<style type="text/css">' . $css_minify . '</style>' . LB;
                 }
 
-                $js = LB . "jQuery(document).ready(function() {
+                $siteName = json_encode((string) $_CONF['site_name']);
+                if ($siteName === false) {
+                    $siteName = '"Menu"';
+                }
+                $js .= LB . "jQuery(document).ready(function() {
                     jQuery('#gl_menu" . $menu['menu_id'] . "').slicknav(({
-                        label: '{$_CONF['site_name']}',
+                        label: " . $siteName . ",
                         allowParentLinks: true,
                     }));
                     jQuery( '.slicknav_nav .gl_menu" . $menu['menu_id'] . "' ).removeClass( 'gl_menu" . $menu['menu_id'] . "' );
@@ -334,8 +358,12 @@ function plugin_getheadercode_menu() {
         }
     }
 
-    $_SCRIPTS->setJavaScriptLibrary('jquery');
-    $_SCRIPTS->setJavaScript($js, true);
+    if ($needsLegacyAssets) {
+        $_SCRIPTS->setJavaScriptLibrary('jquery');
+        if ($js !== '') {
+            $_SCRIPTS->setJavaScript($js, true);
+        }
+    }
 
     return $menu_header;
 }
