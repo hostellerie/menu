@@ -121,6 +121,9 @@ function MENU_resolveElementNode($menuId, $elementId)
             break;
 
         case 5:
+            if (!MENU_resolvedStaticPageAvailable($subtype)) {
+                return null;
+            }
             $url = COM_buildURL($_CONF['site_url'] . '/staticpages/index.php?page=' . rawurlencode((string) $subtype));
             break;
 
@@ -142,6 +145,9 @@ function MENU_resolveElementNode($menuId, $elementId)
             break;
 
         case 9:
+            if (!MENU_resolvedTopicAvailable($subtype)) {
+                return null;
+            }
             $url = $_CONF['site_url'] . '/index.php?topic=' . rawurlencode((string) $subtype);
             break;
     }
@@ -173,6 +179,74 @@ function MENU_resolveElementNode($menuId, $elementId)
         'resolved' => $resolved,
         'children' => $children,
     );
+}
+
+/**
+ * Return whether a stored Static Page destination is currently usable.
+ *
+ * The menu item itself is never deleted. If Static Pages is disabled, the
+ * referenced page is gone, or the page is a draft, the resolved tree omits the
+ * item until the destination becomes available again.
+ *
+ * @param string $pageId
+ * @return bool
+ */
+function MENU_resolvedStaticPageAvailable($pageId)
+{
+    global $_PLUGINS, $_TABLES;
+
+    if (!isset($_PLUGINS) || !is_array($_PLUGINS) || !in_array('staticpages', $_PLUGINS, true)) {
+        return false;
+    }
+    if (!isset($_TABLES['staticpage'])) {
+        return false;
+    }
+
+    // Unit-test environments may intentionally omit Geeklog's DB helpers.
+    if (!function_exists('DB_getItem')) {
+        return true;
+    }
+
+    $escaped = function_exists('DB_escapeString')
+        ? DB_escapeString((string) $pageId)
+        : addslashes((string) $pageId);
+    $found = DB_getItem(
+        $_TABLES['staticpage'],
+        'sp_id',
+        "sp_id='" . $escaped . "' AND draft_flag=0"
+    );
+
+    return $found !== '' && $found !== null && $found !== false;
+}
+
+/**
+ * Return whether a stored Topic destination still exists.
+ *
+ * @param string $topicId
+ * @return bool
+ */
+function MENU_resolvedTopicAvailable($topicId)
+{
+    global $_TABLES;
+
+    if (!isset($_TABLES['topics'])) {
+        return false;
+    }
+
+    if (!function_exists('DB_getItem')) {
+        return true;
+    }
+
+    $escaped = function_exists('DB_escapeString')
+        ? DB_escapeString((string) $topicId)
+        : addslashes((string) $topicId);
+    $found = DB_getItem(
+        $_TABLES['topics'],
+        'tid',
+        "tid='" . $escaped . "'"
+    );
+
+    return $found !== '' && $found !== null && $found !== false;
 }
 
 function MENU_resolveMacros($url)
