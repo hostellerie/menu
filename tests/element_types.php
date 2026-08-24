@@ -23,30 +23,42 @@ $labels = array(
     9 => 'Topic',
 );
 
-$createCascading = MENU_getAllowedElementTypes($labels, 1, true, null);
+$createCascading = MENU_getAllowedElementTypes($labels, 1, true, null, true);
 menu_type_test_assert(isset($createCascading[1]), 'type 1 missing from cascading create');
 menu_type_test_assert(isset($createCascading[2]), 'type 2 Geeklog Action missing from create');
 menu_type_test_assert(isset($createCascading[3]), 'type 3 Geeklog Core missing from create');
+menu_type_test_assert(isset($createCascading[9]), 'Topic must be available when topics exist');
 menu_type_test_assert(array_keys($createCascading) === array(2, 3, 4, 5, 9, 6, 1, 8, 7), 'cascading admin type order is inconsistent');
 menu_type_test_assert(MENU_defaultElementType($createCascading) === 2, 'Geeklog Action must be the create default');
 
-$createSimple = MENU_getAllowedElementTypes($labels, 2, true, null);
+$createSimple = MENU_getAllowedElementTypes($labels, 2, true, null, true);
 menu_type_test_assert(!isset($createSimple[1]), 'type 1 should be unavailable in simple menu create');
 menu_type_test_assert(isset($createSimple[2]), 'type 2 must remain available in simple menu create');
 menu_type_test_assert(!isset($createSimple[3]), 'type 3 should be unavailable in simple menu create');
 menu_type_test_assert(array_keys($createSimple) === array(2, 4, 5, 9, 6, 8, 7), 'simple admin type order is inconsistent');
 menu_type_test_assert(MENU_defaultElementType($createSimple) === 2, 'Geeklog Action must remain the simple-menu default');
 
-$editType2 = MENU_getAllowedElementTypes($labels, 1, true, 2);
+$editType2 = MENU_getAllowedElementTypes($labels, 1, true, 2, true);
 menu_type_test_assert(isset($editType2[2]), 'stored type 2 must remain representable while editing');
 
-$editLegacyType3 = MENU_getAllowedElementTypes($labels, 2, true, 3);
+$editLegacyType3 = MENU_getAllowedElementTypes($labels, 2, true, 3, true);
 menu_type_test_assert(isset($editLegacyType3[3]), 'stored legacy type 3 must remain representable while editing');
 
-$withoutStaticPages = MENU_getAllowedElementTypes($labels, 1, false, null);
+$withoutStaticPages = MENU_getAllowedElementTypes($labels, 1, false, null, true);
 menu_type_test_assert(!isset($withoutStaticPages[5]), 'static page type should require Static Pages plugin');
 
-$editLegacyStatic = MENU_getAllowedElementTypes($labels, 1, false, 5);
+$editLegacyStatic = MENU_getAllowedElementTypes($labels, 1, false, 5, true);
 menu_type_test_assert(isset($editLegacyStatic[5]), 'stored static-page type must remain representable when plugin is unavailable');
+
+$withoutTopics = MENU_getAllowedElementTypes($labels, 1, true, null, false);
+menu_type_test_assert(!isset($withoutTopics[9]), 'Topic type should not be offered when no topics exist');
+
+$editMissingTopic = MENU_getAllowedElementTypes($labels, 1, true, 9, false);
+menu_type_test_assert(isset($editMissingTopic[9]), 'stored Topic type must remain representable when its topic is unavailable');
+
+// Backward-compatible calls without the new hasTopics argument still assume
+// topics may exist.
+$legacyCall = MENU_getAllowedElementTypes($labels, 1, true, null);
+menu_type_test_assert(isset($legacyCall[9]), 'legacy helper calls must retain Topic availability');
 
 echo 'Element type tests passed' . PHP_EOL;
