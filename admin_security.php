@@ -207,7 +207,10 @@ function MENU_adminEnforceCsrf()
         MENU_adminRejectInvalidToken();
     }
 
-    $validationError = MENU_adminElementMutationError($mode, $_POST);
+    $validationError = MENU_adminMutationReferenceError($mode, $_POST);
+    if ($validationError === '') {
+        $validationError = MENU_adminElementMutationError($mode, $_POST);
+    }
     if ($validationError !== '') {
         MENU_adminRejectInvalidRequest($validationError);
     }
@@ -266,7 +269,7 @@ function MENU_adminRegisterTokenBridge()
         . "        return data;\n"
         . "    }\n"
         . "    function submitMutation(href, data) {\n"
-        . "        var action = String(href || '').split('?')[0] || window.location.pathname;\n"
+        . "        var action = String(href || '') || window.location.pathname;\n"
         . "        var form = $('<form>', {method: 'post', action: action, style: 'display:none'});\n"
         . "        $.each(data, function(key, value) {\n"
         . "            $('<input>', {type: 'hidden', name: key, value: value}).appendTo(form);\n"
