@@ -15,7 +15,7 @@ if (!defined('VERSION')) {
 require_once __DIR__ . '/compat.php';
 
 /**
- * Return the private, site-specific Menu data directory.
+ * Return the preferred private, site-specific Menu data directory.
  *
  * Examples:
  *   /path/data/          -> /path/data-menu/
@@ -23,7 +23,7 @@ require_once __DIR__ . '/compat.php';
  *
  * @return string
  */
-function MENU_dataDir()
+function MENU_preferredDataDir()
 {
     global $_CONF;
 
@@ -54,6 +54,52 @@ function MENU_legacyDataDir()
 }
 
 /**
+ * Return the active Menu data directory.
+ *
+ * The preferred location is the sibling {path_data}-menu directory. Some
+ * older/single-site installations allow PHP to write inside path_data but not
+ * in its parent directory. In that case we temporarily fall back to the legacy
+ * path_data/menu_data directory rather than aborting plugin installation.
+ *
+ * @return string
+ */
+function MENU_dataDir()
+{
+    $preferred = MENU_preferredDataDir();
+    if ($preferred === '') {
+        return '';
+    }
+
+    if (is_dir($preferred)) {
+        return $preferred;
+    }
+
+    $parent = dirname(rtrim($preferred, "/\\"));
+    if (is_dir($parent) && is_writable($parent)) {
+        return $preferred;
+    }
+
+    return MENU_legacyDataDir();
+}
+
+/**
+ * Tell whether the preferred multisite-safe storage is currently active.
+ *
+ * @return bool
+ */
+function MENU_usesPreferredDataDir()
+{
+    $preferred = MENU_preferredDataDir();
+    $active = MENU_dataDir();
+
+    if ($preferred === '' || $active === '') {
+        return false;
+    }
+
+    return rtrim($preferred, "/\\") === rtrim($active, "/\\");
+}
+
+/**
  * Ensure a directory exists.
  *
  * @param string $path
@@ -73,10 +119,10 @@ function MENU_ensureDirectory($path)
 }
 
 /**
- * Ensure the site-specific Menu storage layout exists.
+ * Ensure the active Menu storage layout exists.
  *
  * cache/ is disposable. css/ is persistent and must survive Geeklog cache
- * cleanup operations.
+ * cleanup operations when preferred storage is available.
  *
  * @return bool
  */
@@ -146,22 +192,37 @@ function MENU_copyTreeNonDestructive($source, $destination)
 }
 
 /**
- * Migrate legacy path_data/menu_data/ content to the new site-specific
- * {path_data}-menu/ location.
+ * Migrate legacy path_data/menu_data/ content to the preferred
+ * {path_data}-menu/ location when that location is writable.
  *
  * The migration is intentionally non-destructive and idempotent:
  * - legacy files are never deleted;
  * - existing destination files are never overwritten;
  * - it can safely be executed more than once.
  *
+ * If the parent of {path_data}-menu is not writable, the plugin keeps using
+ * legacy storage and returns success. This avoids breaking installation on
+ * older Geeklog layouts while preserving the preferred migration whenever the
+ * filesystem permits it.
+ *
  * @return bool
  */
 function MENU_migrateLegacyData()
 {
     $source = MENU_legacyDataDir();
-    $destination = MENU_dataDir();
+    $preferred = MENU_preferredDataDir();
 
-    if ($destination === '' || !MENU_ensureDataDirs()) {
+    if ($preferred === '') {
+        return false;
+    }
+
+    if (!MENU_usesPreferredDataDir()) {
+        return MENU_ensureDataDirs();
+    }
+
+    if (!MENU_ensureDirectory($preferred)
+        || !MENU_ensureDirectory($preferred . 'cache' . DIRECTORY_SEPARATOR)
+        || !MENU_ensureDirectory($preferred . 'css' . DIRECTORY_SEPARATOR)) {
         return false;
     }
 
@@ -169,5 +230,9 @@ function MENU_migrateLegacyData()
         return true;
     }
 
-    return MENU_copyTreeNonDestructive($source, $destination);
+    if (rtrim($source, "/\\") === rtrim($preferred, "/\\")) {
+        return true;
+    }
+
+    return MENU_copyTreeNonDestructive($source, $preferred);
 }
