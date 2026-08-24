@@ -13,25 +13,74 @@ if (!defined('VERSION')) {
 }
 
 /**
+ * Return presentation capabilities declared by the active theme.
+ *
+ * A theme may provide layout/<theme>/plugin-presentation.php returning:
+ *
+ *     array(
+ *         'menu' => array('navigation'),
+ *     );
+ *
+ * This manifest is deliberately generic so other plugins can use the same
+ * declaration format. A PHP callback remains supported as an optional dynamic
+ * mechanism when the theme load order makes it available.
+ *
+ * @return array
+ */
+function MENU_themePresentationManifest()
+{
+    global $_CONF;
+
+    static $manifest = null;
+    if ($manifest !== null) {
+        return $manifest;
+    }
+
+    $manifest = array();
+    $layoutPath = isset($_CONF['path_layout']) ? rtrim($_CONF['path_layout'], "/\\") : '';
+    if ($layoutPath === '') {
+        return $manifest;
+    }
+
+    $file = $layoutPath . DIRECTORY_SEPARATOR . 'plugin-presentation.php';
+    if (!is_file($file)) {
+        return $manifest;
+    }
+
+    $declared = include $file;
+    if (is_array($declared)) {
+        $manifest = $declared;
+    }
+
+    return $manifest;
+}
+
+/**
  * Return true when the active theme explicitly owns presentation for a Menu
- * resource. The callback name is intentionally generic so other plugins can
- * adopt the same contract without Menu knowing anything about a specific
- * theme.
- *
- * Themes may implement:
- *
- *     theme_handles_plugin_presentation($plugin, $resource)
- *
- * and return true for resources they render themselves.
+ * resource.
  *
  * @param string $menuName
  * @return bool
  */
 function MENU_themeHandlesPresentation($menuName)
 {
-    if (!function_exists('theme_handles_plugin_presentation')) {
+    $menuName = (string) $menuName;
+
+    if (function_exists('theme_handles_plugin_presentation')
+        && theme_handles_plugin_presentation('menu', $menuName)) {
+        return true;
+    }
+
+    $manifest = MENU_themePresentationManifest();
+    if (!isset($manifest['menu']) || !is_array($manifest['menu'])) {
         return false;
     }
 
-    return (bool) theme_handles_plugin_presentation('menu', (string) $menuName);
+    foreach ($manifest['menu'] as $resource) {
+        if (strcasecmp((string) $resource, $menuName) === 0) {
+            return true;
+        }
+    }
+
+    return false;
 }
