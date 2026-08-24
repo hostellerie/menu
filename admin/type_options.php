@@ -46,11 +46,13 @@ if ($mid > 0) {
 }
 
 $hasStaticPages = isset($_PLUGINS) && in_array('staticpages', $_PLUGINS, true);
+$hasTopics = isset($_TABLES['topics']) && DB_count($_TABLES['topics']) > 0;
 $types = MENU_getAllowedElementTypes(
     $LANG_MENU_TYPES,
     $menuType,
     $hasStaticPages,
-    $currentType
+    $currentType,
+    $hasTopics
 );
 
 $resource = array(
