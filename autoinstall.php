@@ -115,11 +115,12 @@ function plugin_postinstall_menu($pi_name)
 {
     global $_CONF;
 
-    if (!is_dir($_CONF['path_images'] . 'menu')) {
-        @mkdir($_CONF['path_images'] . 'menu', 0755, true);
-    }
-
     require_once $_CONF['path'] . 'plugins/menu/storage.php';
+
+    if (!MENU_ensureImageDir()) {
+        COM_errorLog('Menu postinstall: unable to create public image directory: ' . MENU_imageDir());
+        return false;
+    }
 
     if (!MENU_ensureDataDirs()) {
         COM_errorLog('Menu postinstall: unable to create storage directory: ' . MENU_dataDir());
