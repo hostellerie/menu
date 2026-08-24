@@ -43,6 +43,9 @@ jobs:
       - name: Test element type rules
         run: php tests/element_types.php
 
+      - name: Test resolved menu tree API
+        run: php tests/resolved_tree.php
+
   package:
     name: Build installable ZIP
     runs-on: ubuntu-latest
