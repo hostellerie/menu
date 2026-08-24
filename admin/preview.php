@@ -25,20 +25,10 @@ if ($menu_id <= 0 || !isset($Menus[$menu_id])) {
     exit;
 }
 
-/*
- * A preview must also work for a disabled menu. This change only affects the
- * current request; nothing is written to the database.
- */
 $Menus[$menu_id]['active'] = 1;
-
 $menu_name = $Menus[$menu_id]['menu_name'];
 $menu_type = (int) $Menus[$menu_id]['menu_type'];
 
-/**
- * Resolve and load the active theme's optional generic plugin preview provider.
- *
- * @return bool
- */
 function MENU_previewLoadThemeProvider()
 {
     global $_CONF;
@@ -69,12 +59,6 @@ function MENU_previewLoadThemeProvider()
     return function_exists('theme_plugin_presentation_preview');
 }
 
-/**
- * Return whether the active theme can preview this menu resource.
- *
- * @param string $menuName
- * @return bool
- */
 function MENU_previewThemeAvailable($menuName)
 {
     $resource = function_exists('MENU_presentationBaseResource')
@@ -110,11 +94,11 @@ if ($mode === 'tabs') {
     }
     echo '</div>';
     echo '<div class="menu-preview-panel is-active" id="panel-native" role="tabpanel" aria-labelledby="tab-native">';
-    echo '<iframe class="menu-preview-frame" src="' . htmlspecialchars($base . '&amp;mode=native', ENT_QUOTES, 'UTF-8')
+    echo '<iframe class="menu-preview-frame" src="' . htmlspecialchars($base . '&mode=native', ENT_QUOTES, 'UTF-8')
         . '" title="Native Menu preview"></iframe></div>';
     if ($themeAvailable) {
         echo '<div class="menu-preview-panel" id="panel-theme" role="tabpanel" aria-labelledby="tab-theme">';
-        echo '<iframe class="menu-preview-frame" src="' . htmlspecialchars($base . '&amp;mode=theme', ENT_QUOTES, 'UTF-8')
+        echo '<iframe class="menu-preview-frame" src="' . htmlspecialchars($base . '&mode=theme', ENT_QUOTES, 'UTF-8')
             . '" title="Active theme preview"></iframe></div>';
     }
     echo '<script>(function(){var tabs=document.querySelectorAll(".menu-preview-tab");for(var i=0;i<tabs.length;i++){tabs[i].onclick=function(){for(var j=0;j<tabs.length;j++){tabs[j].setAttribute("aria-selected","false");var p=document.getElementById(tabs[j].getAttribute("aria-controls"));if(p){p.className="menu-preview-panel";}}this.setAttribute("aria-selected","true");var panel=document.getElementById(this.getAttribute("aria-controls"));if(panel){panel.className="menu-preview-panel is-active";}};}}());</script>';
@@ -155,25 +139,17 @@ switch ($menu_type) {
     case 1:
         $menu_html = MENU_getMenu($menu_name, 'gl_menu', 'gl_menu', '', 'parent');
         break;
-
     case 2:
         $menu_html = MENU_getMenu($menu_name, 'st-fmenu', '', '', '', 'st-f-last');
         break;
-
     case 3:
         $menu_html = phpblock_getMenu('', $menu_name);
         break;
-
     case 4:
         $menu_html = MENU_getMenu($menu_name, 'st-vmenu', '', '', '');
         break;
 }
 
-/*
- * Render the target menu CSS directly instead of relying on the surrounding
- * Geeklog document's asset pipeline. This keeps the iframe isolated and works
- * on both Geeklog 2.1.1 and 2.2.2.
- */
 $menu_css = '';
 $style_file = 'gl_horizontal-cascading.thtml';
 $under = 50;
@@ -225,10 +201,6 @@ $T->set_var('alignment', $alignment === 1 ? 'left' : 'right');
 $T->parse('output', 'style');
 $menu_css = $T->finish($T->get_var('output'));
 
-/*
- * Older vertical templates contain the historical /images/menu/ URL directly.
- * Rewrite it in the isolated preview so multisite path_images is respected.
- */
 if ($image_url !== '') {
     $menu_css = str_replace(
         rtrim($_CONF['site_url'], '/') . '/images/menu/',
@@ -251,7 +223,6 @@ echo '<style type="text/css">' . MENU_compress($menu_css) . '</style>' . "\n";
 echo '<style type="text/css">';
 echo 'html,body{margin:0;padding:0;background:transparent;}';
 echo 'body{padding:12px;box-sizing:border-box;min-height:80px;}';
-/* Keep the real desktop menu visible when the iframe itself is narrow. */
 if ($menu_type === 1) {
     echo '@media screen and (max-width:750px){#gl_menu' . $menu_id
         . '{display:block!important}.slicknav_menu{display:none!important}}';
