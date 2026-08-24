@@ -6,6 +6,15 @@
   {menu_select}
 </div><div style="clear:both;"></div>
 
+<div class="menu-preview" style="margin:15px 0 20px 0;">
+  <div style="font-weight:bold;margin-bottom:6px;">Preview</div>
+  <iframe
+    src="{site_admin_url}/plugins/menu/preview.php?menu={menuid}"
+    title="Preview: {menuname}"
+    style="display:block;width:100%;min-height:180px;border:1px solid #ccc;background:#fff;box-sizing:border-box;"
+  ></iframe>
+</div>
+
 <form method="post" id="menusel" action="{site_admin_url}/plugins/menu/index.php">
 <div>
   <table style="width:100%;" class="tbl_repeat" id="menu_table" name="menu_table">
