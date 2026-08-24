@@ -67,3 +67,31 @@
   </div>
   </form>
   </div>
+
+<script type="text/javascript">
+jQuery(function () {
+    jQuery.getJSON(
+        '{site_admin_url}/plugins/menu/type_options.php',
+        {menu: '{menuid}'},
+        function (data) {
+            var select = jQuery('#menutype');
+            if (!select.length || !data || !data.types) {
+                return;
+            }
+
+            select.empty();
+            jQuery.each(data.types, function (index, item) {
+                select.append(
+                    jQuery('<option></option>')
+                        .attr('value', item.id)
+                        .text(item.label)
+                );
+            });
+
+            if (typeof toggleFields === 'function') {
+                toggleFields();
+            }
+        }
+    );
+});
+</script>
