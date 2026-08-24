@@ -40,39 +40,90 @@ function MENU_configDefaults()
 }
 
 /**
- * Add the 1.3.0 runtime settings to Geeklog's configuration manager.
+ * Return config sort positions. Gaps deliberately separate logical groups.
+ *
+ * @return array
+ */
+function MENU_configSortOrder130()
+{
+    return array(
+        'enable_cache'             => 10,
+        'accessibility_markup'     => 20,
+        'external_link_protection' => 110,
+        'allow_php_elements'       => 120,
+        'legacy_rendering'         => 210,
+        'load_legacy_css'          => 220,
+        'load_legacy_js'           => 230,
+        'debug'                    => 310,
+    );
+}
+
+/**
+ * Add one Menu 1.3.0 boolean setting.
  *
  * @param config $c
- * @param bool   $includeStructure Whether subgroup/tab/fieldset must be added
+ * @param string $name
+ * @param mixed  $default
+ * @param int    $sort
  * @return void
  */
-function MENU_addConfig130($c, $includeStructure)
+function MENU_addConfigSetting130($c, $name, $default, $sort)
 {
-    $me = 'menu';
-    $defaults = MENU_configDefaults();
+    // selectionArray 0 is Geeklog's standard Yes / No selector.
+    $c->add($name, $default, 'select', 0, 0, 0, $sort, true, 'menu', 0);
+}
 
-    if ($includeStructure) {
-        $c->add('sg_main', null, 'subgroup', 0, 0, null, 0, true, $me, 0);
-        $c->add('tab_main', null, 'tab', 0, 0, null, 0, true, $me, 0);
-        $c->add('fs_main', null, 'fieldset', 0, 0, null, 0, true, $me, 0);
+/**
+ * Add the complete 1.3.0 configuration for a fresh installation.
+ *
+ * @param config $c
+ * @return void
+ */
+function MENU_addConfig130($c)
+{
+    $defaults = MENU_configDefaults();
+    $sortOrder = MENU_configSortOrder130();
+
+    $c->add('sg_main', null, 'subgroup', 0, 0, null, 0, true, 'menu', 0);
+    $c->add('tab_main', null, 'tab', 0, 0, null, 0, true, 'menu', 0);
+    $c->add('fs_main', null, 'fieldset', 0, 0, null, 0, true, 'menu', 0);
+
+    foreach ($sortOrder as $name => $sort) {
+        MENU_addConfigSetting130($c, $name, $defaults[$name], $sort);
+    }
+}
+
+/**
+ * Ensure all 1.3.0 settings exist without resetting existing values.
+ *
+ * This is used by the upgrade path and is intentionally idempotent.
+ *
+ * @return bool
+ */
+function MENU_ensureConfig130()
+{
+    $c = config::get_instance();
+
+    if (!$c->group_exists('menu')) {
+        MENU_addConfig130($c);
+        return true;
     }
 
-    // selectionArray 0 is Geeklog's standard Yes / No selector.
-    // Runtime and accessibility.
-    $c->add('enable_cache', $defaults['enable_cache'], 'select', 0, 0, 0, 10, true, $me, 0);
-    $c->add('accessibility_markup', $defaults['accessibility_markup'], 'select', 0, 0, 0, 20, true, $me, 0);
+    $current = $c->get_config('menu');
+    if (!is_array($current)) {
+        $current = array();
+    }
 
-    // Security.
-    $c->add('external_link_protection', $defaults['external_link_protection'], 'select', 0, 0, 0, 110, true, $me, 0);
-    $c->add('allow_php_elements', $defaults['allow_php_elements'], 'select', 0, 0, 0, 120, true, $me, 0);
+    $defaults = MENU_configDefaults();
+    $sortOrder = MENU_configSortOrder130();
 
-    // Compatibility / legacy presentation.
-    $c->add('legacy_rendering', $defaults['legacy_rendering'], 'select', 0, 0, 0, 210, true, $me, 0);
-    $c->add('load_legacy_css', $defaults['load_legacy_css'], 'select', 0, 0, 0, 220, true, $me, 0);
-    $c->add('load_legacy_js', $defaults['load_legacy_js'], 'select', 0, 0, 0, 230, true, $me, 0);
+    foreach ($sortOrder as $name => $sort) {
+        if (!array_key_exists($name, $current)) {
+            MENU_addConfigSetting130($c, $name, $defaults[$name], $sort);
+        }
+    }
 
-    // Diagnostics.
-    $c->add('debug', $defaults['debug'], 'select', 0, 0, 0, 310, true, $me, 0);
+    return true;
 }
 
 /**
@@ -82,11 +133,5 @@ function MENU_addConfig130($c, $includeStructure)
  */
 function plugin_initconfig_menu()
 {
-    $c = config::get_instance();
-
-    if (!$c->group_exists('menu')) {
-        MENU_addConfig130($c, true);
-    }
-
-    return true;
+    return MENU_ensureConfig130();
 }
