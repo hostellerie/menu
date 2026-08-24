@@ -52,6 +52,9 @@ jobs:
       - name: Test admin security helpers
         run: php tests/admin_security.php
 
+      - name: Test tabbed preview contract
+        run: php tests/preview_contract.php
+
   package:
     name: Build installable ZIP
     runs-on: ubuntu-latest
