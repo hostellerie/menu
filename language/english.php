@@ -125,7 +125,6 @@ $LANG_MENU01 = array (
     'plugins'           => 'Plugin',
     'static_pages'      => 'Static Pages',
     'geeklog_function'  => 'Action',
-    'save'              => 'Save',
     'cancel'            => 'Cancel',
     'action'            => 'Action',
     'first_position'    => 'First Position',
@@ -158,20 +157,20 @@ $LANG_MENU01 = array (
     'menu_hover_image'      => 'Menu Hover Image',
     'parent_item_image'     => 'Sub Menu Parent Indicator',
     'not_used'              => 'Not used if Use Graphics is selected below.',
-	'select_color'			=> 'Select Color',
-	'menu_alignment'		=> 'Menu Alignment',
-	'alignment_question'	=> 'Align the Menu to the',
-	'align_left'			=> 'Left',
-	'align_right'			=> 'Right',
-	'blocks'                => 'Block Styles',
-	'reset'                 => 'Reset Form',
-	'defaults'              => 'Reset To Default Values',
-	'confirm_reset'         => 'This will reset the menu colors and graphics to the installation values. Are you sure you want to continue? When done, make sure to clear your local browser cache as well.',
-	'menu_properties'       => 'Menu Properties for',
-	'disabled_plugin'       => 'Not found or disabled plugin',
-	'clone'                 => 'Copy',
-	'clone_menu_label'      => 'Name for Cloned Menu',
-	'topic'                 => 'Topics',
+    'select_color'          => 'Select Color',
+    'menu_alignment'        => 'Menu Alignment',
+    'alignment_question'    => 'Align the Menu to the',
+    'align_left'            => 'Left',
+    'align_right'           => 'Right',
+    'blocks'                => 'Block Styles',
+    'reset'                 => 'Reset Form',
+    'defaults'              => 'Reset To Default Values',
+    'confirm_reset'         => 'This will reset the menu colors and graphics to the installation values. Are you sure you want to continue? When done, make sure to clear your local browser cache as well.',
+    'menu_properties'       => 'Menu Properties for',
+    'disabled_plugin'       => 'Not found or disabled plugin',
+    'clone'                 => 'Copy',
+    'clone_menu_label'      => 'Name for Cloned Menu',
+    'topic'                 => 'Topics',
 );
 
 $LANG_HC = array (
@@ -179,11 +178,11 @@ $LANG_HC = array (
     'main_menu_hover_bg_color'   => 'Main Menu Hover',
     'main_menu_text_color'       => 'Main Menu Text',
     'main_menu_hover_text_color' => 'Main Menu Text Hover / Sub Menu Text',
-	'menu_bg_filename'           => 'Menu Background Image File Name',
-	'menu_hover_filename'        => 'Menu Hover Image File Name',
-	'menu_parent_filename'      => 'Sub Menu Parent Indicator',
-	'menu_alignment'            => 'Menu Alignment',
-	'use_images'                => 'Use Images',
+    'menu_bg_filename'           => 'Menu Background Image File Name',
+    'menu_hover_filename'        => 'Menu Hover Image File Name',
+    'menu_parent_filename'       => 'Sub Menu Parent Indicator',
+    'menu_alignment'             => 'Menu Alignment',
+    'use_images'                 => 'Use Images',
     'submenu_hover_text_color'   => 'Sub Menu Text Hover',
     'submenu_background_color'   => 'Sub Menu BG',
     'submenu_hover_bg_color'     => 'Sub Menu Hover BG',
@@ -227,7 +226,6 @@ $LANG_MENU_TYPES = array(
     8                   => 'Label',
     9                   => 'Topic',
 );
-
 
 $LANG_MENU_TARGET = array(
     1                   => 'Parent Window',
@@ -289,4 +287,33 @@ $LANG_MENU_TYPES_HELP = array(
     7                   => 'Calls a PHP function. Use only for trusted, advanced integrations.',
     8                   => 'Displays text without a built-in destination.',
     9                   => 'Creates a link to a Geeklog topic.',
+);
+
+// Localization of the Geeklog Configuration UI. These entries are required
+// even on existing installations because the legacy Plugin Toolkit settings
+// are already stored in conf_values.
+$LANG_configsections['menu'] = array(
+    'label' => 'Menu',
+    'title' => 'Menu Configuration',
+);
+
+$LANG_confignames['menu'] = array(
+    'samplesetting1' => 'Legacy sample setting 1',
+    'samplesetting2' => 'Legacy sample setting 2',
+);
+
+$LANG_configsubgroups['menu'] = array(
+    'sg_main' => 'Main Settings',
+);
+
+$LANG_tab['menu'] = array(
+    'tab_main' => 'Main Settings',
+);
+
+$LANG_fs['menu'] = array(
+    'fs_main' => 'Settings',
+);
+
+$LANG_configselects['menu'] = array(
+    1 => array('Yes' => 1, 'No' => 0),
 );
