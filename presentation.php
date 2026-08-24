@@ -120,9 +120,11 @@ function MENU_rewriteAdminConfigurationNavigation($html)
     $adminHome = (string) $LANG_ADMIN['admin_home'];
     $configuration = (string) $LANG_MENU01['configuration'];
 
-    $pattern = '~(<a\\b[^>]*\\bhref=)(["\\'])'
+    // Double quotes keep the quote character class readable and avoid the
+    // ambiguous escaping that broke parsing on PHP 5.6.
+    $pattern = "~(<a\\b[^>]*\\bhref=)([\"'])"
              . preg_quote($adminUrl, '~')
-             . '/?\\2([^>]*>)(.*?)</a>~is';
+             . "/?\\2([^>]*>)(.*?)</a>~is";
 
     return preg_replace_callback(
         $pattern,
