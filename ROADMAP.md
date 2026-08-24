@@ -194,7 +194,7 @@ After stability and security are validated:
 - [ ] Add desktop/tablet/mobile preview where practical.
 - [ ] Preserve accessibility for keyboard-only administration.
 
-## Phase 9 — New functionality
+## Phase 9 — New functionality and theme-facing API
 
 Potential additions after the compatibility baseline is stable:
 
@@ -204,7 +204,13 @@ Potential additions after the compatibility baseline is stable:
 - [ ] Additional link attributes: `rel`, `aria-label`, CSS class and safe target handling.
 - [ ] Richer display conditions by authentication state, group, language, page or plugin context.
 - [ ] Reusable/inherited menu structures where useful.
-- [ ] A simple theme-facing rendering API such as `MENU_render('navigation')`.
+- [ ] Add a stable resolved-tree API such as `MENU_getResolvedTree('navigation')` for themes and integrations.
+- [ ] The resolved-tree API must preserve hierarchy and ordering and apply Menu permissions, activation and display-condition filtering before returning nodes.
+- [ ] Resolve each supported element type through Menu before exposing it to themes: Geeklog Action, Geeklog Core, plugin, static page, URL, PHP function where applicable, topic and submenu/container elements.
+- [ ] Return presentation-neutral node data including at least stable element ID, label, type, subtype where useful, resolved URL, target, selected/current state and recursively nested `children`.
+- [ ] Do not expose raw database rows as the theme API contract.
+- [ ] Keep `MENU_getMenu()` and existing template variables for backward compatibility with existing themes.
+- [ ] Add regression tests for a representative `navigation` tree containing Home as type 2 — Geeklog Action, core/plugin/static-page/topic/URL items and nested submenu elements.
 
 ## Phase 10 — Theme integration
 
@@ -217,19 +223,28 @@ Plugin responsibilities:
 - order
 - permissions
 - links and destinations
+- element-type resolution
+- active/current state resolution where possible
 - display conditions
 
 Theme responsibilities where possible:
 
+- semantic HTML rendering
 - colors
 - spacing
 - typography
 - responsive behaviour
+- dropdown interactions
+- mobile navigation
 - animations
 - palette integration
 
-- [ ] Preserve legacy visual configuration for existing installations.
-- [ ] Allow modern themes such as Eclipse to style menus using theme CSS / CSS variables without duplicating menu data.
+- [ ] Preserve legacy visual configuration and `MENU_getMenu()` output for existing installations and themes.
+- [ ] Make the Menu plugin `navigation` menu the authoritative source for primary navigation integrations.
+- [ ] Allow modern themes such as Eclipse to consume the resolved-tree API and render their own HTML/CSS/JavaScript without duplicating menu data or URL-resolution logic.
+- [ ] Eclipse must preserve Menu hierarchy, permissions, element types, ordering and resolved destinations while controlling only presentation and interaction.
+- [ ] Keep the administration preview presentation-neutral so it validates the same underlying structure consumed by themes.
+- [ ] Do not require physical modification of a theme template merely to make the resolved-tree API available.
 
 ## Phase 11 — Upgrade and release validation
 
