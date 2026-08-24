@@ -197,6 +197,9 @@ function MENU_adminCurrentMode()
 /**
  * Stop a state-changing request whose Geeklog security token is invalid.
  *
+ * Geeklog 2.1.1 still has APIs whose parameters are passed by reference, so
+ * function return values must not be nested directly into those calls.
+ *
  * @return void
  */
 function MENU_adminRejectInvalidToken()
@@ -210,10 +213,13 @@ function MENU_adminRejectInvalidToken()
 
     if (function_exists('COM_output') && function_exists('COM_createHTMLDocument')) {
         if (function_exists('COM_showMessageText')) {
-            COM_output(COM_createHTMLDocument(COM_showMessageText($message, $title)));
+            $content = COM_showMessageText($message, $title);
         } else {
-            COM_output(COM_createHTMLDocument('<h2>' . $title . '</h2><p>' . $message . '</p>'));
+            $content = '<h2>' . $title . '</h2><p>' . $message . '</p>';
         }
+
+        $document = COM_createHTMLDocument($content);
+        COM_output($document);
     } else {
         echo $title . ': ' . $message;
     }
