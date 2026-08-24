@@ -1,0 +1,142 @@
+
+#gl_menu-vert-l{menu_id},
+#gl_menu-vert-r{menu_id} {
+	margin:0 auto;
+}
+#gl_menu-vert-l{menu_id},
+#gl_menu-vert-r{menu_id} {
+    margin-left:0px;
+    padding-left:0px;
+}
+#gl_menu-vert-l{menu_id} {
+	text-align:left;
+}
+#gl_menu-vert-r{menu_id} {
+	text-align:left;
+}
+#gl_menu-vert-l{menu_id} ul,
+#gl_menu-vert-r{menu_id} ul {
+	margin:0  !important;
+	padding:0 !important;
+	list-style:none;
+}
+#gl_menu-vert-l{menu_id} ul {
+	width:156px;
+	border-bottom:1px solid {submenu_highlight_color};
+}
+#gl_menu-vert-r{menu_id} ul {
+	width:156px;
+	border-bottom:1px solid {submenu_highlight_color};
+}
+#gl_menu-vert-l{menu_id} ul li,
+#gl_menu-vert-r{menu_id} ul li {
+	position:relative;
+	z-index:{under};
+	width:100%;
+	margin:0;
+    padding:0;
+}
+#gl_menu-vert-l{menu_id} li ul,
+#gl_menu-vert-r{menu_id} li ul {
+	position:absolute;
+	top:0;
+	display:block;
+	margin:0;
+    padding:0;
+}
+#gl_menu-vert-l{menu_id} li ul {
+	left:155px;
+}
+#gl_menu-vert-r{menu_id} li ul {
+	left:-155px;
+}
+#gl_menu-vert-l{menu_id} li:hover ul,
+#gl_menu-vert-r{menu_id} li:hover ul  {
+	display:block;
+}
+#gl_menu-vert-l{menu_id} li:hover>ul,
+#gl_menu-vert-r{menu_id} li:hover>ul {
+	visibility:visible;
+}
+#gl_menu-vert-l{menu_id} ul ul,
+#gl_menu-vert-r{menu_id} ul ul {
+	visibility:hidden;
+}
+* html #gl_menu-vert-l{menu_id} ul li,
+* html #gl_menu-vert-r{menu_id} ul li {
+	float:left;
+	height:1%;
+}
+* html #gl_menu-vert-l{menu_id} ul li a,
+* html #gl_menu-vert-r{menu_id} ul li a {
+	height:1%;
+}
+#gl_menu-vert-l{menu_id} ul,
+#gl_menu-vert-r{menu_id} ul {
+	margin:0;
+}
+#gl_menu-vert-l{menu_id} ul a,
+#gl_menu-vert-r{menu_id} ul a {
+	display:block;
+	text-decoration:none;
+}
+#gl_menu-vert-l{menu_id} ul a {
+	color:{main_menu_text_color};
+	background:{main_menu_bg_color};
+	padding:3px 6px;
+	border:1px solid {submenu_highlight_color};
+	border-bottom:0;
+}
+#gl_menu-vert-r{menu_id} ul a {
+	color:{main_menu_text_color};
+	background:{main_menu_bg_color};
+	padding:3px 6px;
+	border:1px solid {submenu_highlight_color};
+	border-bottom:0;
+}
+#gl_menu-vert-l{menu_id} ul a:hover {
+	color:{main_menu_hover_text_color};
+	background:{main_menu_hover_bg_color};
+}
+#gl_menu-vert-r{menu_id} ul a:hover {
+	color:{main_menu_hover_text_color};
+	background:{main_menu_hover_bg_color};
+}
+#gl_menu-vert-l{menu_id} li ul a,
+#gl_menu-vert-r{menu_id} li ul a {
+	text-decoration:none;
+}
+#gl_menu-vert-l{menu_id} li ul a {
+	color:{submenu_text_color};
+	background:{main_menu_bg_color};
+	padding:3px 6px;
+	border:1px solid {submenu_highlight_color};
+	border-bottom:0;
+}
+#gl_menu-vert-r{menu_id} li ul a {
+	color:{submenu_text_color};
+	background:{main_menu_bg_color};
+	padding:3px 6px;
+	border:1px solid {submenu_highlight_color};
+	border-bottom:0;
+}
+#gl_menu-vert-l{menu_id} li ul a:hover {
+	color:{submenu_hover_text_color};
+	background:{main_menu_hover_bg_color};
+}
+#gl_menu-vert-r{menu_id} li ul a:hover {
+	color:{submenu_hover_text_color};
+	background:{main_menu_hover_bg_color};
+}
+#gl_menu-vert-l{menu_id} ul a.parent-l{menu_id} {
+	background:{main_menu_bg_color} url({site_url}/images/menu/{menu_parent_filename}) no-repeat scroll 95% 50%;
+}
+#gl_menu-vert-l{menu_id} ul a.parent-l{menu_id}:hover {
+	background:{main_menu_hover_bg_color} url({site_url}/images/menu/{menu_parent_filename}) no-repeat scroll 95% 50%;
+}
+#gl_menu-vert-r{menu_id} ul a.parent-r{menu_id} {
+	background:{main_menu_bg_color} url({site_url}/images/menu/{menu_parent_filename}) no-repeat scroll 95% 50%;
+}
+#gl_menu-vert-r{menu_id} ul a.parent-r{menu_id}:hover {
+	background:{main_menu_hover_bg_color} url({site_url}/images/menu/{menu_parent_filename}) no-repeat scroll 95% 50%;
+}
