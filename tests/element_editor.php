@@ -40,9 +40,6 @@ menu_editor_assert(strpos($runtime, "case '5': $('#staticpage').show();") !== fa
 menu_editor_assert(strpos($runtime, "case '6': $('#urldiv,#targetdiv').show();") !== false, 'runtime must show URL and target for External URL');
 menu_editor_assert(strpos($runtime, "case '7': $('#phpdiv').show();") !== false, 'runtime must show PHP Function field');
 menu_editor_assert(strpos($runtime, "case '9': $('#topic').show();") !== false, 'runtime must show Topic selector for Topic');
-menu_editor_assert(strpos($runtime, "resource = 'plugin'") !== false, 'editor must identify unavailable plugins');
-menu_editor_assert(strpos($runtime, "resource = 'static page'") !== false, 'editor must identify unavailable Static Pages');
-menu_editor_assert(strpos($runtime, "resource = 'topic'") !== false, 'editor must identify unavailable Topics');
 menu_editor_assert(strpos($runtime, "'[Unavailable ' + kind + '] '") !== false, 'missing resources must remain identifiable in admin');
 menu_editor_assert(strpos($runtime, 'data.currentSubtype, data.resource') !== false, 'editor must use authoritative resource status');
 menu_editor_assert(strpos($runtime, 'type_options.php') !== false, 'runtime must load type labels only after Geeklog initialization');
@@ -62,6 +59,9 @@ menu_editor_assert(strpos($typeOptions, 'SELECT element_type, element_subtype') 
 menu_editor_assert(strpos($typeOptions, "'currentType' => \$currentType") !== false, 'type endpoint must expose stored current type');
 menu_editor_assert(strpos($typeOptions, "'currentSubtype' => \$currentSubtype") !== false, 'type endpoint must expose stored current subtype');
 menu_editor_assert(strpos($typeOptions, "'resource' => \$resource") !== false, 'type endpoint must expose destination availability');
+menu_editor_assert(strpos($typeOptions, "\$resource['kind'] = 'plugin'") !== false, 'type endpoint must identify unavailable plugins');
+menu_editor_assert(strpos($typeOptions, "\$resource['kind'] = 'static page'") !== false, 'type endpoint must identify unavailable Static Pages');
+menu_editor_assert(strpos($typeOptions, "\$resource['kind'] = 'topic'") !== false, 'type endpoint must identify unavailable Topics');
 menu_editor_assert(strpos($typeOptions, "\$currentType === 4") !== false, 'type endpoint must validate plugin destinations');
 menu_editor_assert(strpos($typeOptions, "\$currentType === 5") !== false, 'type endpoint must validate Static Page destinations');
 menu_editor_assert(strpos($typeOptions, "\$currentType === 9") !== false, 'type endpoint must validate Topic destinations');
