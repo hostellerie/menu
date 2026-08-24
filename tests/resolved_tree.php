@@ -24,6 +24,7 @@ $_TABLES = array(
     'blocks' => 'gl_blocks',
     'topics' => 'gl_topics',
     'users' => 'gl_users',
+    'staticpage' => 'gl_staticpage',
     'storysubmission' => 'gl_storysubmission',
     'commentsubmissions' => 'gl_commentsubmissions',
 );
