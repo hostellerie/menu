@@ -20,6 +20,40 @@ The modernization must remain conservative: stabilize and secure the existing pl
 
 ---
 
+## Current implementation status — 2026-08-24
+
+The checklist below remains the release checklist. This section records the actual state of the `modernize-1.3.0` branch so completed work is not confused with remaining release validation.
+
+### Completed or substantially implemented
+
+- Phase 1: multisite-safe `{path_data}-menu/` storage, non-destructive legacy migration, isolated cache/CSS storage and site-specific image helpers.
+- Phase 3: Geeklog 2.1.1 → 2.2.2 compatibility helpers and runtime fallbacks; real-world testing is ongoing on both Geeklog 2.1.1 and 2.2.2.
+- Phase 4: PHP 5.6 / 8.1 syntax CI and compatibility-oriented shared code.
+- Phase 8: administration preview now supports native and theme preview tabs; element create/edit type UX has been normalized.
+- Phase 9: `MENU_getResolvedTree('navigation')` exists with hierarchy, ordering, permissions, resolved destinations and representative regression tests.
+- Phase 10: theme-presentation hand-off exists; Eclipse can own `navigation` rendering while legacy Menu rendering remains available for other themes/menus.
+- Missing plugin/static-page/topic destinations are retained in admin data and omitted from the resolved public tree when the destination no longer exists. Existing private resources are not hidden merely because the current visitor lacks permission; links to private destinations may intentionally lead to Geeklog authentication.
+
+### Partially implemented / still blocking stabilization
+
+- Phase 2 CSRF: mutation inventory, token helpers, request enforcement and transitional token bridge exist, but destructive GET operations still need conversion to POST and explicit template/action tokens should replace the bridge progressively.
+- Phase 2 SQL safety: numeric casting is partial; create/edit SQL and `DB_save()` string escaping still need a complete audit. Legacy element ID generation also remains to be reviewed.
+- Phase 2 output/upload safety: not yet fully audited.
+- Phase 5 database modernization: not started beyond preserving the existing schema during current work.
+- Phase 6 cache/performance: storage separation is implemented, but cache keys, invalidation and query behavior still need a full audit.
+- Phase 7 maintainability: compatibility/path/security helpers have been split out, but `admin/index.php` and the duplicated menu element classes remain major cleanup targets.
+- Phase 11: fresh installs are being exercised on Geeklog 2.1.1 and 2.2.2, but the complete upgrade matrix and release validation are not complete.
+
+### Immediate implementation order
+
+1. Finish Phase 2 mutation security: convert move/delete and other destructive GET actions to POST with explicit security tokens.
+2. Finish Phase 2 element create/edit validation and SQL escaping, including safe empty-URL handling and validation that menu/parent/order IDs belong to the expected menu.
+3. Audit the remaining menu/config mutations and remove the transitional CSRF bridge where explicit tokens exist.
+4. Continue Phase 4 warning cleanup and Phase 3 runtime regression testing on Geeklog 2.1.1 and 2.2.2.
+5. Then continue Phase 5/6 database and cache audits before adding further Phase 9 functionality.
+
+---
+
 ## Phase 0 — Baseline and regression reference
 
 - [ ] Preserve the current `master` behaviour as the 1.2.8.1 reference.
