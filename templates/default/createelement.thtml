@@ -18,12 +18,12 @@
         <p><label for="menutype">{LANG_MENU01[type]}:</label>
         {type_select}</p>
       </div>
-      <div id="urldiv" class="required">
+      <div id="urldiv" class="required" style="display:none;">
         <p><label for="menuurl">{LANG_MENU01[url]}:</label>
         <input type="text" id="menuurl" name="menuurl" size="48" value="{menuurl}"{xhtml}></p>
       </div>
 
-      <div id="targetdiv" class="required">
+      <div id="targetdiv" class="required" style="display:none;">
         <p><label for="urltarget">{LANG_MENU01[target]}:</label>
         <select id="urltarget" name="urltarget">
           <option value="">{LANG_MENU01[same_window]}</option>
@@ -31,24 +31,24 @@
         </select></p>
       </div>
 
-      <div id="phpdiv" class="required">
+      <div id="phpdiv" class="required" style="display:none;">
         <p><label for="phpfunction">{LANG_MENU01[php]}:</label>
         <input type="text" id="phpfunction" name="phpfunction" size="48" value="{phpfunction}"{xhtml}></p>
       </div>
-      <div id="glcorediv" class="optional">
+      <div id="glcorediv" class="optional" style="display:none;">
         <p><label for="gltype">{LANG_MENU01[coretype]}:</label>
         {gl_select}</p>
       </div>
-      <div id="plugin" class="optional">
+      <div id="plugin" class="optional" style="display:none;">
         <p><label for="pluginname">{LANG_MENU01[plugins]}:</label>
         {plugin_select}</p>
       </div>
 
-      {sp_select}
+      <div id="staticpage-wrapper" style="display:none;">{sp_select}</div>
 
-      {topic_select}
+      <div id="topic-wrapper" style="display:none;">{topic_select}</div>
 
-      <div id="glfunc" class="optional">
+      <div id="glfunc" class="optional" style="display:none;">
         <p><label for="glfunction">{LANG_MENU01[geeklog_function]}:</label>
         {glfunction_select}</p>
       </div>
@@ -68,12 +68,42 @@
   </form>
   </div>
 
-<script type="text/javascript" src="{site_admin_url}/plugins/menu/js/element-editor.js"></script>
 <script type="text/javascript">
 jQuery(function () {
-    if (window.MENUElementEditor) {
-        window.MENUElementEditor.init();
+    function syncElementFields() {
+        var type = String(jQuery('#menutype').val() || '');
+        jQuery('#urldiv,#targetdiv,#glcorediv,#plugin,#staticpage-wrapper,#glfunc,#phpdiv,#topic-wrapper').hide();
+
+        switch (type) {
+            case '1':
+                jQuery('#urldiv').show();
+                break;
+            case '2':
+                jQuery('#glfunc').show();
+                break;
+            case '3':
+                jQuery('#glcorediv').show();
+                break;
+            case '4':
+                jQuery('#plugin').show();
+                break;
+            case '5':
+                jQuery('#staticpage-wrapper').show();
+                break;
+            case '6':
+                jQuery('#urldiv,#targetdiv').show();
+                break;
+            case '7':
+                jQuery('#phpdiv').show();
+                break;
+            case '9':
+                jQuery('#topic-wrapper').show();
+                break;
+        }
     }
+
+    jQuery('#menutype').off('change.menuElementEditor').on('change.menuElementEditor', syncElementFields);
+    syncElementFields();
 
     jQuery.getJSON(
         '{site_admin_url}/plugins/menu/type_options.php',
@@ -93,9 +123,7 @@ jQuery(function () {
                 );
             });
 
-            if (window.MENUElementEditor) {
-                window.MENUElementEditor.syncFields();
-            }
+            syncElementFields();
         }
     );
 });
