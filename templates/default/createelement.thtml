@@ -65,7 +65,7 @@
 
       <div class="required">
         <p><label for="menuactive">{LANG_MENU01[active]}:</label>
-        <input type="checkbox" id="menuactive" name="menuactive" value="1"{xhtml}></p>
+        <input type="checkbox" id="menuactive" name="menuactive" value="1" checked="checked"{xhtml}></p>
       </div>
       <div class="required">
         <p><label for="group">{LANG_MENU01[permission]}:</label>
@@ -78,81 +78,3 @@
   </div>
   </form>
 </div>
-
-<script type="text/javascript">
-jQuery(function () {
-    var select = jQuery('#menutype');
-    var panels = '#urldiv,#targetdiv,#glfunc,#glcorediv,#plugin,#staticpage,#topic,#phpdiv';
-    var adminOrder = ['2', '3', '4', '5', '9', '6', '1', '8', '7'];
-
-    function orderTypes() {
-        var options = {};
-        var remaining = [];
-
-        select.find('option').each(function () {
-            var option = jQuery(this).detach();
-            var value = String(option.val());
-            options[value] = option;
-            remaining.push(value);
-        });
-
-        jQuery.each(adminOrder, function (index, value) {
-            if (options[value]) {
-                select.append(options[value]);
-                delete options[value];
-            }
-        });
-
-        jQuery.each(remaining, function (index, value) {
-            if (options[value]) {
-                select.append(options[value]);
-                delete options[value];
-            }
-        });
-
-        if (select.find('option[value="2"]').length) {
-            select.val('2');
-        } else if (select.find('option').length) {
-            select.prop('selectedIndex', 0);
-        }
-    }
-
-    function syncElementFields() {
-        var type = String(select.val() || '');
-        jQuery(panels).hide();
-
-        switch (type) {
-            case '1': // Submenu: optional clickable URL
-                jQuery('#urldiv').show();
-                break;
-            case '2': // Geeklog Action
-                jQuery('#glfunc').show();
-                break;
-            case '3': // Geeklog Core
-                jQuery('#glcorediv').show();
-                break;
-            case '4': // Plugin
-                jQuery('#plugin').show();
-                break;
-            case '5': // Static Page
-                jQuery('#staticpage').show();
-                break;
-            case '6': // External URL
-                jQuery('#urldiv,#targetdiv').show();
-                break;
-            case '7': // PHP Function
-                jQuery('#phpdiv').show();
-                break;
-            case '8': // Label only
-                break;
-            case '9': // Topic
-                jQuery('#topic').show();
-                break;
-        }
-    }
-
-    orderTypes();
-    select.off('change.menuElementEditor').on('change.menuElementEditor', syncElementFields);
-    syncElementFields();
-});
-</script>
