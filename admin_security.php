@@ -12,11 +12,8 @@ if (!defined('VERSION')) {
     die('This file can not be used on its own.');
 }
 
-/**
- * Return the Menu administration modes that mutate persistent state.
- *
- * @return array
- */
+require_once __DIR__ . '/admin_element_validation.php';
+
 function MENU_adminMutationModes()
 {
     return array(
@@ -35,11 +32,6 @@ function MENU_adminMutationModes()
     );
 }
 
-/**
- * Return the legacy mutation modes that must no longer execute through GET.
- *
- * @return array
- */
 function MENU_adminPostOnlyModes()
 {
     return array('move', 'delete', 'deletemenu');
@@ -141,22 +133,22 @@ function MENU_adminCurrentMode()
     return '';
 }
 
-function MENU_adminRejectInvalidToken()
+function MENU_adminOutputError($status, $title, $message, $allowPost)
 {
     if (!headers_sent()) {
-        header('HTTP/1.1 403 Forbidden');
+        header('HTTP/1.1 ' . $status);
+        if ($allowPost) {
+            header('Allow: POST');
+        }
     }
-
-    $title = 'Authentication Required';
-    $message = 'The security token for this operation has expired or is invalid. Please reload the administration page and try again.';
 
     if (function_exists('COM_output') && function_exists('COM_createHTMLDocument')) {
         if (function_exists('COM_showMessageText')) {
             $content = COM_showMessageText($message, $title);
         } else {
-            $content = '<h2>' . $title . '</h2><p>' . $message . '</p>';
+            $content = '<h2>' . htmlspecialchars($title, ENT_QUOTES, 'UTF-8') . '</h2><p>'
+                . htmlspecialchars($message, ENT_QUOTES, 'UTF-8') . '</p>';
         }
-
         $document = COM_createHTMLDocument($content);
         COM_output($document);
     } else {
@@ -166,38 +158,34 @@ function MENU_adminRejectInvalidToken()
     exit;
 }
 
-/**
- * Reject old mutation URLs that still try to execute through GET.
- *
- * The administration UI rewrites the legacy move/delete links into POST forms.
- * Rejecting GET server-side prevents bookmarked, crawled or manually replayed
- * mutation URLs from changing state.
- *
- * @return void
- */
+function MENU_adminRejectInvalidToken()
+{
+    MENU_adminOutputError(
+        '403 Forbidden',
+        'Authentication Required',
+        'The security token for this operation has expired or is invalid. Please reload the administration page and try again.',
+        false
+    );
+}
+
 function MENU_adminRejectWrongMethod()
 {
-    if (!headers_sent()) {
-        header('HTTP/1.1 405 Method Not Allowed');
-        header('Allow: POST');
-    }
+    MENU_adminOutputError(
+        '405 Method Not Allowed',
+        'Method Not Allowed',
+        'This Menu administration operation must be submitted using POST. Please reload the administration page and try again.',
+        true
+    );
+}
 
-    $title = 'Method Not Allowed';
-    $message = 'This Menu administration operation must be submitted using POST. Please reload the administration page and try again.';
-
-    if (function_exists('COM_output') && function_exists('COM_createHTMLDocument')) {
-        if (function_exists('COM_showMessageText')) {
-            $content = COM_showMessageText($message, $title);
-        } else {
-            $content = '<h2>' . $title . '</h2><p>' . $message . '</p>';
-        }
-        $document = COM_createHTMLDocument($content);
-        COM_output($document);
-    } else {
-        echo $title . ': ' . $message;
-    }
-
-    exit;
+function MENU_adminRejectInvalidRequest($message)
+{
+    MENU_adminOutputError(
+        '400 Bad Request',
+        'Invalid Menu Request',
+        (string) $message,
+        false
+    );
 }
 
 function MENU_adminEnforceCsrf()
@@ -218,18 +206,13 @@ function MENU_adminEnforceCsrf()
     if (!MENU_adminCheckToken()) {
         MENU_adminRejectInvalidToken();
     }
+
+    $validationError = MENU_adminElementMutationError($mode, $_POST);
+    if ($validationError !== '') {
+        MENU_adminRejectInvalidRequest($validationError);
+    }
 }
 
-/**
- * Register a client-side compatibility bridge for the legacy Menu admin UI.
- *
- * Existing POST forms and AJAX requests receive the native Geeklog token. The
- * historical move/delete/deletemenu anchors are converted into POST submissions
- * in-place. Their GET URLs are therefore no longer used for state changes, and
- * the server rejects direct GET attempts for those modes.
- *
- * @return void
- */
 function MENU_adminRegisterTokenBridge()
 {
     global $_SCRIPTS, $LANG_MENU01;
