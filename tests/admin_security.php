@@ -54,7 +54,44 @@ menu_security_assert(MENU_adminId('-4') === 0, 'negative id must be rejected');
 menu_security_assert(MENU_adminId('abc') === 0, 'non numeric id must be rejected');
 menu_security_assert(MENU_adminDbEscape("O'Reilly") === "O''Reilly", 'database escaping was not delegated');
 
+$_SERVER['PHP_SELF'] = '/admin/plugins/menu/index.php';
+menu_security_assert(MENU_adminIsControllerRequest() === true, 'Menu admin controller detection failed');
+$_POST = array('mode' => 'save');
+$_GET = array();
+menu_security_assert(MENU_adminCurrentMode() === 'save', 'POST mode detection failed');
+
+class MenuSecurityScriptsStub
+{
+    public $libraries = array();
+    public $scripts = array();
+
+    public function setJavaScriptLibrary($name)
+    {
+        $this->libraries[] = $name;
+    }
+
+    public function setJavaScript($script, $footer = false)
+    {
+        $this->scripts[] = $script;
+    }
+}
+
+$_SCRIPTS = new MenuSecurityScriptsStub();
+MENU_adminRegisterTokenBridge();
+menu_security_assert(in_array('jquery', $_SCRIPTS->libraries, true), 'token bridge must request jQuery');
+menu_security_assert(count($_SCRIPTS->scripts) === 1, 'token bridge script was not registered');
+menu_security_assert(strpos($_SCRIPTS->scripts[0], 'glsectoken') !== false, 'token bridge field name missing');
+menu_security_assert(strpos($_SCRIPTS->scripts[0], 'token-value') !== false, 'token bridge value missing');
+menu_security_assert(strpos($_SCRIPTS->scripts[0], 'ajaxPrefilter') !== false, 'AJAX token bridge missing');
+menu_security_assert(strpos($_SCRIPTS->scripts[0], 'deletemenu') !== false, 'legacy mutation link bridge missing');
+
 $menuSecurityCheck = false;
 menu_security_assert(MENU_adminCheckToken() === false, 'failed token must remain failed');
+
+// Restore a non-controller path so no accidental auto-enforcement occurs if
+// this test file is included by another runner.
+$_SERVER['PHP_SELF'] = '/tests/admin_security.php';
+$_POST = array();
+$_GET = array();
 
 echo "Admin security helper tests passed" . PHP_EOL;
