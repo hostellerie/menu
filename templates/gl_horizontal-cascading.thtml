@@ -1,0 +1,154 @@
+
+#gl_menu{menu_id} a {
+  text-decoration:none;
+  white-space:nowrap;
+  display:block;
+  float:{alignment};
+  line-height:2.2em;
+  font-weight:700;
+  color:#ccc;
+  height:2.2em;
+  font-size:1em;
+  padding:0 1.2em;
+}
+#gl_menu{menu_id} {
+  height:auto;
+  position:relative;
+  z-index:{under};
+  margin:0;
+}
+#gl_menu{menu_id} ul {
+  list-style:none;
+  margin:0;
+  padding:0;
+}
+#gl_menu{menu_id} li {
+  display:block;
+  float:{alignment};
+  margin:0;
+  padding:0;
+}
+#gl_menu{menu_id} ul ul {
+  border-left:1px solid #333;
+  border-right:1px solid #000;
+  position: absolute;
+  right: 0;
+}
+#gl_menu{menu_id} li li {
+  background:none;
+  border-top:1px solid #333;
+  border-bottom:1px solid #000;
+  margin:0;
+}
+#gl_menu{menu_id} li li a:hover {
+  background:none;
+}
+#gl_menu{menu_id} li li a {
+  font-family:Helvetica, Arial, sans-serif;
+  font-size:100%;
+  font-weight:400;
+  display:block;
+  text-decoration:none;
+  float:none;
+  height:2.3em;
+  line-height:2.3em;
+  text-indent:1.3em;
+  width:98%;
+  margin-left:1%;
+  padding:0;
+}
+.gl_menu{menu_id} {
+  line-height:2.3em;
+  float:left;
+  position:relative;
+  width:100%;
+}
+.gl_menu{menu_id} ul {
+  background:#fff;
+  padding:0;
+}
+.gl_menu{menu_id} li {
+  float:left;
+  list-style:none;
+  position:relative;
+}
+.gl_menu{menu_id} li:hover {
+  z-index:{over};
+}
+.gl_menu{menu_id} li ul {
+  float:none;
+  left:-999em;
+  position:absolute;
+  top: 0;
+  width:177px;
+  z-index:{under};
+}
+.gl_menu{menu_id} li:hover ul,.gl_menu{menu_id} li.sfHover ul {
+  left:-1px;
+  top:2.2em;
+}
+.gl_menu{menu_id} li:hover li ul,.gl_menu{menu_id} li.sfHover li ul,.gl_menu{menu_id} li li:hover li ul,.gl_menu{menu_id} li li.sfHover li ul,.gl_menu{menu_id} li li li:hover li ul,.gl_menu{menu_id} li li li.sfHover li ul {
+  top:-999em;
+}
+.gl_menu{menu_id} li li:hover ul,.gl_menu{menu_id} li li.sfHover ul,.gl_menu{menu_id} li li li:hover ul,.gl_menu{menu_id} li li li.sfHover ul,.gl_menu{menu_id} li li li li:hover ul,.gl_menu{menu_id} li li li li.sfHover ul {
+  left:176px;
+  top:-1px;
+  z-index:{under};
+}
+.gl_menu{menu_id} li li {
+  position:relative;
+  float:none;
+  width:100%;
+}
+#gl_menu{menu_id},
+#gl_menu{menu_id} ul,
+#gl_menu{menu_id} ul.gl_menu{menu_id} {
+  background:{main_menu_bg_color} {url1};
+}
+.gl_menu{menu_id} li:hover {
+  background:{main_menu_hover_bg_color} {url2};
+}
+#gl_menu{menu_id} a {
+  color:{main_menu_text_color};
+}
+#gl_menu{menu_id} li {
+  float:{alignment};
+}
+#gl_menu{menu_id} li:hover a,
+#gl_menu{menu_id} li.sfHover a,
+#gl_menu{menu_id} li:hover a:hover,
+#gl_menu{menu_id} li.sfHover a:hover {
+  color:{main_menu_hover_text_color};
+}
+#gl_menu{menu_id} li:hover li:hover a:hover,
+#gl_menu{menu_id} li.sfHover li.sfHover a:hover {
+  color:{submenu_hover_text_color};
+}
+#gl_menu{menu_id} ul ul {
+  background:{submenu_background_color} !important;
+  border-left:1px solid {submenu_highlight_color};
+  border-right:1px solid {submenu_shadow_color};
+  right: 1px;
+}
+#gl_menu{menu_id} li li {
+  border-top:1px solid {submenu_highlight_color};
+  border-bottom:1px solid {submenu_shadow_color};
+}
+.gl_menu{menu_id} {
+  float:{alignment};
+}
+
+.slicknav_menu {
+  background:{main_menu_bg_color} {url1} !important;
+}
+.slicknav_nav a:link, .slicknav_nav a:visited {
+  color:{main_menu_text_color} !important;
+}
+.slicknav_nav a:hover {
+  background:{main_menu_hover_bg_color} {url2}  !important;
+  color:{main_menu_hover_text_color} !important;
+}
+.slicknav_parent li a:hover {
+  background:{submenu_background_color}  !important;
+  color:{submenu_hover_text_color} !important;
+}
