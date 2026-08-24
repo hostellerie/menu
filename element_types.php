@@ -13,6 +13,52 @@ if (!defined('VERSION')) {
 }
 
 /**
+ * Return element types in an administrator-oriented order.
+ *
+ * The stored numeric ids are intentionally unchanged. Only their presentation
+ * order is normalized so common destinations are grouped ahead of structural
+ * and advanced entries.
+ *
+ * @return array
+ */
+function MENU_elementTypeAdminOrder()
+{
+    return array(
+        2, // Geeklog Action
+        3, // Geeklog Core
+        4, // Plugin
+        5, // Static Page
+        9, // Topic
+        6, // External URL
+        1, // Submenu/container
+        8, // Label/other
+        7, // PHP Function (advanced)
+    );
+}
+
+/**
+ * Return the preferred type for a newly created element.
+ *
+ * Geeklog Action is a safe, useful default and is supported by all menu
+ * presentation types. It also avoids silently creating structural submenus.
+ *
+ * @param array $types Allowed types keyed by stored type id
+ * @return int|null
+ */
+function MENU_defaultElementType($types)
+{
+    if (isset($types[2])) {
+        return 2;
+    }
+
+    foreach ($types as $typeId => $label) {
+        return (int) $typeId;
+    }
+
+    return null;
+}
+
+/**
  * Return whether an element type is normally available for a menu type.
  *
  * Horizontal-simple and vertical-simple menus cannot contain submenu holder
@@ -58,9 +104,25 @@ function MENU_getAllowedElementTypes($labels, $menuType, $hasStaticPages, $curre
 {
     $types = array();
     $currentType = $currentType === null ? null : (int) $currentType;
+    $order = MENU_elementTypeAdminOrder();
 
+    foreach ($order as $typeId) {
+        if (!array_key_exists($typeId, $labels)) {
+            continue;
+        }
+
+        if (MENU_elementTypeIsAllowed($menuType, $typeId, $hasStaticPages)
+            || ($currentType !== null && $typeId === $currentType)) {
+            $types[$typeId] = $labels[$typeId];
+        }
+    }
+
+    // Preserve any plugin-defined/future types not yet known by this version.
     foreach ($labels as $typeId => $typeLabel) {
         $typeId = (int) $typeId;
+        if (isset($types[$typeId])) {
+            continue;
+        }
         if (MENU_elementTypeIsAllowed($menuType, $typeId, $hasStaticPages)
             || ($currentType !== null && $typeId === $currentType)) {
             $types[$typeId] = $typeLabel;
