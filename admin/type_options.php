@@ -35,6 +35,7 @@ $types = MENU_getAllowedElementTypes(
 
 $response = array(
     'currentType' => $currentType,
+    'defaultType' => MENU_defaultElementType($types),
     'locked' => $locked,
     'types' => array()
 );
