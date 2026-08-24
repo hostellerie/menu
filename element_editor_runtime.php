@@ -28,18 +28,17 @@ function MENU_elementEditorIsAdminRequest()
 }
 
 /**
- * Build the authoritative editor state directly from the database.
+ * Build the stored editor state directly from the database.
  *
- * This deliberately does not depend on the in-memory $Menus cache. The admin
- * controller historically builds an incomplete type select while editing and
- * older cache state can therefore make a stored Geeklog Action look like a
- * Plugin. Reading the stored row here makes the editor deterministic.
+ * This state intentionally contains only values that are safe to resolve during
+ * the early plugin bootstrap. Language-dependent type labels are loaded later
+ * from admin/type_options.php, after Geeklog has completed initialization.
  *
  * @return array
  */
 function MENU_elementEditorServerState()
 {
-    global $_TABLES, $_PLUGINS, $LANG_MENU_TYPES;
+    global $_TABLES;
 
     $mode = function_exists('MENU_adminCurrentMode') ? MENU_adminCurrentMode() : '';
     $menuId = $mode === 'edit'
@@ -53,69 +52,40 @@ function MENU_elementEditorServerState()
         'mid' => $mid,
         'currentType' => null,
         'currentSubtype' => '',
-        'defaultType' => 2,
         'locked' => false,
-        'types' => array(),
     );
 
-    if ($menuId <= 0 || !isset($_TABLES['menu'])) {
+    if ($menuId <= 0 || $mid <= 0 || !isset($_TABLES['menu_elements'])) {
         return $state;
     }
 
-    $menuType = (int) DB_getItem($_TABLES['menu'], 'menu_type', 'id=' . $menuId);
-    if ($menuType <= 0) {
-        return $state;
-    }
-
-    if ($mid > 0 && isset($_TABLES['menu_elements'])) {
-        $result = DB_query(
-            'SELECT element_type, element_subtype FROM ' . $_TABLES['menu_elements']
-            . ' WHERE id=' . $mid . ' AND menu_id=' . $menuId
-        );
-        if (DB_numRows($result) > 0) {
-            $row = DB_fetchArray($result);
-            $state['currentType'] = (int) $row['element_type'];
-            $state['currentSubtype'] = (string) $row['element_subtype'];
-            $state['locked'] = ($state['currentType'] === 1);
-        }
-    }
-
-    $hasStaticPages = isset($_PLUGINS) && is_array($_PLUGINS)
-        && in_array('staticpages', $_PLUGINS, true);
-    $types = MENU_getAllowedElementTypes(
-        is_array($LANG_MENU_TYPES) ? $LANG_MENU_TYPES : array(),
-        $menuType,
-        $hasStaticPages,
-        $state['currentType']
+    $result = DB_query(
+        'SELECT element_type, element_subtype FROM ' . $_TABLES['menu_elements']
+        . ' WHERE id=' . $mid . ' AND menu_id=' . $menuId
     );
-
-    $defaultType = MENU_defaultElementType($types);
-    if ($defaultType !== null) {
-        $state['defaultType'] = (int) $defaultType;
-    }
-
-    foreach ($types as $typeId => $label) {
-        $state['types'][] = array(
-            'id' => (int) $typeId,
-            'label' => (string) $label,
-        );
+    if (DB_numRows($result) > 0) {
+        $row = DB_fetchArray($result);
+        $state['currentType'] = (int) $row['element_type'];
+        $state['currentSubtype'] = (string) $row['element_subtype'];
+        $state['locked'] = ($state['currentType'] === 1);
     }
 
     return $state;
 }
 
 /**
- * Register the authoritative element editor behavior through Geeklog Scripts.
+ * Register the element editor behavior through Geeklog Scripts.
  *
- * The server state is embedded in the page. No AJAX request is required to
- * determine the stored type or the allowed type list. JavaScript only renders
- * that state and switches the related detail panel.
+ * The runtime never clears the server-rendered type select unless a complete,
+ * authoritative replacement list has been returned by type_options.php. This
+ * prevents an early bootstrap (before language arrays are available) from
+ * producing an empty Type selector.
  *
  * @return void
  */
 function MENU_registerElementEditorRuntime()
 {
-    global $_SCRIPTS;
+    global $_CONF, $_SCRIPTS;
 
     if (!MENU_elementEditorIsAdminRequest() || !isset($_SCRIPTS) || !is_object($_SCRIPTS)) {
         return;
@@ -126,12 +96,14 @@ function MENU_registerElementEditorRuntime()
     }
 
     $stateJson = json_encode(MENU_elementEditorServerState());
-    if ($stateJson === false) {
+    $endpointJson = json_encode(rtrim($_CONF['site_admin_url'], '/') . '/plugins/menu/type_options.php');
+    if ($stateJson === false || $endpointJson === false) {
         return;
     }
 
     $js = "jQuery(function($) {\n"
         . "    var state = " . $stateJson . ";\n"
+        . "    var endpoint = " . $endpointJson . ";\n"
         . "    var select = $('#menutype');\n"
         . "    if (!select.length) { return; }\n"
         . "    var panels = '#urldiv,#targetdiv,#glfunc,#glcorediv,#plugin,#staticpage,#topic,#phpdiv';\n"
@@ -155,7 +127,7 @@ function MENU_registerElementEditorRuntime()
         . "        if (type === '4') { field = $('#pluginname'); }\n"
         . "        if (type === '5') { field = $('#spname'); }\n"
         . "        if (type === '9') { field = $('#topicname'); }\n"
-        . "        if (type === '5' && !field.length) {\n"
+        . "        if (type === '5' && (!field || !field.length)) {\n"
         . "            field = $('<select id=\"spname\" name=\"spname\"></select>').appendTo('#staticpage p');\n"
         . "        }\n"
         . "        if (!field || !field.length) { return; }\n"
@@ -168,25 +140,38 @@ function MENU_registerElementEditorRuntime()
         . "        }\n"
         . "        field.val(String(subtype));\n"
         . "    }\n"
-        . "    select.empty();\n"
-        . "    $.each(state.types || [], function(index, item) {\n"
-        . "        $('<option></option>').attr('value', item.id).text(item.label).appendTo(select);\n"
-        . "    });\n"
-        . "    var wanted = state.mode === 'edit' ? state.currentType : state.defaultType;\n"
-        . "    if (wanted !== null && typeof wanted !== 'undefined') { select.val(String(wanted)); }\n"
-        . "    $('#menutype-hidden').empty();\n"
-        . "    if (state.mode === 'edit' && state.locked) {\n"
-        . "        select.prop('disabled', true);\n"
-        . "        $('<input>').attr({type: 'hidden', name: 'menutype', value: wanted}).appendTo('#menutype-hidden');\n"
-        . "    } else {\n"
-        . "        select.prop('disabled', false);\n"
-        . "    }\n"
-        . "    if (state.mode === 'edit') {\n"
-        . "        preserveUnavailableResource(String(state.currentType), state.currentSubtype);\n"
+        . "    function applyTypeResponse(data) {\n"
+        . "        if (!data || !$.isArray(data.types) || data.types.length === 0) { return false; }\n"
+        . "        select.empty();\n"
+        . "        $.each(data.types, function(index, item) {\n"
+        . "            $('<option></option>').attr('value', item.id).text(item.label).appendTo(select);\n"
+        . "        });\n"
+        . "        var wanted = state.mode === 'edit' ? data.currentType : data.defaultType;\n"
+        . "        if (wanted !== null && typeof wanted !== 'undefined') { select.val(String(wanted)); }\n"
+        . "        $('#menutype-hidden').empty();\n"
+        . "        if (state.mode === 'edit' && data.locked) {\n"
+        . "            select.prop('disabled', true);\n"
+        . "            $('<input>').attr({type: 'hidden', name: 'menutype', value: wanted}).appendTo('#menutype-hidden');\n"
+        . "        } else {\n"
+        . "            select.prop('disabled', false);\n"
+        . "        }\n"
+        . "        if (state.mode === 'edit') {\n"
+        . "            preserveUnavailableResource(String(state.currentType), state.currentSubtype);\n"
+        . "        }\n"
+        . "        $('#execute').prop('disabled', false);\n"
+        . "        syncFields();\n"
+        . "        return true;\n"
         . "    }\n"
         . "    select.off('change.menuElementRuntime').on('change.menuElementRuntime', syncFields);\n"
-        . "    $('#execute').prop('disabled', false);\n"
+        . "    if (state.mode === 'new' && select.find('option[value=\"2\"]').length) { select.val('2'); }\n"
         . "    syncFields();\n"
+        . "    $.getJSON(endpoint, {menu: state.menuId, mid: state.mid})\n"
+        . "        .done(function(data) {\n"
+        . "            if (!applyTypeResponse(data) && state.mode === 'edit') { $('#execute').prop('disabled', true); }\n"
+        . "        })\n"
+        . "        .fail(function() {\n"
+        . "            if (state.mode === 'edit') { $('#execute').prop('disabled', true); }\n"
+        . "        });\n"
         . "});";
 
     if (method_exists($_SCRIPTS, 'setJavaScript')) {
