@@ -13,6 +13,13 @@ if (stripos($_SERVER['PHP_SELF'], basename(__FILE__)) !== false) {
     die('This file can not be used on its own.');
 }
 
+/*
+ * config.php can be included by Geeklog from inside plugin installer
+ * functions. Declare these arrays global here so their values never depend on
+ * the scope from which this file was first included.
+ */
+global $_MENU_PLUGIN, $_MENU_DEFAULT;
+
 $_MENU_PLUGIN = array(
     'pi_name'       => 'menu',
     'pi_version'    => '1.3.0',
