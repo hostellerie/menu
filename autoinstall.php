@@ -2,7 +2,7 @@
 
 /* Reminder: always indent with 4 spaces (no tabs). */
 // +---------------------------------------------------------------------------+
-// | Menu Plugin 1.2.8                                                         |
+// | Menu Plugin 1.3.0-alpha1                                                  |
 // +---------------------------------------------------------------------------+
 // | autoinstall.php                                                           |
 // |                                                                           |
@@ -51,9 +51,9 @@ function plugin_autoinstall_menu($pi_name)
     $info = array(
         'pi_name'         => $pi_name,
         'pi_display_name' => $pi_display_name,
-        'pi_version'      => '1.2.8.1',
+        'pi_version'      => '1.3.0-alpha1',
         'pi_gl_version'   => '2.1.2',
-        'pi_homepage'     => 'http://geeklog.fr'
+        'pi_homepage'     => 'https://github.com/hostellerie/menu'
     );
 
     $groups = array(
@@ -120,25 +120,28 @@ function plugin_compatible_with_this_version_menu($pi_name)
         return false;
     }
 
-    // add checks here
+    // Full Geeklog 2.1.1 compatibility is restored in the next modernization
+    // step. Keep the existing minimum version until that work is complete.
 
     return true;
 }
 
 function plugin_postinstall_menu($pi_name)
 {
-    global $_CONF, $_TABLES;
-    
-    // Create menu folder 
+    global $_CONF;
+
+    // Public menu images remain site-specific through path_images.
     if (!is_dir($_CONF['path_images'] . 'menu')) {
-        @mkdir($_CONF['path_images'] . 'menu');
+        @mkdir($_CONF['path_images'] . 'menu', 0755, true);
     }
-    // Create cache folder 
-    if (!is_dir($_CONF['path_data'] . 'menu_data')) {
-                @mkdir($_CONF['path_data'] . 'menu_data');
-                @mkdir($_CONF['path_data'] . 'menu_data/cache');
-                @mkdir($_CONF['path_data'] . 'menu_data/css');
-            }
+
+    require_once $_CONF['path'] . 'plugins/menu/storage.php';
+
+    // Private data lives outside path_data so Geeklog cache cleanup cannot
+    // remove persistent Menu CSS or other plugin-owned data.
+    if (!MENU_ensureDataDirs()) {
+        return false;
+    }
 
     return true;
 }
