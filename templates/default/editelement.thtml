@@ -22,7 +22,7 @@
       </div>
       <div class="required">
         <p><label for="menutype">{LANG_MENU01[type]}:</label>
-        {type_select}</p>
+        {type_select}<span id="menutype-hidden"></span></p>
       </div>
       <div id="urldiv" class="required">
         <p><label for="menuurl">{LANG_MENU01[url]}:</label>
@@ -79,3 +79,47 @@
     </div>
   </form>
 </div>
+
+<script type="text/javascript">
+jQuery(function () {
+    jQuery.getJSON(
+        '{site_admin_url}/plugins/menu/type_options.php',
+        {menu: '{menu}', mid: '{mid}'},
+        function (data) {
+            var select = jQuery('#menutype');
+            var hidden = jQuery('#menutype-hidden');
+            if (!select.length || !data || !data.types) {
+                return;
+            }
+
+            select.empty();
+            jQuery.each(data.types, function (index, item) {
+                var option = jQuery('<option></option>')
+                    .attr('value', item.id)
+                    .text(item.label);
+                if (parseInt(item.id, 10) === parseInt(data.currentType, 10)) {
+                    option.attr('selected', 'selected');
+                }
+                select.append(option);
+            });
+
+            hidden.empty();
+            if (data.locked) {
+                select.attr('disabled', 'disabled');
+                hidden.append(
+                    jQuery('<input>')
+                        .attr('type', 'hidden')
+                        .attr('name', 'menutype')
+                        .attr('value', data.currentType)
+                );
+            } else {
+                select.removeAttr('disabled');
+            }
+
+            if (typeof toggleFields === 'function') {
+                toggleFields();
+            }
+        }
+    );
+});
+</script>
