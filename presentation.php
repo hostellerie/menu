@@ -57,7 +57,8 @@ function MENU_themePresentationManifest()
 
 /**
  * Return true when the active theme explicitly owns presentation for a Menu
- * resource.
+ * resource. A declaration for navigation also covers Geeklog's localized
+ * navigation_<language-id> variant for the active language.
  *
  * @param string $menuName
  * @return bool
@@ -76,8 +77,14 @@ function MENU_themeHandlesPresentation($menuName)
         return false;
     }
 
+    $languageId = function_exists('COM_getLanguageId') ? (string) COM_getLanguageId() : '';
+
     foreach ($manifest['menu'] as $resource) {
-        if (strcasecmp((string) $resource, $menuName) === 0) {
+        $resource = (string) $resource;
+        if (strcasecmp($resource, $menuName) === 0) {
+            return true;
+        }
+        if ($languageId !== '' && strcasecmp($resource . '_' . $languageId, $menuName) === 0) {
             return true;
         }
     }
