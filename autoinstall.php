@@ -2,7 +2,7 @@
 
 /* Reminder: always indent with 4 spaces (no tabs). */
 // +---------------------------------------------------------------------------+
-// | Menu Plugin 1.3.0-alpha1                                                  |
+// | Menu Plugin 1.3.0                                                         |
 // +---------------------------------------------------------------------------+
 // | autoinstall.php                                                           |
 // |                                                                           |
@@ -44,7 +44,7 @@ function plugin_autoinstall_menu($pi_name)
     $info = array(
         'pi_name'         => $pi_name,
         'pi_display_name' => $pi_display_name,
-        'pi_version'      => '1.3.0-alpha1',
+        'pi_version'      => '1.3.0',
         'pi_gl_version'   => '2.1.1',
         'pi_homepage'     => 'https://github.com/hostellerie/menu'
     );
