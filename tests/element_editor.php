@@ -27,7 +27,7 @@ menu_editor_assert($runtime !== false, 'element editor runtime missing');
 menu_editor_assert($storage !== false, 'storage bootstrap missing');
 menu_editor_assert($english !== false, 'English language file missing');
 
-menu_editor_assert(strpos($runtime, 'function MENU_elementEditorServerState()') !== false, 'server-authoritative editor state missing');
+menu_editor_assert(strpos($runtime, 'function MENU_elementEditorServerState()') !== false, 'stored editor state missing');
 menu_editor_assert(strpos($runtime, 'SELECT element_type, element_subtype') !== false, 'editor must read stored type and subtype directly from database');
 menu_editor_assert(strpos($runtime, "'currentType' => null") !== false, 'editor state must expose current type');
 menu_editor_assert(strpos($runtime, "'currentSubtype' => ''") !== false, 'editor state must expose current subtype');
@@ -40,9 +40,11 @@ menu_editor_assert(strpos($runtime, "case '5': $('#staticpage').show();") !== fa
 menu_editor_assert(strpos($runtime, "case '6': $('#urldiv,#targetdiv').show();") !== false, 'runtime must show URL and target for External URL');
 menu_editor_assert(strpos($runtime, "case '7': $('#phpdiv').show();") !== false, 'runtime must show PHP Function field');
 menu_editor_assert(strpos($runtime, "case '9': $('#topic').show();") !== false, 'runtime must show Topic selector for Topic');
-menu_editor_assert(strpos($runtime, "var wanted = state.mode === 'edit' ? state.currentType : state.defaultType") !== false, 'runtime must restore stored edit type and use default create type');
 menu_editor_assert(strpos($runtime, "text('[Unavailable] ' + String(subtype))") !== false, 'missing resources must remain identifiable in admin');
-menu_editor_assert(strpos($runtime, 'type_options.php') === false, 'runtime must not depend on AJAX type restoration');
+menu_editor_assert(strpos($runtime, 'type_options.php') !== false, 'runtime must load type labels only after Geeklog initialization');
+menu_editor_assert(strpos($runtime, "data.types.length === 0") !== false, 'runtime must reject an empty authoritative type list');
+menu_editor_assert(strpos($runtime, 'select.empty();') !== false, 'runtime must replace the type list after a valid response');
+menu_editor_assert(strpos($runtime, "if (!applyTypeResponse(data) && state.mode === 'edit')") !== false, 'edit must fail closed when type restoration is invalid');
 menu_editor_assert(strpos($storage, "require_once __DIR__ . '/element_editor_runtime.php';") !== false, 'runtime must be loaded by Menu bootstrap');
 
 menu_editor_assert(strpos($create, "var adminOrder = ['2', '3', '4', '5', '9', '6', '1', '8', '7']") !== false, 'create fallback must use administrator-oriented order');
@@ -51,8 +53,10 @@ menu_editor_assert(strpos($create, "select.val('2')") !== false, 'create fallbac
 menu_editor_assert(strpos($edit, 'type_options.php') === false, 'edit template must not duplicate authoritative AJAX logic');
 menu_editor_assert(strpos($edit, 'disabled="disabled"') !== false, 'edit save must remain disabled until authoritative runtime initializes');
 
-menu_editor_assert(strpos($typeOptions, "DB_getItem(\$_TABLES['menu'], 'menu_type'") !== false, 'compatibility endpoint must read menu type directly from database');
-menu_editor_assert(strpos($typeOptions, '!isset($Menus[$menuId])') === false, 'compatibility endpoint must not depend on in-memory Menu cache');
+menu_editor_assert(strpos($typeOptions, "DB_getItem(\$_TABLES['menu'], 'menu_type'") !== false, 'type endpoint must read menu type directly from database');
+menu_editor_assert(strpos($typeOptions, '!isset($Menus[$menuId])') === false, 'type endpoint must not depend on in-memory Menu cache');
+menu_editor_assert(strpos($typeOptions, "'currentType' => \$currentType") !== false, 'type endpoint must expose stored current type');
+menu_editor_assert(strpos($typeOptions, "'defaultType' => MENU_defaultElementType") !== false, 'type endpoint must expose create default type');
 
 menu_editor_assert(strpos($types, '2, // Geeklog Action') !== false, 'admin order must start with Geeklog Action');
 menu_editor_assert(strpos($types, '9, // Topic') !== false, 'Topic must be explicitly ordered');
