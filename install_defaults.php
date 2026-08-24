@@ -6,38 +6,14 @@
 // +---------------------------------------------------------------------------+
 // | install_defaults.php                                                      |
 // |                                                                           |
-// | This file is used to hook into Geeklog's configuration UI                 |
+// | Default configuration installer for Geeklog.                              |
 // +---------------------------------------------------------------------------+
-
-/**
- * @package Menu
- */
 
 if (stripos($_SERVER['PHP_SELF'], basename(__FILE__)) !== false) {
     die('This file can not be used on its own.');
 }
 
-/**
- * Return the global Menu configuration defaults introduced in 1.3.0.
- *
- * These options apply to the plugin as a whole. Per-menu presentation and
- * structure remain stored in the Menu plugin tables and editor.
- *
- * @return array
- */
-function MENU_configDefaults()
-{
-    return array(
-        'enable_cache'             => true,
-        'load_legacy_css'          => true,
-        'load_legacy_js'           => true,
-        'legacy_rendering'         => true,
-        'allow_php_elements'       => false,
-        'external_link_protection' => true,
-        'accessibility_markup'     => true,
-        'debug'                    => false,
-    );
-}
+require_once __DIR__ . '/config.php';
 
 /**
  * Return config sort positions. Gaps deliberately separate logical groups.
@@ -69,7 +45,6 @@ function MENU_configSortOrder130()
  */
 function MENU_addConfigSetting130($c, $name, $default, $sort)
 {
-    // selectionArray 0 is Geeklog's standard Yes / No selector.
     $c->add($name, $default, 'select', 0, 0, 0, $sort, true, 'menu', 0);
 }
 
@@ -81,7 +56,8 @@ function MENU_addConfigSetting130($c, $name, $default, $sort)
  */
 function MENU_addConfig130($c)
 {
-    $defaults = MENU_configDefaults();
+    global $_MENU_DEFAULT;
+
     $sortOrder = MENU_configSortOrder130();
 
     $c->add('sg_main', null, 'subgroup', 0, 0, null, 0, true, 'menu', 0);
@@ -89,19 +65,19 @@ function MENU_addConfig130($c)
     $c->add('fs_main', null, 'fieldset', 0, 0, null, 0, true, 'menu', 0);
 
     foreach ($sortOrder as $name => $sort) {
-        MENU_addConfigSetting130($c, $name, $defaults[$name], $sort);
+        MENU_addConfigSetting130($c, $name, $_MENU_DEFAULT[$name], $sort);
     }
 }
 
 /**
  * Ensure all 1.3.0 settings exist without resetting existing values.
  *
- * This is used by the upgrade path and is intentionally idempotent.
- *
  * @return bool
  */
 function MENU_ensureConfig130()
 {
+    global $_MENU_DEFAULT;
+
     $c = config::get_instance();
 
     if (!$c->group_exists('menu')) {
@@ -114,12 +90,10 @@ function MENU_ensureConfig130()
         $current = array();
     }
 
-    $defaults = MENU_configDefaults();
     $sortOrder = MENU_configSortOrder130();
-
     foreach ($sortOrder as $name => $sort) {
         if (!array_key_exists($name, $current)) {
-            MENU_addConfigSetting130($c, $name, $defaults[$name], $sort);
+            MENU_addConfigSetting130($c, $name, $_MENU_DEFAULT[$name], $sort);
         }
     }
 
@@ -129,7 +103,7 @@ function MENU_ensureConfig130()
 /**
  * Initialize Menu plugin configuration for a fresh installation.
  *
- * @return boolean TRUE on success
+ * @return bool
  */
 function plugin_initconfig_menu()
 {
