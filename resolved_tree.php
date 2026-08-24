@@ -13,6 +13,8 @@ if (!defined('VERSION')) {
     die('This file can not be used on its own.');
 }
 
+require_once __DIR__ . '/resolved_admin.php';
+
 function MENU_findMenuIdByName($name)
 {
     global $Menus;
@@ -71,7 +73,7 @@ function MENU_getResolvedTree($name = 'navigation')
 
 function MENU_resolveElementNode($menuId, $elementId)
 {
-    global $Menus, $_CONF, $_GROUPS;
+    global $Menus, $_CONF;
 
     if (!isset($Menus[$menuId]['elements'][$elementId])) {
         return null;
@@ -265,10 +267,7 @@ function MENU_resolveGeeklogCoreChildren($subtype)
             break;
 
         case 2: // admin menu
-            // The legacy renderer builds a large permission-aware dashboard
-            // with counters. Keep this node explicit until that logic is moved
-            // to a structured provider instead of duplicating it here.
-            $resolved = false;
+            $children = MENU_resolveGeeklogAdminChildren();
             break;
 
         case 3: // topics
