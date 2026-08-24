@@ -1,0 +1,66 @@
+name: Menu modernization CI
+
+on:
+  push:
+    branches:
+      - modernize-1.3.0
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  php-lint:
+    name: PHP ${{ matrix.php }} syntax
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['5.6', '8.1']
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          coverage: none
+
+      - name: Lint PHP and INC files
+        shell: bash
+        run: |
+          set -e
+          while IFS= read -r -d '' file; do
+            php -l "$file"
+          done < <(find . -type f \( -name '*.php' -o -name '*.inc' \) -print0)
+
+  package:
+    name: Build installable ZIP
+    runs-on: ubuntu-latest
+    needs: php-lint
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build package
+        shell: bash
+        run: |
+          set -e
+          rm -rf build
+          mkdir -p build/menu
+          rsync -a ./ build/menu/ \
+            --exclude '.git/' \
+            --exclude '.github/' \
+            --exclude 'build/' \
+            --exclude 'ROADMAP.md'
+          cd build
+          zip -qr menu-1.3.0-alpha1.zip menu
+          sha256sum menu-1.3.0-alpha1.zip > menu-1.3.0-alpha1.zip.sha256
+
+      - name: Upload package
+        uses: actions/upload-artifact@v4
+        with:
+          name: menu-1.3.0-alpha1
+          path: |
+            build/menu-1.3.0-alpha1.zip
+            build/menu-1.3.0-alpha1.zip.sha256
