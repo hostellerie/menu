@@ -1,6 +1,6 @@
 <?php
 
-// Server-side Menu element mutation validation tests. PHP 5.6+.
+// Server-side Menu mutation validation tests. PHP 5.6+.
 define('VERSION', '2.1.1');
 
 $_TABLES = array(
@@ -12,17 +12,18 @@ $_TABLES = array(
 $_PLUGINS = array('staticpages');
 
 $menuValidationMenus = array(
-    1 => 1, // cascading
-    2 => 2, // simple
+    1 => array('menu_type' => 1, 'menu_name' => 'navigation'),
+    2 => array('menu_type' => 2, 'menu_name' => 'footer'),
+    3 => array('menu_type' => 1, 'menu_name' => 'custom'),
 );
 $menuValidationElements = array(
-    1 => array('menu_id' => 1, 'pid' => 0, 'element_type' => 2, 'element_subtype' => '0'),
-    2 => array('menu_id' => 1, 'pid' => 0, 'element_type' => 1, 'element_subtype' => ''),
-    3 => array('menu_id' => 1, 'pid' => 2, 'element_type' => 6, 'element_subtype' => 'https://example.test/child'),
-    4 => array('menu_id' => 1, 'pid' => 0, 'element_type' => 4, 'element_subtype' => 'missingplugin'),
-    5 => array('menu_id' => 1, 'pid' => 0, 'element_type' => 5, 'element_subtype' => 'missing-page'),
-    6 => array('menu_id' => 1, 'pid' => 0, 'element_type' => 9, 'element_subtype' => 'missing-topic'),
-    20 => array('menu_id' => 2, 'pid' => 0, 'element_type' => 2, 'element_subtype' => '0'),
+    1 => array('id' => 1, 'menu_id' => 1, 'pid' => 0, 'element_type' => 2, 'element_subtype' => '0'),
+    2 => array('id' => 2, 'menu_id' => 1, 'pid' => 0, 'element_type' => 1, 'element_subtype' => ''),
+    3 => array('id' => 3, 'menu_id' => 1, 'pid' => 2, 'element_type' => 6, 'element_subtype' => 'https://example.test/child'),
+    4 => array('id' => 4, 'menu_id' => 1, 'pid' => 0, 'element_type' => 4, 'element_subtype' => 'missingplugin'),
+    5 => array('id' => 5, 'menu_id' => 1, 'pid' => 0, 'element_type' => 5, 'element_subtype' => 'missing-page'),
+    6 => array('id' => 6, 'menu_id' => 1, 'pid' => 0, 'element_type' => 9, 'element_subtype' => 'missing-topic'),
+    20 => array('id' => 20, 'menu_id' => 2, 'pid' => 0, 'element_type' => 2, 'element_subtype' => '0'),
 );
 $menuValidationStaticPages = array('about' => true);
 $menuValidationTopics = array('news' => true);
@@ -32,10 +33,13 @@ function DB_getItem($table, $field, $where)
     global $menuValidationMenus, $menuValidationElements,
            $menuValidationStaticPages, $menuValidationTopics;
 
-    if ($table === 'gl_menu' && $field === 'menu_type') {
+    if ($table === 'gl_menu') {
         if (preg_match('/id=(\d+)/', $where, $matches)) {
             $id = (int) $matches[1];
-            return isset($menuValidationMenus[$id]) ? $menuValidationMenus[$id] : '';
+            if (!isset($menuValidationMenus[$id])) {
+                return '';
+            }
+            return isset($menuValidationMenus[$id][$field]) ? $menuValidationMenus[$id][$field] : '';
         }
     }
 
@@ -146,6 +150,45 @@ function menu_validation_base_edit($id, $type)
     );
 }
 
+// Destructive/movement references.
+menu_validation_assert(
+    MENU_adminMutationReferenceError('move', array('menu' => 1, 'mid' => 1, 'where' => 'up')) === '',
+    'valid move must pass'
+);
+menu_validation_assert(
+    MENU_adminMutationReferenceError('move', array('menu' => 1, 'mid' => 1, 'where' => 'sideways')) !== '',
+    'invalid move direction must fail'
+);
+menu_validation_assert(
+    MENU_adminMutationReferenceError('move', array('menu' => 1, 'mid' => 20, 'where' => 'down')) !== '',
+    'move element from another menu must fail'
+);
+menu_validation_assert(
+    MENU_adminMutationReferenceError('delete', array('menuid' => 1, 'mid' => 1)) === '',
+    'valid element delete must pass'
+);
+menu_validation_assert(
+    MENU_adminMutationReferenceError('delete', array('menuid' => 1, 'mid' => 20)) !== '',
+    'delete element from another menu must fail'
+);
+menu_validation_assert(
+    MENU_adminMutationReferenceError('deletemenu', array('id' => 3)) === '',
+    'custom menu deletion must pass validation'
+);
+menu_validation_assert(
+    MENU_adminMutationReferenceError('deletemenu', array('id' => 1)) !== '',
+    'navigation menu deletion must be blocked'
+);
+menu_validation_assert(
+    MENU_adminMutationReferenceError('deletemenu', array('id' => 2)) !== '',
+    'footer menu deletion must be blocked'
+);
+menu_validation_assert(
+    MENU_adminMutationReferenceError('deletemenu', array('id' => 99)) !== '',
+    'unknown menu deletion must fail'
+);
+
+// Element create/edit structure and destination validation.
 $valid = menu_validation_base_create();
 menu_validation_assert(MENU_adminElementMutationError('save', $valid) === '', 'valid Geeklog Action create must pass');
 
