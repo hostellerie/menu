@@ -37,6 +37,9 @@ jobs:
       - name: Test multisite storage migration
         run: php tests/storage_migration.php
 
+      - name: Test frontend rendering assets
+        run: php tests/render_assets.php
+
   package:
     name: Build installable ZIP
     runs-on: ubuntu-latest
