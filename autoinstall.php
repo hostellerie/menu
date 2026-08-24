@@ -35,13 +35,6 @@
 * @package Menu
 */
 
-/**
-* Plugin autoinstall function
-*
-* @param    string  $pi_name    Plugin name
-* @return   array               Plugin information
-*
-*/
 function plugin_autoinstall_menu($pi_name)
 {
     $pi_name         = 'menu';
@@ -52,7 +45,7 @@ function plugin_autoinstall_menu($pi_name)
         'pi_name'         => $pi_name,
         'pi_display_name' => $pi_display_name,
         'pi_version'      => '1.3.0-alpha1',
-        'pi_gl_version'   => '2.1.2',
+        'pi_gl_version'   => '2.1.1',
         'pi_homepage'     => 'https://github.com/hostellerie/menu'
     );
 
@@ -62,12 +55,11 @@ function plugin_autoinstall_menu($pi_name)
     );
 
     $features = array(
-        $pi_name . '.admin'    => 'Full access to ' . $pi_display_name
-                                  . ' plugin'
+        $pi_name . '.admin' => 'Full access to ' . $pi_display_name . ' plugin'
     );
 
     $mappings = array(
-        $pi_name . '.admin'     => array($pi_admin)
+        $pi_name . '.admin' => array($pi_admin)
     );
 
     $tables = array(
@@ -76,20 +68,15 @@ function plugin_autoinstall_menu($pi_name)
         'menu_elements'
     );
 
-    $inst_parms = array(
+    return array(
         'info'      => $info,
         'groups'    => $groups,
         'features'  => $features,
         'mappings'  => $mappings,
         'tables'    => $tables
     );
-
-    return $inst_parms;
 }
 
-/**
-Create the initial configuration for the plugin
-*/
 function plugin_load_configuration_menu($pi_name)
 {
     global $_CONF;
@@ -102,26 +89,23 @@ function plugin_load_configuration_menu($pi_name)
     return plugin_initconfig_menu();
 }
 
-/**
-* Check if the plugin is compatible with this Geeklog version
-*
-* @param    string  $pi_name    Plugin name
-* @return   boolean             true: plugin compatible; false: not compatible
-*
-*/
 function plugin_compatible_with_this_version_menu($pi_name)
 {
     global $_CONF, $_DB_dbms;
 
-    // check if we support the DBMS the site is running on
     $dbFile = $_CONF['path'] . 'plugins/' . $pi_name . '/sql/'
             . $_DB_dbms . '_install.php';
-    if (! file_exists($dbFile)) {
+    if (!file_exists($dbFile)) {
         return false;
     }
 
-    // Full Geeklog 2.1.1 compatibility is restored in the next modernization
-    // step. Keep the existing minimum version until that work is complete.
+    if (defined('VERSION') && version_compare(VERSION, '2.1.1', '<')) {
+        return false;
+    }
+
+    if (version_compare(PHP_VERSION, '5.6.0', '<')) {
+        return false;
+    }
 
     return true;
 }
@@ -130,15 +114,12 @@ function plugin_postinstall_menu($pi_name)
 {
     global $_CONF;
 
-    // Public menu images remain site-specific through path_images.
     if (!is_dir($_CONF['path_images'] . 'menu')) {
         @mkdir($_CONF['path_images'] . 'menu', 0755, true);
     }
 
     require_once $_CONF['path'] . 'plugins/menu/storage.php';
 
-    // Private data lives outside path_data so Geeklog cache cleanup cannot
-    // remove persistent Menu CSS or other plugin-owned data.
     if (!MENU_ensureDataDirs()) {
         return false;
     }
