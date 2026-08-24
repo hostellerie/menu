@@ -49,12 +49,12 @@ menu_editor_assert(strpos($create, "select.val('2')") !== false, 'create fallbac
 menu_editor_assert(strpos($edit, 'type_options.php') === false, 'edit template must not duplicate authoritative AJAX logic');
 menu_editor_assert(strpos($edit, 'disabled="disabled"') !== false, 'edit save must remain disabled until stored type is restored');
 
-menu_editor_assert(strpos($typeOptions, "DB_getItem($_TABLES['menu'], 'menu_type'") !== false, 'type endpoint must read menu type directly from the database');
-menu_editor_assert(strpos($typeOptions, "DB_getItem(\n        $_TABLES['menu_elements'],\n        'element_type'") !== false, 'type endpoint must read stored element type directly from the database');
+menu_editor_assert(strpos($typeOptions, "DB_getItem(\$_TABLES['menu'], 'menu_type'") !== false, 'type endpoint must read menu type directly from the database');
+menu_editor_assert(strpos($typeOptions, "DB_getItem(\n        \$_TABLES['menu_elements'],\n        'element_type'") !== false, 'type endpoint must read stored element type directly from the database');
 menu_editor_assert(strpos($typeOptions, '!isset($Menus[$menuId])') === false, 'type endpoint must not depend on the in-memory Menu cache');
-menu_editor_assert(strpos($typeOptions, "'currentType' => $currentType") !== false, 'endpoint must expose stored current type');
+menu_editor_assert(strpos($typeOptions, "'currentType' => \$currentType") !== false, 'endpoint must expose stored current type');
 menu_editor_assert(strpos($typeOptions, "'defaultType' => MENU_defaultElementType") !== false, 'endpoint must expose default create type');
-menu_editor_assert(strpos($typeOptions, "'locked' => $locked") !== false, 'endpoint must preserve locked Submenu state');
+menu_editor_assert(strpos($typeOptions, "'locked' => \$locked") !== false, 'endpoint must preserve locked Submenu state');
 
 menu_editor_assert(strpos($types, '2, // Geeklog Action') !== false, 'admin order must start with Geeklog Action');
 menu_editor_assert(strpos($types, '9, // Topic') !== false, 'Topic must be explicitly ordered');
