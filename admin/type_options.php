@@ -26,20 +26,22 @@ if ($menuType === false || $menuType === null || $menuType === '') {
 $menuType = (int) $menuType;
 
 $currentType = null;
+$currentSubtype = '';
 $locked = false;
 if ($mid > 0) {
-    $currentTypeValue = DB_getItem(
-        $_TABLES['menu_elements'],
-        'element_type',
-        'id=' . $mid . ' AND menu_id=' . $menuId
+    $result = DB_query(
+        'SELECT element_type, element_subtype FROM ' . $_TABLES['menu_elements']
+        . ' WHERE id=' . $mid . ' AND menu_id=' . $menuId
     );
 
-    if ($currentTypeValue === false || $currentTypeValue === null || $currentTypeValue === '') {
+    if (DB_numRows($result) === 0) {
         header('HTTP/1.1 404 Not Found');
         exit;
     }
 
-    $currentType = (int) $currentTypeValue;
+    $row = DB_fetchArray($result);
+    $currentType = (int) $row['element_type'];
+    $currentSubtype = (string) $row['element_subtype'];
     $locked = ($currentType === 1);
 }
 
@@ -51,10 +53,52 @@ $types = MENU_getAllowedElementTypes(
     $currentType
 );
 
+$resource = array(
+    'kind' => '',
+    'available' => true,
+    'value' => $currentSubtype,
+);
+
+if ($currentType === 4) {
+    $resource['kind'] = 'plugin';
+    $pluginMenus = MENU_PLG_getMenuItems();
+    $resource['available'] = isset($pluginMenus[$currentSubtype]);
+} elseif ($currentType === 5) {
+    $resource['kind'] = 'static page';
+    $resource['available'] = false;
+    if ($hasStaticPages && isset($_TABLES['staticpage']) && $currentSubtype !== '') {
+        $escaped = function_exists('DB_escapeString')
+            ? DB_escapeString($currentSubtype)
+            : addslashes($currentSubtype);
+        $found = DB_getItem(
+            $_TABLES['staticpage'],
+            'sp_id',
+            "sp_id='" . $escaped . "' AND draft_flag=0"
+        );
+        $resource['available'] = $found !== '' && $found !== null && $found !== false;
+    }
+} elseif ($currentType === 9) {
+    $resource['kind'] = 'topic';
+    $resource['available'] = false;
+    if (isset($_TABLES['topics']) && $currentSubtype !== '') {
+        $escaped = function_exists('DB_escapeString')
+            ? DB_escapeString($currentSubtype)
+            : addslashes($currentSubtype);
+        $found = DB_getItem(
+            $_TABLES['topics'],
+            'tid',
+            "tid='" . $escaped . "'"
+        );
+        $resource['available'] = $found !== '' && $found !== null && $found !== false;
+    }
+}
+
 $response = array(
     'currentType' => $currentType,
+    'currentSubtype' => $currentSubtype,
     'defaultType' => MENU_defaultElementType($types),
     'locked' => $locked,
+    'resource' => $resource,
     'types' => array()
 );
 
