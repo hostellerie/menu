@@ -12,6 +12,8 @@ if (!defined('VERSION')) {
     die('This file can not be used on its own.');
 }
 
+require_once __DIR__ . '/compat.php';
+
 /**
  * Return the private, site-specific Menu data directory.
  *
@@ -123,7 +125,6 @@ function MENU_copyTreeNonDestructive($source, $destination)
         $src = rtrim($source, "/\\") . DIRECTORY_SEPARATOR . $entry;
         $dst = rtrim($destination, "/\\") . DIRECTORY_SEPARATOR . $entry;
 
-        // Do not follow symlinks during migration.
         if (is_link($src)) {
             continue;
         }
@@ -133,7 +134,6 @@ function MENU_copyTreeNonDestructive($source, $destination)
                 $ok = false;
             }
         } elseif (is_file($src)) {
-            // Existing destination files always win.
             if (!file_exists($dst) && !@copy($src, $dst)) {
                 $ok = false;
             }
