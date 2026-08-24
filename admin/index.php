@@ -71,8 +71,8 @@ function MENU_displayMenuList( ) {
     $menu_arr = array(
             array('url'  => $_CONF['site_admin_url'] .'/plugins/menu/index.php?mode=newmenu',
                   'text' => $LANG_MENU01['add_newmenu']),
-            array('url'  => $_CONF['site_admin_url'],
-                  'text' => $LANG_ADMIN['admin_home']),
+            array('url'  => $_CONF['site_admin_url'] . '/plugins/menu/configuration.php',
+                  'text' => $LANG_MENU01['configuration']),
     );
     $retval  .= COM_startBlock($LANG_MENU01['menu_builder'],'', COM_getBlockTemplate('_admin_block', 'header'));
     $retval  .= ADMIN_createMenu($menu_arr, $LANG_MENU_ADMIN[1],
@@ -137,8 +137,8 @@ function MENU_cloneMenu( $menu_id ) {
     $menu_arr = array(
             array('url'  => $_CONF['site_admin_url'] .'/plugins/menu/index.php',
                   'text' => $LANG_MENU01['menu_list']),
-            array('url'  => $_CONF['site_admin_url'],
-                  'text' => $LANG_ADMIN['admin_home']),
+            array('url'  => $_CONF['site_admin_url'] . '/plugins/menu/configuration.php',
+                  'text' => $LANG_MENU01['configuration']),
     );
     $retval  .= COM_startBlock($LANG_MENU01['menu_builder'].' :: '.$LANG_MENU01['add_newmenu'],'', COM_getBlockTemplate('_admin_block', 'header'));
     $retval  .= ADMIN_createMenu($menu_arr, $LANG_MENU_ADMIN[2],
@@ -229,8 +229,8 @@ function MENU_createMenu( ) {
     $menu_arr = array(
             array('url'  => $_CONF['site_admin_url'] .'/plugins/menu/index.php',
                   'text' => $LANG_MENU01['menu_list']),
-            array('url'  => $_CONF['site_admin_url'],
-                  'text' => $LANG_ADMIN['admin_home']),
+            array('url'  => $_CONF['site_admin_url'] . '/plugins/menu/configuration.php',
+                  'text' => $LANG_MENU01['configuration']),
     );
     $retval  .= COM_startBlock($LANG_MENU01['menu_builder'].' :: '.$LANG_MENU01['add_newmenu'],'', COM_getBlockTemplate('_admin_block', 'header'));
     $retval  .= ADMIN_createMenu($menu_arr, $LANG_MENU_ADMIN[2],
