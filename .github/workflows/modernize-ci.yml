@@ -40,6 +40,9 @@ jobs:
       - name: Test frontend rendering assets
         run: php tests/render_assets.php
 
+      - name: Test element type rules
+        run: php tests/element_types.php
+
   package:
     name: Build installable ZIP
     runs-on: ubuntu-latest
