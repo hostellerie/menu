@@ -25,7 +25,6 @@ function COM_getLanguageId() { return ''; }
 function COM_applyFilter($value) { return $value; }
 function COM_isAnonUser() { return false; }
 function COM_buildUrl($url) { return $url; }
-function COM_buildURL($url) { return $url; }
 function COM_getCurrentURL() { return 'https://example.test/'; }
 function SEC_hasRights($rights) { return $rights === 'stats.view'; }
 function SEC_inGroup($group) { return $group === 2 || $group === 'Logged-in Users'; }
