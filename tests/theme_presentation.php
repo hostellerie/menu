@@ -12,6 +12,11 @@ if (!mkdir($layout, 0755, true) && !is_dir($layout)) {
 
 $_CONF = array('path_layout' => $layout);
 
+function COM_getLanguageId()
+{
+    return 'fr';
+}
+
 file_put_contents(
     $layout . 'plugin-presentation.php',
     "<?php\nreturn array('menu' => array('navigation'));\n"
@@ -29,6 +34,8 @@ function menu_presentation_assert($condition, $message)
 
 menu_presentation_assert(MENU_themeHandlesPresentation('navigation') === true, 'navigation should be theme-owned');
 menu_presentation_assert(MENU_themeHandlesPresentation('Navigation') === true, 'resource matching should be case-insensitive');
+menu_presentation_assert(MENU_themeHandlesPresentation('navigation_fr') === true, 'localized navigation should inherit theme ownership');
+menu_presentation_assert(MENU_themeHandlesPresentation('navigation_en') === false, 'inactive language variant must not be claimed');
 menu_presentation_assert(MENU_themeHandlesPresentation('footer') === false, 'undeclared footer must keep legacy Menu presentation');
 
 @unlink($layout . 'plugin-presentation.php');
