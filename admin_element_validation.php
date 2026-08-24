@@ -5,7 +5,7 @@
 // +---------------------------------------------------------------------------+
 // | admin_element_validation.php                                              |
 // |                                                                           |
-// | Server-side validation for Menu element create/edit mutations.            |
+// | Server-side validation for Menu administration mutations.                 |
 // +---------------------------------------------------------------------------+
 
 if (!defined('VERSION')) {
@@ -15,8 +15,72 @@ if (!defined('VERSION')) {
 require_once __DIR__ . '/element_types.php';
 
 /**
- * Return an empty string when an element mutation is structurally valid,
- * otherwise return a short administrator-facing error message.
+ * Validate move/delete/deletemenu request references before the legacy
+ * controller performs any mutation.
+ *
+ * @param string $mode
+ * @param array  $post
+ * @return string
+ */
+function MENU_adminMutationReferenceError($mode, $post)
+{
+    global $_TABLES;
+
+    if ($mode !== 'move' && $mode !== 'delete' && $mode !== 'deletemenu') {
+        return '';
+    }
+    if (!is_array($post)) {
+        return 'Invalid Menu administration request.';
+    }
+
+    if ($mode === 'deletemenu') {
+        $menuId = isset($post['id']) ? (int) $post['id'] : 0;
+        if ($menuId <= 0 || !isset($_TABLES['menu'])) {
+            return 'Invalid menu.';
+        }
+
+        $menuName = DB_getItem($_TABLES['menu'], 'menu_name', 'id=' . $menuId);
+        if ($menuName === '' || $menuName === null || $menuName === false) {
+            return 'The selected menu does not exist.';
+        }
+        if (in_array((string) $menuName, array('navigation', 'footer', 'block'), true)) {
+            return 'This built-in menu cannot be deleted.';
+        }
+
+        return '';
+    }
+
+    $menuId = $mode === 'move'
+        ? (isset($post['menu']) ? (int) $post['menu'] : 0)
+        : (isset($post['menuid']) ? (int) $post['menuid'] : 0);
+    $mid = isset($post['mid']) ? (int) $post['mid'] : 0;
+
+    if ($menuId <= 0 || $mid <= 0 || !isset($_TABLES['menu_elements'])) {
+        return 'Invalid menu element.';
+    }
+
+    $elementId = DB_getItem(
+        $_TABLES['menu_elements'],
+        'id',
+        'id=' . $mid . ' AND menu_id=' . $menuId
+    );
+    if ($elementId === '' || $elementId === null || $elementId === false) {
+        return 'The menu element does not belong to the selected menu.';
+    }
+
+    if ($mode === 'move') {
+        $where = isset($post['where']) ? strtolower(trim((string) $post['where'])) : '';
+        if ($where !== 'up' && $where !== 'down') {
+            return 'Invalid menu movement direction.';
+        }
+    }
+
+    return '';
+}
+
+/**
+ * Return an empty string when an element create/edit mutation is structurally
+ * valid, otherwise return a short administrator-facing error message.
  *
  * Existing unavailable plugin/static-page/topic destinations are allowed when
  * an administrator edits an element without changing that stored destination.
