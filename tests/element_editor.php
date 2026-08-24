@@ -15,11 +15,13 @@ $create = file_get_contents($root . '/templates/default/createelement.thtml');
 $edit = file_get_contents($root . '/templates/default/editelement.thtml');
 $types = file_get_contents($root . '/element_types.php');
 $typeOptions = file_get_contents($root . '/admin/type_options.php');
+$english = file_get_contents($root . '/language/english.php');
 
 menu_editor_assert($create !== false, 'create element template missing');
 menu_editor_assert($edit !== false, 'edit element template missing');
 menu_editor_assert($types !== false, 'element type helper missing');
 menu_editor_assert($typeOptions !== false, 'type options endpoint missing');
+menu_editor_assert($english !== false, 'English language file missing');
 
 $expectedPanels = array(
     "case '1'" => "jQuery('#urldiv').show();",
@@ -48,9 +50,12 @@ foreach (array($create, $edit) as $template) {
     }
 }
 
-menu_editor_assert(strpos($create, "select.val(String(data.defaultType))") !== false, 'create form must apply stable default type');
+menu_editor_assert(strpos($create, "var adminOrder = ['2', '3', '4', '5', '9', '6', '1', '8', '7']") !== false, 'create form must use the administrator-oriented order');
+menu_editor_assert(strpos($create, "select.find('option[value=\"2\"]')") !== false, 'create form must prefer Geeklog Action');
+menu_editor_assert(strpos($create, "select.val('2')") !== false, 'create form must select Geeklog Action by default');
+menu_editor_assert(strpos($create, 'type_options.php') === false, 'create form must not depend on the AJAX type endpoint');
 menu_editor_assert(strpos($edit, "select.val(String(data.currentType))") !== false, 'edit form must preserve stored type');
-menu_editor_assert(strpos($typeOptions, "'defaultType' => MENU_defaultElementType") !== false, 'endpoint must expose default type');
+menu_editor_assert(strpos($typeOptions, "'defaultType' => MENU_defaultElementType") !== false, 'endpoint must expose default type for compatibility');
 menu_editor_assert(strpos($types, '2, // Geeklog Action') !== false, 'admin order must start with Geeklog Action');
 menu_editor_assert(strpos($types, '9, // Topic') !== false, 'Topic must be explicitly ordered');
 menu_editor_assert(strpos($types, '7, // PHP Function') !== false, 'PHP Function must remain available as advanced type');
@@ -58,6 +63,7 @@ menu_editor_assert(strpos($types, '7, // PHP Function') !== false, 'PHP Function
 menu_editor_assert(strpos($create, 'for="pluginname"') !== false, 'create plugin label must target plugin selector');
 menu_editor_assert(strpos($edit, 'for="pluginname"') !== false, 'edit plugin label must target plugin selector');
 menu_editor_assert(strpos($edit, 'for="glfunction"') !== false, 'Geeklog Action label must target glfunction selector');
+menu_editor_assert(strpos($english, "'geeklog_function'  => 'Action'") !== false, 'Geeklog Action selector must use the concise Action label');
 menu_editor_assert(strpos($edit, "saveButton.attr('disabled', 'disabled')") !== false, 'edit save must remain blocked after type-loading failure');
 
 echo "Element editor UI contract tests passed" . PHP_EOL;
