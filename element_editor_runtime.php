@@ -31,8 +31,8 @@ function MENU_elementEditorIsAdminRequest()
  * Build the stored editor state directly from the database.
  *
  * This state intentionally contains only values that are safe to resolve during
- * the early plugin bootstrap. Language-dependent type labels are loaded later
- * from admin/type_options.php, after Geeklog has completed initialization.
+ * the early plugin bootstrap. Language-dependent type labels and destination
+ * availability are loaded later from admin/type_options.php.
  *
  * @return array
  */
@@ -78,8 +78,7 @@ function MENU_elementEditorServerState()
  *
  * The runtime never clears the server-rendered type select unless a complete,
  * authoritative replacement list has been returned by type_options.php. This
- * prevents an early bootstrap (before language arrays are available) from
- * producing an empty Type selector.
+ * prevents an early bootstrap from producing an empty Type selector.
  *
  * @return void
  */
@@ -121,23 +120,32 @@ function MENU_registerElementEditorRuntime()
         . "            case '9': $('#topic').show(); break;\n"
         . "        }\n"
         . "    }\n"
-        . "    function preserveUnavailableResource(type, subtype) {\n"
-        . "        if (!subtype) { return; }\n"
-        . "        var field = null;\n"
-        . "        var resource = 'resource';\n"
-        . "        if (type === '4') { field = $('#pluginname'); resource = 'plugin'; }\n"
-        . "        if (type === '5') { field = $('#spname'); resource = 'static page'; }\n"
-        . "        if (type === '9') { field = $('#topicname'); resource = 'topic'; }\n"
-        . "        if (type === '5' && (!field || !field.length)) {\n"
-        . "            field = $('<select id=\"spname\" name=\"spname\"></select>').appendTo('#staticpage p');\n"
+        . "    function resourceField(type) {\n"
+        . "        if (type === '4') { return $('#pluginname'); }\n"
+        . "        if (type === '5') {\n"
+        . "            var staticField = $('#spname');\n"
+        . "            if (!staticField.length) {\n"
+        . "                staticField = $('<select id=\"spname\" name=\"spname\"></select>').appendTo('#staticpage p');\n"
+        . "            }\n"
+        . "            return staticField;\n"
         . "        }\n"
-        . "        if (!field || !field.length) { return; }\n"
-        . "        var found = false;\n"
-        . "        field.find('option').each(function() {\n"
-        . "            if (String($(this).val()) === String(subtype)) { found = true; }\n"
-        . "        });\n"
-        . "        if (!found) {\n"
-        . "            $('<option></option>').val(String(subtype)).text('[Unavailable ' + resource + '] ' + String(subtype)).appendTo(field);\n"
+        . "        if (type === '9') { return $('#topicname'); }\n"
+        . "        return $();\n"
+        . "    }\n"
+        . "    function applyResourceStatus(type, subtype, resource) {\n"
+        . "        if (!subtype || (type !== '4' && type !== '5' && type !== '9')) { return; }\n"
+        . "        var field = resourceField(type);\n"
+        . "        if (!field.length) { return; }\n"
+        . "        var option = field.find('option').filter(function() {\n"
+        . "            return String($(this).val()) === String(subtype);\n"
+        . "        }).first();\n"
+        . "        if (!resource || resource.available !== true) {\n"
+        . "            var kind = resource && resource.kind ? resource.kind : 'resource';\n"
+        . "            var label = '[Unavailable ' + kind + '] ' + String(subtype);\n"
+        . "            if (!option.length) {\n"
+        . "                option = $('<option></option>').val(String(subtype)).appendTo(field);\n"
+        . "            }\n"
+        . "            option.text(label);\n"
         . "        }\n"
         . "        field.val(String(subtype));\n"
         . "    }\n"
@@ -157,7 +165,7 @@ function MENU_registerElementEditorRuntime()
         . "            select.prop('disabled', false);\n"
         . "        }\n"
         . "        if (state.mode === 'edit') {\n"
-        . "            preserveUnavailableResource(String(state.currentType), state.currentSubtype);\n"
+        . "            applyResourceStatus(String(data.currentType), data.currentSubtype, data.resource);\n"
         . "        }\n"
         . "        $('#execute').prop('disabled', false);\n"
         . "        syncFields();\n"
