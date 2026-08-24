@@ -45,12 +45,11 @@ menu_editor_assert(strpos($runtime, 'data.currentSubtype, data.resource') !== fa
 menu_editor_assert(strpos($runtime, 'type_options.php') !== false, 'runtime must load type labels only after Geeklog initialization');
 menu_editor_assert(strpos($runtime, "data.types.length === 0") !== false, 'runtime must reject an empty authoritative type list');
 menu_editor_assert(strpos($runtime, 'select.empty();') !== false, 'runtime must replace the type list after a valid response');
+menu_editor_assert(strpos($runtime, "state.mode === 'new' && select.find('option[value=\"2\"]')") !== false, 'create runtime must prefer Geeklog Action before authoritative refresh');
 menu_editor_assert(strpos($runtime, "if (!applyTypeResponse(data) && state.mode === 'edit')") !== false, 'edit must fail closed when type restoration is invalid');
 menu_editor_assert(strpos($storage, "require_once __DIR__ . '/element_editor_runtime.php';") !== false, 'runtime must be loaded by Menu bootstrap');
 
-menu_editor_assert(strpos($create, "var adminOrder = ['2', '3', '4', '5', '9', '6', '1', '8', '7']") !== false, 'create fallback must use administrator-oriented order');
-menu_editor_assert(strpos($create, "select.find('option[value=\"2\"]')") !== false, 'create fallback must prefer Geeklog Action');
-menu_editor_assert(strpos($create, "select.val('2')") !== false, 'create fallback must select Geeklog Action');
+menu_editor_assert(strpos($create, 'checked="checked"') !== false, 'new elements must be active by default');
 menu_editor_assert(strpos($edit, 'type_options.php') === false, 'edit template must not duplicate authoritative AJAX logic');
 menu_editor_assert(strpos($edit, 'disabled="disabled"') !== false, 'edit save must remain disabled until authoritative runtime initializes');
 
@@ -71,6 +70,7 @@ menu_editor_assert(strpos($types, '2, // Geeklog Action') !== false, 'admin orde
 menu_editor_assert(strpos($types, '9, // Topic') !== false, 'Topic must be explicitly ordered');
 menu_editor_assert(strpos($types, '7, // PHP Function') !== false, 'PHP Function must remain available as advanced type');
 menu_editor_assert(strpos($types, '|| ($currentType !== null && $typeId === $currentType)') !== false, 'stored legacy/current type must always remain representable while editing');
+menu_editor_assert(strpos($types, 'MENU_defaultElementType') !== false, 'central type helper must own create default selection');
 
 menu_editor_assert(strpos($create, 'for="pluginname"') !== false, 'create plugin label must target plugin selector');
 menu_editor_assert(strpos($edit, 'for="pluginname"') !== false, 'edit plugin label must target plugin selector');
