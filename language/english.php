@@ -124,7 +124,7 @@ $LANG_MENU01 = array (
     'gl_header_menu'    => 'Header Menu',
     'plugins'           => 'Plugin',
     'static_pages'      => 'Static Pages',
-    'geeklog_function' => 'Geeklog Function',
+    'geeklog_function'  => 'Action',
     'save'              => 'Save',
     'cancel'            => 'Cancel',
     'action'            => 'Action',
@@ -181,9 +181,9 @@ $LANG_HC = array (
     'main_menu_hover_text_color' => 'Main Menu Text Hover / Sub Menu Text',
 	'menu_bg_filename'           => 'Menu Background Image File Name',
 	'menu_hover_filename'        => 'Menu Hover Image File Name',
-	'menu_parent_filename'       => 'Menu Parent File Name',
-	'menu_alignment'             => 'Menu Alignment',
-	'use_images'                 => 'Use Images',
+	'menu_parent_filename'       => 'Sub Menu Parent Indicator',
+	'menu_alignment'            => 'Menu Alignment',
+	'use_images'                => 'Use Images',
     'submenu_hover_text_color'   => 'Sub Menu Text Hover',
     'submenu_background_color'   => 'Sub Menu BG',
     'submenu_hover_bg_color'     => 'Sub Menu Hover BG',
@@ -258,43 +258,35 @@ $LANG_MENU_ADMIN = array(
     2                   => 'To create a new menu, specify a Menu Name and Menu type below. You can also set the active status, and what group of users will be able to see the menu, with the Active and Visible To fields.',
     3                   => 'Click on the icon under the Edit column to edit a menu item\'s properties. Arrange the items by moving them up or down with the arrows under the Order column.',
     4                   => 'To create a new menu element, specify its details and permissions below.',
-    5                   => 'Once an element is created, you can always go back and edit its details and permissions below.',
-    6                   => 'Menu Builder allows you to easily customize the look and feel of your menus. Adjust the values below to create a unique menu style.',
+    5                   => 'To edit a menu element, modify its details or permissions below.',
 );
 
-$PLG_menu_MESSAGE1 = 'Menu Logo Options Successfully Saved.';
-$PLG_menu_MESSAGE2 = 'Uploaded logo was not a JPG, GIF, or PNG image.';
-$PLG_menu_MESSAGE3 = 'There was a problem upgrading Menu, please check the error log file.';
-$PLG_menu_MMESSAGE4 = 'Logo exceeds the maximum allowed height or width.';
-
-// Messages for the plugin upgrade
-$PLG_menu_MESSAGE3002 = $LANG32[9]; // "requires a newer version of Geeklog"
-
-// Localization of the Admin Configuration UI
-$LANG_configsections['menu'] = array(
-    'label' => 'Menu',
-    'title' => 'Menu Configuration'
+$LANG_MENU_GLTYPES_HELP = array(
+    1                   => 'Displays the standard Geeklog user menu.',
+    2                   => 'Displays the Geeklog administration menu.',
+    3                   => 'Displays the Geeklog topics menu.',
+    4                   => 'Displays Static Pages navigation.',
+    5                   => 'Displays plugin-provided menu items.',
+    6                   => 'Displays the Geeklog header menu.',
 );
 
-$LANG_confignames['menu'] = array(
-    'samplesetting1' => 'Sample Setting #1',
-    'samplesetting2' => 'Sample Setting #2',
+$LANG_MENU_GLFUNCTION_HELP = array(
+    0                   => 'Link to the site home page.',
+    1                   => 'Link to the story submission page.',
+    2                   => 'Link to the article directory.',
+    3                   => 'Link to user preferences.',
+    4                   => 'Link to site search.',
+    5                   => 'Link to site statistics.',
 );
 
-$LANG_configsubgroups['menu'] = array(
-    'sg_main' => 'Main Settings'
+$LANG_MENU_TYPES_HELP = array(
+    1                   => 'Creates a container that may contain child items and can optionally have its own link.',
+    2                   => 'Creates a link to a standard Geeklog action such as Home, Search or Contribute.',
+    3                   => 'Inserts a dynamic Geeklog menu such as the User, Admin or Topics menu.',
+    4                   => 'Creates a link provided by an installed plugin.',
+    5                   => 'Creates a link to a published Static Page.',
+    6                   => 'Creates a link to a custom or external URL.',
+    7                   => 'Calls a PHP function. Use only for trusted, advanced integrations.',
+    8                   => 'Displays text without a built-in destination.',
+    9                   => 'Creates a link to a Geeklog topic.',
 );
-
-$LANG_tab['menu'] = array(
-    'tab_main' => 'Menu Main Settings'
-);
-
-$LANG_fs['menu'] = array(
-    'fs_main' => 'Menu Main Settings'
-);
-
-$LANG_configselects['menu'] = array(
-    0 => array('True' => 1, 'False' => 0),
-    1 => array('True' => true, 'False' => false)
-);
-?>
