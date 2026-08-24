@@ -1,5 +1,12 @@
-  <div class="glfform">
-    <form method="post" action="{form_action}" id="newitem">
+<style type="text/css">
+#staticpage,
+#topic {
+    display: none;
+}
+</style>
+
+<div class="glfform">
+  <form method="post" action="{form_action}" id="newitem">
     <div>
     <input type="hidden" id="menunid" name="menuid" value="{menuid}"{xhtml}>
       <div id="parentdiv" class="required">
@@ -70,14 +77,48 @@
     </div>
   </div>
   </form>
-  </div>
+</div>
 
 <script type="text/javascript">
 jQuery(function () {
+    var select = jQuery('#menutype');
     var panels = '#urldiv,#targetdiv,#glfunc,#glcorediv,#plugin,#staticpage,#topic,#phpdiv';
+    var adminOrder = ['2', '3', '4', '5', '9', '6', '1', '8', '7'];
+
+    function orderTypes() {
+        var options = {};
+        var remaining = [];
+
+        select.find('option').each(function () {
+            var option = jQuery(this).detach();
+            var value = String(option.val());
+            options[value] = option;
+            remaining.push(value);
+        });
+
+        jQuery.each(adminOrder, function (index, value) {
+            if (options[value]) {
+                select.append(options[value]);
+                delete options[value];
+            }
+        });
+
+        jQuery.each(remaining, function (index, value) {
+            if (options[value]) {
+                select.append(options[value]);
+                delete options[value];
+            }
+        });
+
+        if (select.find('option[value="2"]').length) {
+            select.val('2');
+        } else if (select.find('option').length) {
+            select.prop('selectedIndex', 0);
+        }
+    }
 
     function syncElementFields() {
-        var type = String(jQuery('#menutype').val() || '');
+        var type = String(select.val() || '');
         jQuery(panels).hide();
 
         switch (type) {
@@ -110,34 +151,8 @@ jQuery(function () {
         }
     }
 
-    jQuery('#menutype').off('change.menuElementEditor').on('change.menuElementEditor', syncElementFields);
-
-    jQuery.getJSON(
-        '{site_admin_url}/plugins/menu/type_options.php',
-        {menu: '{menuid}'},
-        function (data) {
-            var select = jQuery('#menutype');
-            if (!select.length || !data || !data.types) {
-                syncElementFields();
-                return;
-            }
-
-            select.empty();
-            jQuery.each(data.types, function (index, item) {
-                select.append(
-                    jQuery('<option></option>')
-                        .attr('value', item.id)
-                        .text(item.label)
-                );
-            });
-
-            if (data.defaultType !== null && typeof data.defaultType !== 'undefined') {
-                select.val(String(data.defaultType));
-            }
-            syncElementFields();
-        }
-    ).fail(function () {
-        syncElementFields();
-    });
+    orderTypes();
+    select.off('change.menuElementEditor').on('change.menuElementEditor', syncElementFields);
+    syncElementFields();
 });
 </script>
