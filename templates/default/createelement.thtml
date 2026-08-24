@@ -18,6 +18,7 @@
         <p><label for="menutype">{LANG_MENU01[type]}:</label>
         {type_select}</p>
       </div>
+
       <div id="urldiv" class="required" style="display:none;">
         <p><label for="menuurl">{LANG_MENU01[url]}:</label>
         <input type="text" id="menuurl" name="menuurl" size="48" value="{menuurl}"{xhtml}></p>
@@ -31,27 +32,30 @@
         </select></p>
       </div>
 
-      <div id="phpdiv" class="required" style="display:none;">
-        <p><label for="phpfunction">{LANG_MENU01[php]}:</label>
-        <input type="text" id="phpfunction" name="phpfunction" size="48" value="{phpfunction}"{xhtml}></p>
+      <div id="glfunc" class="optional" style="display:none;">
+        <p><label for="glfunction">{LANG_MENU01[geeklog_function]}:</label>
+        {glfunction_select}</p>
       </div>
+
       <div id="glcorediv" class="optional" style="display:none;">
         <p><label for="gltype">{LANG_MENU01[coretype]}:</label>
         {gl_select}</p>
       </div>
+
       <div id="plugin" class="optional" style="display:none;">
         <p><label for="pluginname">{LANG_MENU01[plugins]}:</label>
         {plugin_select}</p>
       </div>
 
-      <div id="staticpage-wrapper" style="display:none;">{sp_select}</div>
+      {sp_select}
 
-      <div id="topic-wrapper" style="display:none;">{topic_select}</div>
+      {topic_select}
 
-      <div id="glfunc" class="optional" style="display:none;">
-        <p><label for="glfunction">{LANG_MENU01[geeklog_function]}:</label>
-        {glfunction_select}</p>
+      <div id="phpdiv" class="required" style="display:none;">
+        <p><label for="phpfunction">{LANG_MENU01[php]}:</label>
+        <input type="text" id="phpfunction" name="phpfunction" size="48" value="{phpfunction}"{xhtml}></p>
       </div>
+
       <div class="required">
         <p><label for="menuactive">{LANG_MENU01[active]}:</label>
         <input type="checkbox" id="menuactive" name="menuactive" value="1"{xhtml}></p>
@@ -70,40 +74,43 @@
 
 <script type="text/javascript">
 jQuery(function () {
+    var panels = '#urldiv,#targetdiv,#glfunc,#glcorediv,#plugin,#staticpage,#topic,#phpdiv';
+
     function syncElementFields() {
         var type = String(jQuery('#menutype').val() || '');
-        jQuery('#urldiv,#targetdiv,#glcorediv,#plugin,#staticpage-wrapper,#glfunc,#phpdiv,#topic-wrapper').hide();
+        jQuery(panels).hide();
 
         switch (type) {
-            case '1':
+            case '1': // Submenu: optional clickable URL
                 jQuery('#urldiv').show();
                 break;
-            case '2':
+            case '2': // Geeklog Action
                 jQuery('#glfunc').show();
                 break;
-            case '3':
+            case '3': // Geeklog Core
                 jQuery('#glcorediv').show();
                 break;
-            case '4':
+            case '4': // Plugin
                 jQuery('#plugin').show();
                 break;
-            case '5':
-                jQuery('#staticpage-wrapper').show();
+            case '5': // Static Page
+                jQuery('#staticpage').show();
                 break;
-            case '6':
+            case '6': // External URL
                 jQuery('#urldiv,#targetdiv').show();
                 break;
-            case '7':
+            case '7': // PHP Function
                 jQuery('#phpdiv').show();
                 break;
-            case '9':
-                jQuery('#topic-wrapper').show();
+            case '8': // Label only
+                break;
+            case '9': // Topic
+                jQuery('#topic').show();
                 break;
         }
     }
 
     jQuery('#menutype').off('change.menuElementEditor').on('change.menuElementEditor', syncElementFields);
-    syncElementFields();
 
     jQuery.getJSON(
         '{site_admin_url}/plugins/menu/type_options.php',
@@ -111,6 +118,7 @@ jQuery(function () {
         function (data) {
             var select = jQuery('#menutype');
             if (!select.length || !data || !data.types) {
+                syncElementFields();
                 return;
             }
 
@@ -123,8 +131,13 @@ jQuery(function () {
                 );
             });
 
+            if (data.defaultType !== null && typeof data.defaultType !== 'undefined') {
+                select.val(String(data.defaultType));
+            }
             syncElementFields();
         }
-    );
+    ).fail(function () {
+        syncElementFields();
+    });
 });
 </script>
