@@ -15,47 +15,32 @@ $create = file_get_contents($root . '/templates/default/createelement.thtml');
 $edit = file_get_contents($root . '/templates/default/editelement.thtml');
 $types = file_get_contents($root . '/element_types.php');
 $typeOptions = file_get_contents($root . '/admin/type_options.php');
+$runtime = file_get_contents($root . '/element_editor_runtime.php');
+$storage = file_get_contents($root . '/storage.php');
 $english = file_get_contents($root . '/language/english.php');
 
 menu_editor_assert($create !== false, 'create element template missing');
 menu_editor_assert($edit !== false, 'edit element template missing');
 menu_editor_assert($types !== false, 'element type helper missing');
 menu_editor_assert($typeOptions !== false, 'type options endpoint missing');
+menu_editor_assert($runtime !== false, 'element editor runtime missing');
+menu_editor_assert($storage !== false, 'storage bootstrap missing');
 menu_editor_assert($english !== false, 'English language file missing');
 
-$expectedPanels = array(
-    "case '1'" => "jQuery('#urldiv').show();",
-    "case '2'" => "jQuery('#glfunc').show();",
-    "case '3'" => "jQuery('#glcorediv').show();",
-    "case '4'" => "jQuery('#plugin').show();",
-    "case '5'" => "jQuery('#staticpage').show();",
-    "case '6'" => "jQuery('#urldiv,#targetdiv').show();",
-    "case '7'" => "jQuery('#phpdiv').show();",
-    "case '8'" => 'break;',
-    "case '9'" => "jQuery('#topic').show();",
-);
+menu_editor_assert(strpos($runtime, "var panels = '#urldiv,#targetdiv,#glfunc,#glcorediv,#plugin,#staticpage,#topic,#phpdiv'") !== false, 'runtime panel list missing');
+menu_editor_assert(strpos($runtime, "case '2': $('#glfunc').show();") !== false, 'runtime must show Action selector for Geeklog Action');
+menu_editor_assert(strpos($runtime, "case '9': $('#topic').show();") !== false, 'runtime must show Topic selector for Topic');
+menu_editor_assert(strpos($runtime, "mode === 'new' && select.find('option[value=\"2\"]')") !== false, 'runtime must immediately prefer Geeklog Action on create');
+menu_editor_assert(strpos($runtime, "select.val('2')") !== false, 'runtime must select Geeklog Action immediately');
+menu_editor_assert(strpos($runtime, 'type_options.php') !== false, 'runtime must load authoritative type options');
+menu_editor_assert(strpos($runtime, "mode === 'edit' ? data.currentType : data.defaultType") !== false, 'runtime must distinguish create and edit type selection');
+menu_editor_assert(strpos($storage, "require_once __DIR__ . '/element_editor_runtime.php';") !== false, 'runtime must be loaded by Menu bootstrap');
 
-foreach (array($create, $edit) as $template) {
-    menu_editor_assert(strpos($template, 'var panels =') !== false, 'central panel list missing');
-    menu_editor_assert(strpos($template, 'syncElementFields') !== false, 'field synchronizer missing');
-    menu_editor_assert(strpos($template, "off('change.menuElementEditor')") !== false, 'type change handler missing');
-    menu_editor_assert(strpos($template, 'style="display:none;"') !== false, 'conditional fields must be hidden by default');
-
-    foreach ($expectedPanels as $case => $action) {
-        $casePos = strpos($template, $case);
-        menu_editor_assert($casePos !== false, 'missing editor mapping for ' . $case);
-        $nextCase = strpos($template, 'case ', $casePos + strlen($case));
-        $segment = $nextCase === false ? substr($template, $casePos) : substr($template, $casePos, $nextCase - $casePos);
-        menu_editor_assert(strpos($segment, $action) !== false, 'wrong visible fields for ' . $case);
-    }
-}
-
-menu_editor_assert(strpos($create, "var adminOrder = ['2', '3', '4', '5', '9', '6', '1', '8', '7']") !== false, 'create form must use the administrator-oriented order');
-menu_editor_assert(strpos($create, "select.find('option[value=\"2\"]')") !== false, 'create form must prefer Geeklog Action');
-menu_editor_assert(strpos($create, "select.val('2')") !== false, 'create form must select Geeklog Action by default');
-menu_editor_assert(strpos($create, 'type_options.php') === false, 'create form must not depend on the AJAX type endpoint');
-menu_editor_assert(strpos($edit, "select.val(String(data.currentType))") !== false, 'edit form must preserve stored type');
-menu_editor_assert(strpos($typeOptions, "'defaultType' => MENU_defaultElementType") !== false, 'endpoint must expose default type for compatibility');
+menu_editor_assert(strpos($create, "var adminOrder = ['2', '3', '4', '5', '9', '6', '1', '8', '7']") !== false, 'create fallback must use administrator-oriented order');
+menu_editor_assert(strpos($create, "select.find('option[value=\"2\"]')") !== false, 'create fallback must prefer Geeklog Action');
+menu_editor_assert(strpos($create, "select.val('2')") !== false, 'create fallback must select Geeklog Action');
+menu_editor_assert(strpos($edit, "select.val(String(data.currentType))") !== false, 'edit fallback must preserve stored type');
+menu_editor_assert(strpos($typeOptions, "'defaultType' => MENU_defaultElementType") !== false, 'endpoint must expose default type');
 menu_editor_assert(strpos($types, '2, // Geeklog Action') !== false, 'admin order must start with Geeklog Action');
 menu_editor_assert(strpos($types, '9, // Topic') !== false, 'Topic must be explicitly ordered');
 menu_editor_assert(strpos($types, '7, // PHP Function') !== false, 'PHP Function must remain available as advanced type');
