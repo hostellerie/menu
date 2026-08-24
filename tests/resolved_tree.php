@@ -35,7 +35,6 @@ $Menus = array();
 function COM_getLanguageId() { return ''; }
 function COM_applyFilter($value) { return $value; }
 function COM_isAnonUser() { return false; }
-function COM_buildUrl($url) { return $url; }
 function COM_buildURL($url) { return $url; }
 function COM_getCurrentURL() { return 'https://example.test/'; }
 function COM_numberFormat($number) { return (string) $number; }
