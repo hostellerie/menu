@@ -45,7 +45,8 @@ menu_editor_assert(strpos($runtime, 'data.currentSubtype, data.resource') !== fa
 menu_editor_assert(strpos($runtime, 'type_options.php') !== false, 'runtime must load type labels only after Geeklog initialization');
 menu_editor_assert(strpos($runtime, "data.types.length === 0") !== false, 'runtime must reject an empty authoritative type list');
 menu_editor_assert(strpos($runtime, 'select.empty();') !== false, 'runtime must replace the type list after a valid response');
-menu_editor_assert(strpos($runtime, "state.mode === 'new' && select.find('option[value=\"2\"]')") !== false, 'create runtime must prefer Geeklog Action before authoritative refresh');
+menu_editor_assert(strpos($runtime, "state.mode === 'new'") !== false, 'runtime must contain create-specific initialization');
+menu_editor_assert(strpos($runtime, "select.val('2')") !== false, 'create runtime must prefer Geeklog Action before authoritative refresh');
 menu_editor_assert(strpos($runtime, "if (!applyTypeResponse(data) && state.mode === 'edit')") !== false, 'edit must fail closed when type restoration is invalid');
 menu_editor_assert(strpos($storage, "require_once __DIR__ . '/element_editor_runtime.php';") !== false, 'runtime must be loaded by Menu bootstrap');
 
