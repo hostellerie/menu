@@ -120,7 +120,7 @@ $editStart = strpos($views, 'function MENU_editElement');
 $editEnd = strpos($views, 'function MENU_menuConfig', $editStart);
 $editBody = substr($views, $editStart, $editEnd - $editStart);
 if (strpos($editBody, 'array_flip(MENU_adminDescendantIds($menu_id, $mid))') === false
-    || strpos($editBody, "isset($blockedParentIds[(int) $row['id']])") === false) {
+    || strpos($editBody, 'isset($blockedParentIds[(int) $row[\'id\']])') === false) {
     fwrite(STDERR, "Edit parent selector does not filter descendants\n");
     exit(1);
 }
