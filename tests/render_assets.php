@@ -55,7 +55,7 @@ menu_render_test_assert(
     'SlickNav loading must use a dedicated need flag'
 );
 menu_render_test_assert(
-    strpos($functions, "(int) $menu['menu_type'] === 1") !== false,
+    strpos($functions, "(int) \$menu['menu_type'] === 1") !== false,
     'SlickNav assets must be limited to horizontal cascading menus'
 );
 menu_render_test_assert(
