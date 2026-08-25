@@ -1,0 +1,20 @@
+name: Temporary Menu SQL XSS audit
+
+on:
+  push:
+    branches:
+      - modernize-1.3.0
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: SQL calls
+        run: |
+          echo '=== SQL calls ==='
+          grep -RInE 'DB_(query|save|getItem)\(' --include='*.php' --include='*.inc' . | grep -v '/tests/' || true
+      - name: Direct HTML assembly hotspots
+        run: |
+          echo '=== HTML assembly ==='
+          grep -RInE "(value=\\\".*\\$|>.*\\$[A-Za-z_]|alt=\\\".*\\$|title=\\\".*\\$)" admin classes --include='*.php' || true
