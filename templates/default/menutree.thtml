@@ -8,6 +8,27 @@
 
 <div id="menu-order-token" style="display:none;">{security_token_input}</div>
 
+<style type="text/css">
+#menu_table tbody tr > td:nth-last-child(2) {
+    position: relative;
+    cursor: grab;
+    text-align: center;
+    font-size: 18px;
+    line-height: 1;
+    user-select: none;
+    white-space: nowrap;
+}
+#menu_table tbody tr > td:nth-last-child(2) form {
+    display: none;
+}
+#menu_table tbody tr > td:nth-last-child(2)::after {
+    content: "\22EE\22EE";
+}
+#menu_table tbody tr > td:last-child {
+    display: none;
+}
+</style>
+
 <div>
   <table style="width:100%;" class="tbl_repeat" id="menu_table" name="menu_table" data-menuid="{menuid}" data-post-url="{site_admin_url}/plugins/menu/index.php">
     <tr>
@@ -16,7 +37,7 @@
       <th class="aligncenter" style="text-align:center;">{LANG_MENU01[info]}</th>
       <th class="aligncenter" style="text-align:center;">{LANG_MENU01[edit]}</th>
       <th class="aligncenter" style="text-align:center;">{LANG_MENU01[delete]}</th>
-      <th colspan="2" style="text-align:center;">{LANG_MENU01[order]}</th>
+      <th class="aligncenter" style="text-align:center;">{LANG_MENU01[order]}</th>
     </tr>
 	<tbody>
     {menu_tree}
