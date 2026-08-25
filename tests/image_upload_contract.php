@@ -13,6 +13,8 @@ define('VERSION', '2.2.2');
 $root = dirname(__DIR__);
 $helper = file_get_contents($root . '/image_upload.php');
 $admin = file_get_contents($root . '/admin/index.php');
+$mutations = file_get_contents($root . '/admin_menu_mutations.php');
+$adminCode = $admin . "\n" . $mutations;
 $sql = file_get_contents($root . '/sql/mysql_install.php');
 
 assertTrue(strpos($helper, 'is_uploaded_file($tmpName)') !== false, 'real PHP upload required');
@@ -26,9 +28,9 @@ assertTrue(strpos($helper, 'MENU_imageDir()') !== false, 'site-specific image di
 assertTrue(strpos($helper, "basename((string) \$oldFilename)") !== false, 'old filename constrained to basename');
 
 assertTrue(strpos($admin, "plugins/menu/image_upload.php") !== false, 'upload helper loaded');
-assertTrue(strpos($admin, "MENU_storeLegacyImageUpload") !== false, 'centralized upload helper used');
-assertTrue(strpos($admin, "\$file['type']") === false, 'browser supplied MIME is not trusted');
-assertTrue(strpos($admin, "path_html'] . 'images/menu/") === false, 'legacy hard-coded upload path removed');
+assertTrue(strpos($mutations, "MENU_storeLegacyImageUpload") !== false, 'centralized upload helper used');
+assertTrue(strpos($adminCode, "\$file['type']") === false, 'browser supplied MIME is not trusted');
+assertTrue(strpos($adminCode, "path_html'] . 'images/menu/") === false, 'legacy hard-coded upload path removed');
 
 assertTrue(strpos($sql, "'use_images', '1'") === false, 'fresh install does not enable missing image assets');
 assertTrue(strpos($sql, "'menu_bg_filename', 'menu_bg.gif'") === false, 'missing background default removed');
