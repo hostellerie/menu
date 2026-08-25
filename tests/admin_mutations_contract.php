@@ -34,10 +34,9 @@ if (strpos($index, "admin_menu_mutations.php") === false) {
     exit(1);
 }
 
-
 $forbiddenIndexSql = array(
-    "UPDATE {$_TABLES['menu_elements']} SET element_order=",
-    "UPDATE {$_TABLES['menu_config']} SET enabled",
+    'UPDATE {$_TABLES[\'menu_elements\']} SET element_order=',
+    'UPDATE {$_TABLES[\'menu_config\']} SET enabled',
     'MENU_deleteChildElements($id, $menu_id)',
 );
 foreach ($forbiddenIndexSql as $needle) {
