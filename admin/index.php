@@ -1239,8 +1239,11 @@ function MENU_saveEditMenuElement ( ) {
             $subtype = Geeklog\Input::fPost('spname');
             break;
         case 6 :
-            $subtype = Geeklog\Input::fPost('menuurl');
-            if ( strpos($subtype,"http") !== 0 && strpos($subtype,"%site") === false && $subtype[0] != '#' && rtrim($subtype) != '' ) {
+            $subtype = trim(Geeklog\Input::fPost('menuurl'));
+            if ($subtype !== ''
+                && strpos($subtype, "http") !== 0
+                && strpos($subtype, "%site") === false
+                && $subtype[0] != '#') {
                 $subtype = 'http://' . $subtype;
             }
             break;
@@ -1258,7 +1261,10 @@ function MENU_saveEditMenuElement ( ) {
     $active = (int) Geeklog\Input::fPost('menuactive');
     $url    = trim(Geeklog\Input::fPost('menuurl'));
 
-    if (strpos($url,"http") !== 0 && strpos($url,"%site") === false && $url[0] != '#' && rtrim($url) != '') {
+    if ($url !== ''
+        && strpos($url, "http") !== 0
+        && strpos($url, "%site") === false
+        && $url[0] != '#') {
         $url = 'http://' . $url;
     }
 
