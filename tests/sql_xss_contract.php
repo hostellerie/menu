@@ -28,7 +28,7 @@ assertTrue(strpos($class, '$label    = MENU_dbEscape($this->label);') !== false,
 assertTrue(strpos($class, 'MENU_safeHref($this->url)') !== false, 'legacy href uses safe URL helper');
 assertTrue(strpos($class, 'strip_tags($this->label)') === false, 'legacy label output no longer uses strip_tags alone');
 assertTrue(strpos($mutations, 'WHERE id=$id AND menu_id=$menu_id') !== false, 'element update scoped to menu');
-assertTrue(strpos($admin, "preg_match('/^mid_([1-9][0-9]*)$/', \$rowId") !== false, 'drag IDs validated');
+assertTrue(strpos($mutations, "preg_match('/^mid_([1-9][0-9]*)$/', \$rowId") !== false, 'drag IDs validated');
 assertTrue(strpos($functions, '$menuIDSql = MENU_dbEscape($menuID);') !== false, 'autotag menu name escaped');
 assertTrue(strpos($class, "MENU_safeHref(\$url)") !== false, 'dynamic legacy URLs use safe href helper');
 assertTrue(strpos($class, "MENU_escapeStoredText(\$label)") !== false, 'dynamic legacy labels are escaped');
