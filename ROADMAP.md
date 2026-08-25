@@ -39,7 +39,7 @@ The checklist below remains the release checklist. This section records the actu
 
 - Phase 2 CSRF: mutation inventory, explicit tokens and server-side enforcement are implemented; all state-changing controller modes are POST-only and destructive move/delete actions now use native POST forms. The transitional JavaScript token/GET bridge has been removed.
 - Phase 2 SQL safety: numeric casting is partial; create/edit SQL and `DB_save()` string escaping still need a complete audit. Legacy element ID generation also remains to be reviewed.
-- Phase 2 output/upload safety: not yet fully audited.
+- Phase 2 upload safety: legacy presentation-image uploads are centralized, content-validated and site-specific; broader output/CSS review remains in progress.
 - Phase 5 database modernization: not started beyond preserving the existing schema during current work.
 - Phase 6 cache/performance: storage separation is implemented, but cache keys, invalidation and query behavior still need a full audit.
 - Phase 7 maintainability: compatibility/path/security helpers have been split out, but `admin/index.php` and the duplicated menu element classes remain major cleanup targets.
@@ -161,13 +161,13 @@ $_CONF['path_images'] . 'menu/'
 
 ### Upload security
 
-- [ ] Validate uploads with `is_uploaded_file()`.
-- [ ] Detect MIME type server-side.
-- [ ] Keep a strict PNG/GIF/JPEG allow-list unless formats are intentionally expanded.
-- [ ] Validate image contents and dimensions.
-- [ ] Add file-size and dimension limits.
-- [ ] Generate server-side filenames.
-- [ ] Fix inconsistent old-image deletion paths.
+- [x] Validate uploads with `is_uploaded_file()`.
+- [x] Detect image type server-side from image contents.
+- [x] Keep a strict PNG/GIF/JPEG allow-list unless formats are intentionally expanded.
+- [x] Validate image contents and dimensions.
+- [x] Add file-size and dimension limits.
+- [x] Generate server-side filenames.
+- [x] Fix inconsistent old-image deletion paths.
 
 ## Phase 3 — Geeklog 2.1.1 → 2.2.2 compatibility
 

@@ -43,6 +43,7 @@
 require_once '../../../lib-common.php';
 require_once '../../auth.inc.php';
 require_once $_CONF['path'].'system/lib-admin.php';
+require_once $_CONF['path'].'plugins/menu/image_upload.php';
 
 $display = '';
 
@@ -328,10 +329,10 @@ function MENU_saveNewMenu( ) {
             DB_save($_TABLES['menu_config'],"menu_id,conf_name,conf_value","$menu_id,'submenu_hover_bg_color','#333333'");
             DB_save($_TABLES['menu_config'],"menu_id,conf_name,conf_value","$menu_id,'submenu_highlight_color','#151515'");
             DB_save($_TABLES['menu_config'],"menu_id,conf_name,conf_value","$menu_id,'submenu_shadow_color','#151515'");
-            DB_save($_TABLES['menu_config'],"menu_id,conf_name,conf_value","$menu_id,'use_images','1'");
-            DB_save($_TABLES['menu_config'],"menu_id,conf_name,conf_value","$menu_id,'menu_bg_filename','menu_bg.gif'");
-            DB_save($_TABLES['menu_config'],"menu_id,conf_name,conf_value","$menu_id,'menu_hover_filename','menu_hover_bg.gif'");
-            DB_save($_TABLES['menu_config'],"menu_id,conf_name,conf_value","$menu_id,'menu_parent_filename','menu_parent.png'");
+            DB_save($_TABLES['menu_config'],"menu_id,conf_name,conf_value","$menu_id,'use_images','0'");
+            DB_save($_TABLES['menu_config'],"menu_id,conf_name,conf_value","$menu_id,'menu_bg_filename',''");
+            DB_save($_TABLES['menu_config'],"menu_id,conf_name,conf_value","$menu_id,'menu_hover_filename',''");
+            DB_save($_TABLES['menu_config'],"menu_id,conf_name,conf_value","$menu_id,'menu_parent_filename',''");
             DB_save($_TABLES['menu_config'],"menu_id,conf_name,conf_value","$menu_id,'menu_alignment','1'");
             break;
         case 2:
@@ -345,10 +346,10 @@ function MENU_saveNewMenu( ) {
             DB_save($_TABLES['menu_config'],"menu_id,conf_name,conf_value","$menu_id,'submenu_hover_bg_color','#333333'");
             DB_save($_TABLES['menu_config'],"menu_id,conf_name,conf_value","$menu_id,'submenu_highlight_color','#151515'");
             DB_save($_TABLES['menu_config'],"menu_id,conf_name,conf_value","$menu_id,'submenu_shadow_color','#151515'");
-            DB_save($_TABLES['menu_config'],"menu_id,conf_name,conf_value","$menu_id,'use_images','1'");
-            DB_save($_TABLES['menu_config'],"menu_id,conf_name,conf_value","$menu_id,'menu_bg_filename','menu_bg.gif'");
-            DB_save($_TABLES['menu_config'],"menu_id,conf_name,conf_value","$menu_id,'menu_hover_filename','menu_hover_bg.gif'");
-            DB_save($_TABLES['menu_config'],"menu_id,conf_name,conf_value","$menu_id,'menu_parent_filename','menu_parent.png'");
+            DB_save($_TABLES['menu_config'],"menu_id,conf_name,conf_value","$menu_id,'use_images','0'");
+            DB_save($_TABLES['menu_config'],"menu_id,conf_name,conf_value","$menu_id,'menu_bg_filename',''");
+            DB_save($_TABLES['menu_config'],"menu_id,conf_name,conf_value","$menu_id,'menu_hover_filename',''");
+            DB_save($_TABLES['menu_config'],"menu_id,conf_name,conf_value","$menu_id,'menu_parent_filename',''");
             DB_save($_TABLES['menu_config'],"menu_id,conf_name,conf_value","$menu_id,'menu_alignment','1'");
             break;
         case 3:
@@ -363,10 +364,10 @@ function MENU_saveNewMenu( ) {
             DB_save($_TABLES['menu_config'],"menu_id,conf_name,conf_value","$menu_id,'submenu_hover_bg_color','#BBBBBB'");
             DB_save($_TABLES['menu_config'],"menu_id,conf_name,conf_value","$menu_id,'submenu_highlight_color','#999999'");
             DB_save($_TABLES['menu_config'],"menu_id,conf_name,conf_value","$menu_id,'submenu_shadow_color','#999999'");
-            DB_save($_TABLES['menu_config'],"menu_id,conf_name,conf_value","$menu_id,'use_images','1'");
-            DB_save($_TABLES['menu_config'],"menu_id,conf_name,conf_value","$menu_id,'menu_bg_filename','menu_bg.gif'");
-            DB_save($_TABLES['menu_config'],"menu_id,conf_name,conf_value","$menu_id,'menu_hover_filename','menu_hover_bg.gif'");
-            DB_save($_TABLES['menu_config'],"menu_id,conf_name,conf_value","$menu_id,'menu_parent_filename','vmenu_parent.gif'");
+            DB_save($_TABLES['menu_config'],"menu_id,conf_name,conf_value","$menu_id,'use_images','0'");
+            DB_save($_TABLES['menu_config'],"menu_id,conf_name,conf_value","$menu_id,'menu_bg_filename',''");
+            DB_save($_TABLES['menu_config'],"menu_id,conf_name,conf_value","$menu_id,'menu_hover_filename',''");
+            DB_save($_TABLES['menu_config'],"menu_id,conf_name,conf_value","$menu_id,'menu_parent_filename',''");
             DB_save($_TABLES['menu_config'],"menu_id,conf_name,conf_value","$menu_id,'menu_alignment','1'");
             break;
     }
@@ -1724,107 +1725,32 @@ function MENU_saveMenuConfig($menu_id=0) {
         DB_save($_TABLES['menu_config'], 'menu_id,conf_name,conf_value', "$menu_id,'$nameSql','$valueSql'");
     }
 
-    $file = array();
-    $file = $_FILES['bgimg'];
-    if ( isset($file['tmp_name']) && $file['tmp_name'] != '' ) {
+    // Optional images belong only to the legacy renderer. Validate them from
+    // their actual file contents and store them in the site-specific Geeklog
+    // image directory. Existing images are preserved when no valid replacement
+    // is uploaded.
+    $imageUploads = array(
+        'bgimg' => array('prefix' => 'menu_bg', 'config' => 'menu_bg_filename'),
+        'hvimg' => array('prefix' => 'menu_hover_bg', 'config' => 'menu_hover_filename'),
+        'piimg' => array('prefix' => 'menu_parent', 'config' => 'menu_parent_filename'),
+    );
 
-        switch ( $file['type'] ) {
-            case 'image/png' :
-            case 'image/x-png' :
-                $ext = '.png';
-                break;
-            case 'image/gif' :
-                $ext = '.gif';
-                break;
-            case 'image/jpg' :
-            case 'image/jpeg' :
-            case 'image/pjpeg' :
-                $ext = '.jpg';
-                break;
-            default :
-                $ext = 'unknown';
-                $retval = 2;
-                break;
-        }
-        if ( $ext != 'unknown' ) {
-            $imgInfo = @getimagesize($file['tmp_name']);
-            if ( $imgInfo != false ) {
-                $newFilename = 'menu_bg' . substr(md5(uniqid(rand())),0,8) . $ext;
-                $rc = move_uploaded_file($file['tmp_name'],$_CONF['path_html'] . 'images/menu/' . $newFilename);
-                if ( $rc ) {
-                    @unlink($_CONF['path_html'] . '/menu/images/' . $Menus[$menu_id]['config']['bgimage']);
-                    $newFilenameSql = MENU_dbEscape($newFilename);
-                    DB_save($_TABLES['menu_config'], 'menu_id,conf_name,conf_value', "$menu_id,'menu_bg_filename','$newFilenameSql'");
-                }
-            }
-        }
-    }
-    $file = array();
-    $file = $_FILES['hvimg'];
-    if ( isset($file['tmp_name']) && $file['tmp_name'] != '' ) {
-        switch ( $file['type'] ) {
-            case 'image/png' :
-            case 'image/x-png' :
-                $ext = '.png';
-                break;
-            case 'image/gif' :
-                $ext = '.gif';
-                break;
-            case 'image/jpg' :
-            case 'image/jpeg' :
-            case 'image/pjpeg' :
-                $ext = '.jpg';
-                break;
-            default :
-                $ext = 'unknown';
-                $retval = 2;
-                break;
-        }
-        if ( $ext != 'unknown' ) {
-            $imgInfo = @getimagesize($file['tmp_name']);
-            if ( $imgInfo != false ) {
-                $newFilename = 'menu_hover_bg' . substr(md5(uniqid(rand())),0,8) . $ext;
-                $rc = move_uploaded_file($file['tmp_name'],$_CONF['path_html'] . 'images/menu/' . $newFilename);
-                if ( $rc ) {
-                    @unlink($_CONF['path_html'] . '/menu/images/' . $Menus[$menu_id]['config']['hoverimage']);
-                    $newFilenameSql = MENU_dbEscape($newFilename);
-                    DB_save($_TABLES['menu_config'], 'menu_id,conf_name,conf_value', "$menu_id,'menu_hover_filename','$newFilenameSql'");
-                }
-            }
-        }
-    }
-    $file = array();
-    $file = $_FILES['piimg'];
-    if ( isset($file['tmp_name']) && $file['tmp_name'] != '' ) {
-        switch ( $file['type'] ) {
-            case 'image/png' :
-            case 'image/x-png' :
-                $ext = '.png';
-                break;
-            case 'image/gif' :
-                $ext = '.gif';
-                break;
-            case 'image/jpg' :
-            case 'image/jpeg' :
-            case 'image/pjpeg' :
-                $ext = '.jpg';
-                break;
-            default :
-                $ext = 'unknown';
-                $retval = 2;
-                break;
-        }
-        if ( $ext != 'unknown' ) {
-            $imgInfo = @getimagesize($file['tmp_name']);
-            if ( $imgInfo != false ) {
-                $newFilename = 'menu_parent' . substr(md5(uniqid(rand())),0,8) . $ext;
-                $rc = move_uploaded_file($file['tmp_name'],$_CONF['path_html'] . 'images/menu/' . $newFilename);
-                if ( $rc ) {
-                    @unlink($_CONF['path_html'] . '/menu/images/' . $Menus[$menu_id]['config']['parentimage']);
-                    $newFilenameSql = MENU_dbEscape($newFilename);
-                    DB_save($_TABLES['menu_config'], 'menu_id,conf_name,conf_value', "$menu_id,'menu_parent_filename','$newFilenameSql'");
-                }
-            }
+    foreach ($imageUploads as $field => $settings) {
+        $file = isset($_FILES[$field]) ? $_FILES[$field] : array();
+        $configName = $settings['config'];
+        $oldFilename = isset($Menus[$menu_id]['config'][$configName])
+            ? $Menus[$menu_id]['config'][$configName]
+            : '';
+        $newFilename = MENU_storeLegacyImageUpload($file, $settings['prefix'], $oldFilename);
+
+        if ($newFilename !== '') {
+            $configNameSql = MENU_dbEscape($configName);
+            $newFilenameSql = MENU_dbEscape($newFilename);
+            DB_save(
+                $_TABLES['menu_config'],
+                'menu_id,conf_name,conf_value',
+                "$menu_id,'$configNameSql','$newFilenameSql'"
+            );
         }
     }
     MENU_CACHE_remove_instance('menu');
@@ -2003,10 +1929,10 @@ if ( (isset($_POST['execute']) || $mode != '') && !isset($_POST['cancel']) && !i
             DB_save($_TABLES['menu_config'],"menu_id,conf_name,conf_value","$menu_id,'submenu_hover_bg_color','#333333'");
             DB_save($_TABLES['menu_config'],"menu_id,conf_name,conf_value","$menu_id,'submenu_highlight_color','#333333'");
             DB_save($_TABLES['menu_config'],"menu_id,conf_name,conf_value","$menu_id,'submenu_shadow_color','#000000'");
-            DB_save($_TABLES['menu_config'],"menu_id,conf_name,conf_value","$menu_id,'use_images','1'");
-            DB_save($_TABLES['menu_config'],"menu_id,conf_name,conf_value","$menu_id,'menu_bg_filename','menu_bg.gif'");
-            DB_save($_TABLES['menu_config'],"menu_id,conf_name,conf_value","$menu_id,'menu_hover_filename','menu_hover_bg.gif'");
-            DB_save($_TABLES['menu_config'],"menu_id,conf_name,conf_value","$menu_id,'menu_parent_filename','menu_parent.png'");
+            DB_save($_TABLES['menu_config'],"menu_id,conf_name,conf_value","$menu_id,'use_images','0'");
+            DB_save($_TABLES['menu_config'],"menu_id,conf_name,conf_value","$menu_id,'menu_bg_filename',''");
+            DB_save($_TABLES['menu_config'],"menu_id,conf_name,conf_value","$menu_id,'menu_hover_filename',''");
+            DB_save($_TABLES['menu_config'],"menu_id,conf_name,conf_value","$menu_id,'menu_parent_filename',''");
             DB_save($_TABLES['menu_config'],"menu_id,conf_name,conf_value","$menu_id,'menu_alignment','1'");
             break;
         case 2: // horizontal simple (footer menu)
@@ -2024,7 +1950,7 @@ if ( (isset($_POST['execute']) || $mode != '') && !isset($_POST['cancel']) && !i
             DB_save($_TABLES['menu_config'],"menu_id,conf_name,conf_value","$menu_id,'submenu_text_color','#0000FF'");
             DB_save($_TABLES['menu_config'],"menu_id,conf_name,conf_value","$menu_id,'submenu_hover_text_color','#FFFFFF'");
             DB_save($_TABLES['menu_config'],"menu_id,conf_name,conf_value","$menu_id,'submenu_highlight_color','#999999'");
-            DB_save($_TABLES['menu_config'],"menu_id,conf_name,conf_value","$menu_id,'menu_parent_filename','vmenu_parent.gif'");
+            DB_save($_TABLES['menu_config'],"menu_id,conf_name,conf_value","$menu_id,'menu_parent_filename',''");
             DB_save($_TABLES['menu_config'],"menu_id,conf_name,conf_value","$menu_id,'menu_alignment','1'");
             break;
     }
