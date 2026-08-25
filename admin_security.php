@@ -228,6 +228,14 @@ function MENU_adminEnforceCsrf()
         MENU_adminRejectInvalidToken();
     }
 
+    // Menu cloning was moved to admin/clone.php in 1.3.0 so the large legacy
+    // controller can no longer run its MAX(id)+1 based clone implementation.
+    if ($mode === 'saveclonemenu') {
+        MENU_adminRejectInvalidRequest(
+            'The legacy clone endpoint is no longer available. Reload the Menu administration page and try again.'
+        );
+    }
+
     $validationError = MENU_adminMutationReferenceError($mode, $_POST);
     if ($validationError === '') {
         $validationError = MENU_adminPostMutationError($mode, $_POST);
