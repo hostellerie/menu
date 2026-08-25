@@ -209,6 +209,9 @@ function MENU_adminEnforceCsrf()
 
     $validationError = MENU_adminMutationReferenceError($mode, $_POST);
     if ($validationError === '') {
+        $validationError = MENU_adminPostMutationError($mode, $_POST);
+    }
+    if ($validationError === '') {
         $validationError = MENU_adminElementMutationError($mode, $_POST);
     }
     if ($validationError !== '') {
