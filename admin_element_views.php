@@ -615,10 +615,14 @@ function MENU_editElement( $menu_id, $mid ) {
     }
     $topic_select .= '</select>' . LB;
 
-    $parent_select = '<select id="pid" name="pid">' . LB;
+        $blockedParentIds = array_flip(MENU_adminDescendantIds($menu_id, $mid));
+$parent_select = '<select id="pid" name="pid">' . LB;
     $parent_select .= '<option value="0">' . $LANG_MENU01['top_level'] . '</option>' . LB;
     $result = DB_query("SELECT id,element_label FROM {$_TABLES['menu_elements']} WHERE menu_id='" . $menu_id . "' AND element_type=1 ORDER BY element_order ASC, id ASC");
     while ($row = DB_fetchArray($result)) {
+        if ((int) $row['id'] === (int) $mid || isset($blockedParentIds[(int) $row['id']])) {
+            continue;
+        }
         if ((int) $row['id'] === (int) $mid) {
             continue;
         }

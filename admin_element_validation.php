@@ -68,6 +68,64 @@ function MENU_adminMenuExists($menuId)
  * @param array  $post
  * @return string
  */
+/**
+ * Return all descendant element IDs for one element in a menu.
+ * The hierarchy is loaded in one query and walked in memory. A visited set
+ * prevents malformed pre-existing data from causing an infinite loop.
+ *
+ * @param int $menuId
+ * @param int $elementId
+ * @return array
+ */
+function MENU_adminDescendantIds($menuId, $elementId)
+{
+    global $_TABLES;
+
+    $menuId = (int) $menuId;
+    $elementId = (int) $elementId;
+    if ($menuId <= 0 || $elementId <= 0 || !isset($_TABLES['menu_elements'])) {
+        return array();
+    }
+
+    $childrenByParent = array();
+    $result = DB_query(
+        'SELECT id,pid FROM ' . $_TABLES['menu_elements']
+        . ' WHERE menu_id=' . $menuId
+    );
+    while ($row = DB_fetchArray($result)) {
+        $id = (int) $row['id'];
+        $pid = (int) $row['pid'];
+        if (!isset($childrenByParent[$pid])) {
+            $childrenByParent[$pid] = array();
+        }
+        $childrenByParent[$pid][] = $id;
+    }
+
+    $descendants = array();
+    $seen = array($elementId => true);
+    $queue = isset($childrenByParent[$elementId])
+        ? $childrenByParent[$elementId]
+        : array();
+
+    while (!empty($queue)) {
+        $id = (int) array_shift($queue);
+        if ($id <= 0 || isset($seen[$id])) {
+            continue;
+        }
+        $seen[$id] = true;
+        $descendants[] = $id;
+        if (isset($childrenByParent[$id])) {
+            foreach ($childrenByParent[$id] as $childId) {
+                if (!isset($seen[(int) $childId])) {
+                    $queue[] = (int) $childId;
+                }
+            }
+        }
+    }
+
+    return $descendants;
+}
+
 function MENU_adminMutationReferenceError($mode, $post)
 {
     global $_TABLES;
@@ -282,6 +340,10 @@ function MENU_adminElementMutationError($mode, $post)
     $pid = isset($post['pid']) ? (int) $post['pid'] : 0;
     if ($pid < 0 || ($mid > 0 && $pid === $mid)) {
         return 'Invalid parent menu element.';
+    }
+    if ($mid > 0 && $pid > 0
+        && in_array($pid, MENU_adminDescendantIds($menuId, $mid), true)) {
+        return 'A menu element cannot use one of its descendants as parent.';
     }
     if ($pid > 0) {
         $parentType = DB_getItem(
