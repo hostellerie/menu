@@ -58,6 +58,9 @@ jobs:
       - name: Test element mutation validation
         run: php tests/admin_element_validation.php
 
+      - name: Test SQL and XSS hardening
+        run: php tests/sql_xss_contract.php
+
       - name: Test tabbed preview contract
         run: php tests/preview_contract.php
 
