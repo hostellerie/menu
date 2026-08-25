@@ -64,6 +64,9 @@ jobs:
       - name: Test legacy image upload hardening
         run: php tests/image_upload_contract.php
 
+      - name: Test legacy CSS security
+        run: php tests/css_security_contract.php
+
       - name: Test tabbed preview contract
         run: php tests/preview_contract.php
 
