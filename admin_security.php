@@ -68,6 +68,11 @@ function MENU_adminRequestMethod()
         : 'GET';
 }
 
+function MENU_adminHasRights()
+{
+    return function_exists('SEC_hasRights') && SEC_hasRights('menu.admin');
+}
+
 function MENU_adminCheckToken()
 {
     return function_exists('SEC_checkToken') && SEC_checkToken();
@@ -158,6 +163,16 @@ function MENU_adminOutputError($status, $title, $message, $allowPost)
     exit;
 }
 
+function MENU_adminRejectAccess()
+{
+    MENU_adminOutputError(
+        '403 Forbidden',
+        'Access Denied',
+        'You do not have permission to modify Menu configuration.',
+        false
+    );
+}
+
 function MENU_adminRejectInvalidToken()
 {
     MENU_adminOutputError(
@@ -197,6 +212,12 @@ function MENU_adminEnforceCsrf()
     $mode = MENU_adminCurrentMode();
     if (!MENU_adminRequestMutates($mode, $_POST)) {
         return;
+    }
+
+    // Authorization must precede method, token and mutation validation so an
+    // unauthorized request cannot probe mutation behavior or token validity.
+    if (!MENU_adminHasRights()) {
+        MENU_adminRejectAccess();
     }
 
     if (MENU_adminModeRequiresPost($mode) && MENU_adminRequestMethod() !== 'POST') {
