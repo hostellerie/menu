@@ -31,7 +31,7 @@ menu_legacy_cleanup_assert(
     'Legacy clone controller branch must be removed'
 );
 menu_legacy_cleanup_assert(
-    strpos($security, "$mode === 'save' || $mode === 'saveclonemenu'") !== false,
+    strpos($security, '$mode === \'save\' || $mode === \'saveclonemenu\'') !== false,
     'Crafted legacy persistence requests must remain explicitly rejected'
 );
 menu_legacy_cleanup_assert(
