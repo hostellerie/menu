@@ -174,24 +174,52 @@ $T->set_file(array('style' => $style_file));
 $T->set_var('under', $under);
 $T->set_var('over', $over);
 $T->set_var('menu_id', $menu_id);
-$T->set_var('site_url', $_CONF['site_url']);
 $T->set_var('url1', '');
 $T->set_var('url2', '');
+$T->set_var('menu_parent_background', '');
 
-$image_url = MENU_imageUrl();
+$colorNames = array(
+    'main_menu_bg_color', 'main_menu_hover_bg_color',
+    'main_menu_text_color', 'main_menu_hover_text_color',
+    'submenu_text_color', 'submenu_hover_text_color',
+    'submenu_background_color', 'submenu_hover_bg_color',
+    'submenu_highlight_color', 'submenu_shadow_color',
+);
 
 if (isset($Menus[$menu_id]['config']) && is_array($Menus[$menu_id]['config'])) {
     foreach ($Menus[$menu_id]['config'] as $name => $value) {
-        if ($name == 'use_images') {
-            if ((int) $value === 1) {
-                $T->set_var('url1', 'url(' . $image_url . '{menu_bg_filename}) repeat-x');
-                $T->set_var('url2', 'url(' . $image_url . '{menu_hover_filename}) repeat-x');
-            }
+        if (in_array($name, $colorNames, true)) {
+            $T->set_var($name, MENU_cssColor($value));
             continue;
         }
-        $T->set_var($name, $value);
+        if ($name === 'menu_bg_filename'
+            || $name === 'menu_hover_filename'
+            || $name === 'menu_parent_filename') {
+            $T->set_var($name, MENU_cssImageFilename($value));
+            continue;
+        }
+        if ($name === 'menu_alignment') {
+            $T->set_var($name, ((int) $value === 1) ? 1 : 0);
+        }
+    }
+
+    if (isset($Menus[$menu_id]['config']['use_images'])
+        && (int) $Menus[$menu_id]['config']['use_images'] === 1) {
+        $T->set_var('url1', MENU_cssImageBackground(
+            isset($Menus[$menu_id]['config']['menu_bg_filename']) ? $Menus[$menu_id]['config']['menu_bg_filename'] : '',
+            'repeat-x'
+        ));
+        $T->set_var('url2', MENU_cssImageBackground(
+            isset($Menus[$menu_id]['config']['menu_hover_filename']) ? $Menus[$menu_id]['config']['menu_hover_filename'] : '',
+            'repeat-x'
+        ));
+        $T->set_var('menu_parent_background', MENU_cssImageBackground(
+            isset($Menus[$menu_id]['config']['menu_parent_filename']) ? $Menus[$menu_id]['config']['menu_parent_filename'] : ''
+        ));
     }
 }
+
+$image_url = MENU_imageUrl();
 
 $alignment = 1;
 if (isset($Menus[$menu_id]['config']['menu_alignment'])) {

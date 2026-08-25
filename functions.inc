@@ -316,22 +316,49 @@ function plugin_getheadercode_menu() {
                             break;
                     }
                     $ms->set_file(array('style' => $stylefile));
-                    $ms->set_var('menu_id',$menu['menu_id']);
-                    $ms->set_var('site_url',$_CONF['site_url']);
+                    $ms->set_var('menu_id', (int) $menu['menu_id']);
+                    $ms->set_var('url1', '');
+                    $ms->set_var('url2', '');
+                    $ms->set_var('menu_parent_background', '');
+                    $colorNames = array(
+                        'main_menu_bg_color', 'main_menu_hover_bg_color',
+                        'main_menu_text_color', 'main_menu_hover_text_color',
+                        'submenu_text_color', 'submenu_hover_text_color',
+                        'submenu_background_color', 'submenu_hover_bg_color',
+                        'submenu_highlight_color', 'submenu_shadow_color',
+                    );
                     if (is_array($menu['config'])) {
                         foreach ($menu['config'] AS $name => $value) {
-                            if ($name == 'use_images' && $value == 0) {
-                                $ms->set_var('url1','');
-                                $ms->set_var('url2','');
-                                continue;
-                            } else if ($name == 'use_images' && $value == 1) {
-                                $url1 = "url({$_CONF['site_url']}/images/menu/{menu_bg_filename}) repeat-x";
-                                $url2 = "url({$_CONF['site_url']}/images/menu/{menu_hover_filename}) repeat-x";
-                                $ms->set_var('url1',$url1);
-                                $ms->set_var('url2',$url2);
+                            if (in_array($name, $colorNames, true)) {
+                                $ms->set_var($name, MENU_cssColor($value));
                                 continue;
                             }
-                            $ms->set_var($name,$value);
+                            if ($name === 'menu_bg_filename'
+                                || $name === 'menu_hover_filename'
+                                || $name === 'menu_parent_filename') {
+                                $ms->set_var($name, MENU_cssImageFilename($value));
+                                continue;
+                            }
+                            if ($name === 'use_images') {
+                                continue;
+                            }
+                            if ($name === 'menu_alignment') {
+                                $ms->set_var($name, ((int) $value === 1) ? 1 : 0);
+                                continue;
+                            }
+                        }
+                        if (isset($menu['config']['use_images']) && (int) $menu['config']['use_images'] === 1) {
+                            $ms->set_var('url1', MENU_cssImageBackground(
+                                isset($menu['config']['menu_bg_filename']) ? $menu['config']['menu_bg_filename'] : '',
+                                'repeat-x'
+                            ));
+                            $ms->set_var('url2', MENU_cssImageBackground(
+                                isset($menu['config']['menu_hover_filename']) ? $menu['config']['menu_hover_filename'] : '',
+                                'repeat-x'
+                            ));
+                            $ms->set_var('menu_parent_background', MENU_cssImageBackground(
+                                isset($menu['config']['menu_parent_filename']) ? $menu['config']['menu_parent_filename'] : ''
+                            ));
                         }
                     }
                     if ($menu['config']['menu_alignment'] == 1) {

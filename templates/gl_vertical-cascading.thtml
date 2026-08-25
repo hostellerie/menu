@@ -129,14 +129,14 @@
 	background:{main_menu_hover_bg_color};
 }
 #gl_menu-vert-l{menu_id} ul a.parent-l{menu_id} {
-	background:{main_menu_bg_color} url({site_url}/images/menu/{menu_parent_filename}) no-repeat scroll 95% 50%;
+	background:{main_menu_bg_color} {menu_parent_background} no-repeat scroll 95% 50%;
 }
 #gl_menu-vert-l{menu_id} ul a.parent-l{menu_id}:hover {
-	background:{main_menu_hover_bg_color} url({site_url}/images/menu/{menu_parent_filename}) no-repeat scroll 95% 50%;
+	background:{main_menu_hover_bg_color} {menu_parent_background} no-repeat scroll 95% 50%;
 }
 #gl_menu-vert-r{menu_id} ul a.parent-r{menu_id} {
-	background:{main_menu_bg_color} url({site_url}/images/menu/{menu_parent_filename}) no-repeat scroll 95% 50%;
+	background:{main_menu_bg_color} {menu_parent_background} no-repeat scroll 95% 50%;
 }
 #gl_menu-vert-r{menu_id} ul a.parent-r{menu_id}:hover {
-	background:{main_menu_hover_bg_color} url({site_url}/images/menu/{menu_parent_filename}) no-repeat scroll 95% 50%;
+	background:{main_menu_hover_bg_color} {menu_parent_background} no-repeat scroll 95% 50%;
 }

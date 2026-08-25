@@ -1544,6 +1544,17 @@ function MENU_menuConfig( $mid ) {
     $use_images_checked = ($menuConfig['use_images'] == 1 ? ' checked="checked"' : '');
     $use_colors_checked = ($menuConfig['use_images'] == 0 ? ' checked="checked"' : '');
 
+    $legacyColorKeys = array(
+        'main_menu_bg_color', 'main_menu_hover_bg_color',
+        'main_menu_text_color', 'main_menu_hover_text_color',
+        'submenu_text_color', 'submenu_hover_text_color',
+        'submenu_background_color', 'submenu_hover_bg_color',
+        'submenu_highlight_color', 'submenu_shadow_color',
+    );
+    foreach ($legacyColorKeys as $colorKey) {
+        $menuConfig[$colorKey] = MENU_cssColor($menuConfig[$colorKey]);
+    }
+
     // build menu type select
 
     $menuTypeSelect = '<select id="menutype" name="menutype">' . LB;
@@ -1708,6 +1719,19 @@ function MENU_saveMenuConfig($menu_id=0) {
     $mc['submenu_shadow_color']       = Geeklog\Input::fPost('sms_sample');
     $mc['menu_alignment']             = (int) Geeklog\Input::fPost('malign', 0);
     $mc['use_images']                 = (int) Geeklog\Input::fPost('gorc', 0);
+
+    $legacyColorKeys = array(
+        'main_menu_bg_color', 'main_menu_hover_bg_color',
+        'main_menu_text_color', 'main_menu_hover_text_color',
+        'submenu_text_color', 'submenu_hover_text_color',
+        'submenu_background_color', 'submenu_hover_bg_color',
+        'submenu_highlight_color', 'submenu_shadow_color',
+    );
+    foreach ($legacyColorKeys as $colorKey) {
+        $mc[$colorKey] = MENU_cssColor($mc[$colorKey]);
+    }
+    $mc['menu_alignment'] = ($mc['menu_alignment'] === 1) ? 1 : 0;
+    $mc['use_images'] = ($mc['use_images'] === 1) ? 1 : 0;
     $menutype                         = (int) Geeklog\Input::fPost('menutype');
     $menuactive                       = (int) Geeklog\Input::fPost('menuactive');
     $menugroup                        = (int) Geeklog\Input::fPost('group');
