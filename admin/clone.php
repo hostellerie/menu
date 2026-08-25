@@ -11,6 +11,7 @@
 
 require_once '../../../lib-common.php';
 require_once '../../auth.inc.php';
+require_once $_CONF['path'] . 'plugins/menu/cache_runtime.php';
 
 if (!SEC_hasRights('menu.admin')) {
     if (!headers_sent()) {
@@ -154,10 +155,7 @@ foreach ($sourceElements as $element) {
     );
 }
 
-MENU_CACHE_remove_instance('menu');
-MENU_CACHE_remove_instance('css');
-DB_save($_TABLES['vars'], 'name,value', "'cacheid'," . rand());
-MENU_initMENU(true);
+MENU_invalidateRuntimeCache(true);
 
 COM_redirect(
     $_CONF['site_admin_url'] . '/plugins/menu/index.php?mode=menu&menu=' . $newMenuId
