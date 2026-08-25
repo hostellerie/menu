@@ -1,0 +1,27 @@
+name: Temporary Menu ordering assets
+
+on:
+  push:
+    branches: [modernize-1.3.0]
+    paths:
+      - .github/workflows/temp-order-assets.yml
+      - tools/temp_order_assets.py
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: modernize-1.3.0
+      - run: python3 tools/temp_order_assets.py
+      - run: php -l admin_element_views.php
+      - run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add admin_element_views.php templates/default/menutree.thtml
+          git commit -m "Load Menu ordering assets after jQuery" || exit 0
+          git push origin HEAD:modernize-1.3.0
