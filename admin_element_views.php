@@ -24,7 +24,7 @@ function MENU_displayTree( $menu_id ) {
     $_SCRIPTS->setJavaScriptFile('menu_order_handle', '/admin/plugins/menu/js/menu-order-handle.js');
 
     $retval = '';
-
+    $safeMenuName = MENU_escapeStoredText($Menus[$menu_id]['menu_name']);
 
     $menu_arr = array(
             array('url'  => $_CONF['site_admin_url'] .'/plugins/menu/index.php?mode=new&amp;menuid='.$menu_id,
@@ -32,7 +32,7 @@ function MENU_displayTree( $menu_id ) {
             array('url'  => $_CONF['site_admin_url'] .'/plugins/menu/index.php',
                   'text' => $LANG_MENU01['menu_list']),
     );
-    $retval  .= COM_startBlock($LANG_MENU01['menu_builder'].' :: '.$Menus[$menu_id]['menu_name'],'', COM_getBlockTemplate('_admin_block', 'header'));
+    $retval  .= COM_startBlock($LANG_MENU01['menu_builder'].' :: '.$safeMenuName,'', COM_getBlockTemplate('_admin_block', 'header'));
     $retval  .= ADMIN_createMenu($menu_arr, $LANG_MENU_ADMIN[3],
                                 $_CONF['site_admin_url'] . '/plugins/menu/images/menu.png');
     
@@ -53,12 +53,12 @@ function MENU_displayTree( $menu_id ) {
     $T->set_var(array(
         'site_admin_url'    => $_CONF['site_admin_url'],
         'site_url'          => $_CONF['site_url'],
-        'birdseed'          => '<a href="'.$_CONF['site_admin_url'].'/plugins/menu/index.php">'.$LANG_MENU01['menu_list'].'</a> :: '.$Menus[$menu_id]['menu_name'].' :: '.$LANG_MENU01['elements'],
+        'birdseed'          => '<a href="' . MENU_escapeHTML($_CONF['site_admin_url']) . '/plugins/menu/index.php">' . MENU_escapeHTML($LANG_MENU01['menu_list']) . '</a> :: ' . $safeMenuName . ' :: ' . MENU_escapeHTML($LANG_MENU01['elements']),
         'lang_admin'        => $LANG_MENU00['admin'],
         'version'           => $_MENU_CONF['pi_version'],
         'menu_tree'         => $Menus[$menu_id]['elements'][0]->editTree(0,2),
         'menuid'            => $menu_id,
-        'menuname'          => $Menus[$menu_id]['menu_name'],
+        'menuname'          => $safeMenuName,
         'menu_select'       => $menu_select,
         'menuactive'        => $Menus[$menu_id]['active'] == 1 ? ' checked="checked"' : ' ',
         'xhtml'             => XHTML,
@@ -211,14 +211,15 @@ function MENU_createElement ( $menu_id ) {
     $_SCRIPTS->setJavaScript($js);
     
     $retval = '';
+    $safeMenuName = MENU_escapeStoredText($Menus[$menu_id]['menu_name']);
 
     $menu_arr = array(
             array('url'  => $_CONF['site_admin_url'] .'/plugins/menu/index.php?mode=menu&amp;menu='.$menu_id,
-                  'text' => 'Back to ' . $Menus[$menu_id]['menu_name']),
+                  'text' => 'Back to ' . $safeMenuName),
             array('url'  => $_CONF['site_admin_url'] .'/plugins/menu/index.php',
                   'text' => $LANG_MENU01['menu_list']),
     );
-    $retval  .= COM_startBlock($LANG_MENU01['menu_builder'].' :: '.$LANG_MENU01['create_element'] .' >> ' . $Menus[$menu_id]['menu_name'],'', COM_getBlockTemplate('_admin_block', 'header'));
+    $retval  .= COM_startBlock($LANG_MENU01['menu_builder'].' :: '.$LANG_MENU01['create_element'] .' >> ' . $safeMenuName,'', COM_getBlockTemplate('_admin_block', 'header'));
     $retval  .= ADMIN_createMenu($menu_arr, $LANG_MENU_ADMIN[4],
                                 $_CONF['site_admin_url'] . '/plugins/menu/images/menu.png');
 
@@ -523,14 +524,15 @@ function MENU_editElement( $menu_id, $mid ) {
     $_SCRIPTS->setJavaScript($js);
     
     $retval = '';
+    $safeMenuName = MENU_escapeStoredText($Menus[$menu_id]['menu_name']);
 
     $menu_arr = array(
             array('url'  => $_CONF['site_admin_url'] .'/plugins/menu/index.php?mode=menu&amp;menu='.$menu_id,
-                  'text' => 'Back to ' . $Menus[$menu_id]['menu_name']),
+                  'text' => 'Back to ' . $safeMenuName),
             array('url'  => $_CONF['site_admin_url'] .'/plugins/menu/index.php',
                   'text' => $LANG_MENU01['menu_list']),
     );
-    $retval  .= COM_startBlock($LANG_MENU01['menu_builder'].' :: '.$LANG_MENU01['edit_element'] .' for ' . $Menus[$menu_id]['menu_name'],'', COM_getBlockTemplate('_admin_block', 'header'));
+    $retval  .= COM_startBlock($LANG_MENU01['menu_builder'].' :: '.$LANG_MENU01['edit_element'] .' for ' . $safeMenuName,'', COM_getBlockTemplate('_admin_block', 'header'));
     $retval  .= ADMIN_createMenu($menu_arr, $LANG_MENU_ADMIN[5],
                                 $_CONF['site_admin_url'] . '/plugins/menu/images/menu.png');
 
@@ -623,9 +625,6 @@ $parent_select = '<select id="pid" name="pid">' . LB;
         if ((int) $row['id'] === (int) $mid || isset($blockedParentIds[(int) $row['id']])) {
             continue;
         }
-        if ((int) $row['id'] === (int) $mid) {
-            continue;
-        }
         $parent_select .= '<option value="' . (int) $row['id'] . '" '
             . ($Menus[$menu_id]['elements'][$mid]->pid == $row['id'] ? 'selected="selected"' : '')
             . '>' . MENU_escapeStoredText($row['element_label']) . '</option>' . LB;
@@ -684,7 +683,7 @@ $parent_select = '<select id="pid" name="pid">' . LB;
         'site_admin_url'    => $_CONF['site_admin_url'],
         'site_url'          => $_CONF['site_url'],
         'form_action'       => $_CONF['site_admin_url'] . '/plugins/menu/index.php',
-        'birdseed'          => '<a href="'.$_CONF['site_admin_url'].'/plugins/menu/index.php">Menu List</a> :: <a href="'.$_CONF['site_admin_url'].'/plugins/menu/index.php?mode=menu&amp;menu='.$menu_id.'">'.$Menus[$menu_id]['menu_name'].'</a> :: Edit Element',
+        'birdseed'          => '<a href="' . MENU_escapeHTML($_CONF['site_admin_url']) . '/plugins/menu/index.php">Menu List</a> :: <a href="' . MENU_escapeHTML($_CONF['site_admin_url']) . '/plugins/menu/index.php?mode=menu&amp;menu=' . (int) $menu_id . '">' . $safeMenuName . '</a> :: Edit Element',
         'menulabel'         => $Menus[$menu_id]['elements'][$mid]->label,
         'menuorder'         => $Menus[$menu_id]['elements'][$mid]->order,
         'order_select'      => $order_select,
