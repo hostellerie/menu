@@ -316,11 +316,7 @@ function MENU_saveNewMenu( ) {
             break;
     }
 
-    MENU_CACHE_remove_instance('menu');
-    MENU_CACHE_remove_instance('css');
-    $randID = rand();
-    DB_save($_TABLES['vars'],'name,value',"'cacheid',$randID");
-    MENU_initMENU(true);
+    MENU_invalidateRuntimeCache(true);
 }
 
 /*
@@ -431,7 +427,7 @@ function MENU_moveElement( $menu_id, $mid, $direction ) {
     $pid = $Menus[$menu_id]['elements'][$mid]->pid;
 
     $Menus[$menu_id]['elements'][$pid]->reorderMenu();
-    MENU_CACHE_remove_instance('menu');
+    MENU_invalidateRuntimeCache(true);
 
     return;
 }
@@ -1158,9 +1154,8 @@ function MENU_saveEditMenuElement ( ) {
     $sql = "UPDATE {$_TABLES['menu_elements']} SET pid=$pid, element_order=$neworder, element_label='$labelSql', element_type=$type, element_subtype='$subtypeSql', element_active=$active, element_url='$urlSql', element_target='$targetSql', group_id=$group_id WHERE id=$id AND menu_id=$menu_id";
 
     DB_query($sql);
-    MENU_initMENU(true);
     $Menus[$menu_id]['elements'][$pid]->reorderMenu();
-    MENU_initMENU(true);
+    MENU_invalidateRuntimeCache(true);
 }
 
 
@@ -1181,9 +1176,7 @@ function MENU_changeActiveStatusElement($bid_arr = null)
             . " WHERE id=" . $mid . " AND menu_id=" . $menuId);
     }
 
-    MENU_CACHE_remove_instance('menu');
-    MENU_CACHE_remove_instance('css');
-    MENU_CACHE_remove_instance('js');
+    MENU_invalidateRuntimeCache(true);
 }
 
 
@@ -1202,21 +1195,8 @@ function MENU_changeActiveStatusMenu($bid_arr = null)
         DB_query("UPDATE {$_TABLES['menu']} SET menu_active=" . $active . " WHERE id=" . $menuId);
     }
 
-    MENU_CACHE_remove_instance('menu');
+    MENU_invalidateRuntimeCache(true);
 }
-
-function MENU_deleteMenu($menu_id) {
-    global $Menus, $_CONF, $_TABLES, $_USER;
-
-    MENU_deleteChildElements(0,$menu_id);
-
-    DB_query("DELETE FROM {$_TABLES['menu']} WHERE id=".$menu_id);
-    DB_query("DELETE FROM {$_TABLES['menu_config']} WHERE menu_id=".$menu_id);
-
-    MENU_CACHE_remove_instance('menu');
-    MENU_CACHE_remove_instance('css');
-}
-
 
 /**
 * Recursivly deletes all elements and child elements
@@ -1232,10 +1212,8 @@ function MENU_deleteChildElements( $id, $menu_id ){
         $row = DB_fetchArray( $aResult );
         MENU_deleteChildElements( $row['id'],$menu_id );
     }
-    $sql = "DELETE FROM " . $_TABLES['menu_elements'] . " WHERE id=" . $id;
-    DB_query( $sql );
-
-    MENU_CACHE_remove_instance('menu');
+    $sql = "DELETE FROM " . $_TABLES['menu_elements'] . " WHERE id=" . $id . " AND menu_id=" . (int) $menu_id;
+    DB_query($sql);
 }
 
 /*
@@ -1632,10 +1610,7 @@ function MENU_saveMenuConfig($menu_id=0) {
             );
         }
     }
-    MENU_CACHE_remove_instance('menu');
-    MENU_CACHE_remove_instance('css');
-    $randID = rand();
-    DB_save($_TABLES['vars'],'name,value',"'cacheid',$randID");
+    MENU_invalidateRuntimeCache(true);
     return;
 }
 
@@ -1702,7 +1677,6 @@ if ( (isset($_POST['execute']) || $mode != '') && !isset($_POST['cancel']) && !i
             break;
         case 'saveedit' :
             MENU_saveEditMenuElement();
-            MENU_CACHE_remove_instance('menu');
             COM_redirect($_CONF['site_admin_url'] . '/plugins/menu/index.php?mode=menu&amp;menu=' . $menu_id);
             break;
         case 'savenewmenu' :
@@ -1719,13 +1693,11 @@ if ( (isset($_POST['execute']) || $mode != '') && !isset($_POST['cancel']) && !i
             break;
         case 'activate' :
             MENU_changeActiveStatusElement();
-            MENU_initMENU();
             $content = MENU_displayTree( $menu_id );
             $currentSelect = $LANG_MENU01['menu_builder'];
             break;
         case 'menuactivate' :
             MENU_changeActiveStatusMenu();
-            MENU_initMENU();
             $content = MENU_displayMenuList( );
             $currentSelect = $LANG_MENU01['menu_builder'];
             break;
@@ -1733,16 +1705,11 @@ if ( (isset($_POST['execute']) || $mode != '') && !isset($_POST['cancel']) && !i
             // delete the element
             $id      = (int) Geeklog\Input::fPost('mid');
             $menu_id = (int) Geeklog\Input::fPost('menuid');
-            MENU_deleteChildElements( $id, $menu_id );
+            MENU_deleteChildElements($id, $menu_id);
             $Menus[$menu_id]['elements'][0]->reorderMenu();
+            MENU_invalidateRuntimeCache(true);
             echo COM_refresh($_CONF['site_admin_url'] . '/plugins/menu/index.php?mode=menu&amp;menu=' . $menu_id);
             exit;
-            break;
-        case 'deletemenu' :
-            // delete the element
-            $menu_id = (int) Geeklog\Input::fPost('id');
-            MENU_deleteMenu($menu_id);
-            COM_redirect($_CONF['site_admin_url'] . '/plugins/menu/index.php');
             break;
         case 'config' :
             $content = MENU_menuConfig($menu_id);
@@ -1752,7 +1719,6 @@ if ( (isset($_POST['execute']) || $mode != '') && !isset($_POST['cancel']) && !i
         case 'savecfg' :
             $menu_id = (int) Geeklog\Input::fPost('menu_id');
             MENU_saveMenuConfig($menu_id);
-            MENU_initMENU();
             $content = MENU_menuConfig( $menu_id );
             $currentSelect = $LANG_MENU01['menu_colors'];
             break;
@@ -1781,8 +1747,6 @@ if ( (isset($_POST['execute']) || $mode != '') && !isset($_POST['cancel']) && !i
             break;
     }
 } else if ( isset($_POST['defaults']) ) {
-    MENU_CACHE_remove_instance('menu');
-    MENU_CACHE_remove_instance('css');
     $menu_id = (int) Geeklog\Input::fPost('menu_id');
 
     switch ( $Menus[$menu_id]['menu_type']) {
@@ -1822,7 +1786,7 @@ if ( (isset($_POST['execute']) || $mode != '') && !isset($_POST['cancel']) && !i
             DB_save($_TABLES['menu_config'],"menu_id,conf_name,conf_value","$menu_id,'menu_alignment','1'");
             break;
     }
-    MENU_initMenu();
+    MENU_invalidateRuntimeCache(true);
     $content = MENU_displayMenuList( );
 } else if ( isset($_POST['cancel']) && isset($_POST['menu']) ) {
     $menu_id = (int) Geeklog\Input::fPost('menu');
@@ -1853,8 +1817,8 @@ if ( (isset($_POST['execute']) || $mode != '') && !isset($_POST['cancel']) && !i
             . " WHERE menu_id=" . $menu_id . " AND id=" . (int) $mid);
     }
 
-    MENU_CACHE_remove_instance('menu');
-    
+    MENU_invalidateRuntimeCache(false);
+
     exit;
 } else {
     // display the tree
