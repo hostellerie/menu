@@ -76,10 +76,13 @@ function MENU_displayMenuList()
 
             $menuType = isset($menu['menu_type']) ? (int) $menu['menu_type'] : 0;
             $menuTypeLabel = isset($LANG_MENU_MENU_TYPES[$menuType])
-                ? MENU_escapeHTML($LANG_MENU_MENU_TYPES[$menuType]) : '';
-            $elementDetails = '<b>' . MENU_escapeHTML($LANG_MENU01['type']) . ':</b> '
-                . $menuTypeLabel . '<br' . XHTML . '>';
-            $info = COM_getTooltip($safeMenuName, $elementDetails, '', $safeMenuName, 'help');
+                ? (string) $LANG_MENU_MENU_TYPES[$menuType] : '';
+            $tooltipText = $LANG_MENU01['type'] . ': ' . $menuTypeLabel;
+            $info = $safeMenuName
+                . ' <img src="' . MENU_escapeHTML($_CONF['site_admin_url'])
+                . '/plugins/menu/images/info.png" alt="' . MENU_escapeHTML($LANG_MENU01['info'])
+                . '" title="' . MENU_escapeHTML($tooltipText)
+                . '" style="vertical-align:middle;cursor:help"' . XHTML . '>';
             $T->set_var('info', $info);
             $T->set_var('rowclass', ($rowCounter % 2) + 1);
             $T->parse('mrow', 'menurow', true);
