@@ -33,6 +33,22 @@
             return data;
         }
 
+        function currentOrder() {
+            var parts = [];
+
+            $table.find('tbody tr[id^="mid_"]').each(function () {
+                var mid = parseInt(String(this.id).replace(/^mid_/, ''), 10) || 0;
+                if (mid > 0) {
+                    // Keep the legacy server-side payload shape, but derive it
+                    // directly from the rows after the drop instead of relying
+                    // on TableDnD's global serializer state.
+                    parts.push('menu_table[]=mid_' + mid);
+                }
+            });
+
+            return parts.join('&');
+        }
+
         function reloadOnFailure(request) {
             request.fail(function () {
                 window.location.reload();
@@ -77,15 +93,20 @@
         $table.tableDnD({
             dragHandle: 'menu-drag-handle',
             onDrop: function () {
-                var data = addToken({
-                    orders: $.tableDnD.serialize(),
-                    menu_id: menuId
-                });
+                var orders = currentOrder();
+
+                if (!orders || menuId <= 0) {
+                    window.location.reload();
+                    return;
+                }
 
                 reloadOnFailure($.ajax({
                     type: 'POST',
                     url: postUrl,
-                    data: data
+                    data: addToken({
+                        orders: orders,
+                        menu_id: menuId
+                    })
                 }));
             }
         });
