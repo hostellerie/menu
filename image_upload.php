@@ -106,3 +106,35 @@ function MENU_storeLegacyImageUpload($file, $prefix, $oldFilename = '')
 
     return $newFilename;
 }
+
+/**
+ * Render a preview only when a configured legacy image really exists.
+ *
+ * @param string $filename Configured basename
+ * @param bool   $fixedSize Whether to constrain the preview to 27x27
+ * @return string
+ */
+function MENU_legacyImagePreview($filename, $fixedSize = true)
+{
+    $filename = basename(trim((string) $filename));
+    if ($filename === '' || !preg_match('/\.(?:png|gif|jpe?g)$/i', $filename)) {
+        return '';
+    }
+
+    $directory = MENU_imageDir();
+    $url = MENU_imageUrl();
+    if ($directory === '' || $url === '') {
+        return '';
+    }
+
+    $path = $directory . $filename;
+    if (!is_file($path) || is_link($path)) {
+        return '';
+    }
+
+    $src = htmlspecialchars($url . rawurlencode($filename), ENT_QUOTES, 'UTF-8');
+    $size = $fixedSize ? ' width="27" height="27"' : '';
+
+    return '<img src="' . $src . '"' . $size
+        . ' style="vertical-align:middle;border:none;" alt=""' . XHTML . '>';
+}
