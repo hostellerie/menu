@@ -2,17 +2,18 @@
 
 $root = dirname(__DIR__);
 
-$removedImages = array(
+$removedAssets = array(
     'admin/images/blank.gif',
     'admin/images/check.png',
     'admin/images/copy.png',
     'admin/images/rainbow.png',
     'admin/images/transparent.png',
+    'public_html/js/menu_ie6vertmenu.js',
 );
 
-foreach ($removedImages as $relativePath) {
+foreach ($removedAssets as $relativePath) {
     if (file_exists($root . '/' . $relativePath)) {
-        fwrite(STDERR, "Removed legacy admin asset returned: {$relativePath}\n");
+        fwrite(STDERR, "Removed legacy asset returned: {$relativePath}\n");
         exit(1);
     }
 }
