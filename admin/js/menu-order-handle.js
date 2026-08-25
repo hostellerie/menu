@@ -1,13 +1,27 @@
 (function ($) {
     'use strict';
 
-    $(function () {
+    function initMenuOrderHandle(attempt) {
         var $table = $('#menu_table');
         var $token = $('#menu-order-token input[type="hidden"]').first();
 
-        if (!$table.length || !$token.length || typeof $.fn.tableDnD !== 'function') {
+        if (!$table.length || !$token.length) {
             return;
         }
+
+        if (typeof $.fn.tableDnD !== 'function') {
+            if (attempt < 50) {
+                window.setTimeout(function () {
+                    initMenuOrderHandle(attempt + 1);
+                }, 100);
+            }
+            return;
+        }
+
+        if ($table.data('menu-order-handle-ready')) {
+            return;
+        }
+        $table.data('menu-order-handle-ready', true);
 
         var menuId = parseInt($table.attr('data-menuid'), 10) || 0;
         var postUrl = $table.attr('data-post-url') || window.location.href;
@@ -68,8 +82,10 @@
             $downCell.remove();
         });
 
-        // Remove the whole-row handlers installed by the legacy initialization,
-        // then re-enable TableDnD only on the dedicated handle cell.
+        $table.find('tr').first().find('th').last().attr('colspan', '1');
+
+        // Remove whole-row handlers installed by the legacy initialization,
+        // then bind TableDnD again using only the dedicated handle cells.
         $table.find('tbody tr')
             .off('mousedown touchstart')
             .css('cursor', '');
@@ -120,5 +136,9 @@
                 window.location.reload();
             });
         });
+    }
+
+    $(function () {
+        initMenuOrderHandle(0);
     });
 }(jQuery));
