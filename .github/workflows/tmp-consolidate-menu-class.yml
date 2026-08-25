@@ -20,7 +20,20 @@ jobs:
       - name: Consolidate class files
         run: |
           cp classes/classMenuElement2.php classes/classMenuElement.php
-          python3 -c "from pathlib import Path; p=Path('functions.inc'); s=p.read_text(); old=\"if (VERSION >= '2.0.0') {\\n    require_once \\$_CONF['path'].'plugins/menu/classes/classMenuElement2.php';\\n} else {\\n    require_once \\$_CONF['path'].'plugins/menu/classes/classMenuElement.php';\\n}\"; new=\"require_once \\$_CONF['path'] . 'plugins/menu/classes/classMenuElement.php';\"; assert old in s; p.write_text(s.replace(old,new,1))"
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('functions.inc')
+          s = p.read_text()
+          old = """if (VERSION >= '2.0.0') {
+              require_once $_CONF['path'].'plugins/menu/classes/classMenuElement2.php';
+          } else {
+              require_once $_CONF['path'].'plugins/menu/classes/classMenuElement.php';
+          }"""
+          new = "require_once $_CONF['path'] . 'plugins/menu/classes/classMenuElement.php';"
+          if old not in s:
+              raise SystemExit('versioned class include block not found')
+          p.write_text(s.replace(old, new, 1))
+          PY
           git rm classes/classMenuElement2.php
       - name: Validate
         run: |
