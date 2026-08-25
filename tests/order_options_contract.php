@@ -11,12 +11,12 @@ function menu_order_test_assert($condition, $message)
 $root = dirname(__DIR__);
 $template = file_get_contents($root . '/templates/default/createelement.thtml');
 $endpoint = file_get_contents($root . '/admin/getorder.php');
-$index = file_get_contents($root . '/admin/index.php');
+$views = file_get_contents($root . '/admin_element_views.php');
 
 menu_order_test_assert(
-    strpos($index, '$lastOrderIndex = count($orderRows) - 1;') !== false
-        && strpos($index, '$orderIndex === $lastOrderIndex') !== false
-        && strpos($index, ' selected="selected"') !== false,
+    strpos($views, '$lastOrderIndex = count($orderRows) - 1;') !== false
+        && strpos($views, '$orderIndex === $lastOrderIndex') !== false
+        && strpos($views, ' selected="selected"') !== false,
     'Create form must select the last Display After option server-side'
 );
 menu_order_test_assert(
@@ -24,7 +24,7 @@ menu_order_test_assert(
     'Create form must not rely on JavaScript to choose the default order'
 );
 menu_order_test_assert(
-    strpos($index, "getorder.php?optionid='+option_id+'&menuid='+menu_id") !== false,
+    strpos($views, "getorder.php?optionid='+option_id+'&menuid='+menu_id") !== false,
     'Parent selection must refresh Display After options'
 );
 menu_order_test_assert(
