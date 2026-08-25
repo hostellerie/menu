@@ -34,6 +34,14 @@ if (strpos($module, 'MENU_adminTokenInput()') === false) {
     exit(1);
 }
 
+$treeStart = strpos($module, 'function MENU_displayTree');
+$treeEnd = strpos($module, 'function MENU_createElement', $treeStart);
+$treeBody = substr($module, $treeStart, $treeEnd - $treeStart);
+if (strpos($treeBody, "$_SCRIPTS->setJavaScriptLibrary('jquery');") === false) {
+    fwrite(STDERR, "Admin tree view does not explicitly require Geeklog jQuery\n");
+    exit(1);
+}
+
 if (strpos($template, 'tablednd_0_6.js') === false
     || strpos($template, 'menu-order-handle.js') === false) {
     fwrite(STDERR, "Admin tree template does not load ordering assets\n");
