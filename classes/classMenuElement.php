@@ -115,22 +115,7 @@ class mbElement {
     }
 
 
-    function createElementID( $menu_id ) {
-        global $_TABLES;
 
-        $sql = "SELECT MAX(id) + 1 AS next_id FROM " . $_TABLES['menu_elements'];
-        $result = DB_query( $sql );
-        $row = DB_fetchArray( $result );
-        $id = $row['next_id'];
-        if ( $id < 1 ) {
-            $id = 1;
-        }
-        if ( $id == 0 ) {
-            COM_errorLog("Site Tailor: Error - Returned 0 as element id");
-            $id = 1;
-        }
-        return $id;
-    }
 
 
     function setAccessRights( $meadmin, $root, $groups ) {
