@@ -6,6 +6,7 @@ on:
       - modernize-1.3.0
     paths:
       - .github/workflows/temp-fix-submenu-editor.yml
+      - tools/temp_fix_submenu_editor.py
 
 permissions:
   contents: write
