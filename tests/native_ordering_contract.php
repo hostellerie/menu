@@ -22,10 +22,11 @@ foreach ($forbidden as $needle) {
 }
 
 $requiredScript = array(
-    "addEventListener('dragstart'",
-    "addEventListener('dragover'",
-    "addEventListener('drop'",
-    "addEventListener('keydown'",
+    "handle.setAttribute('draggable', 'true')",
+    "handle.addEventListener('dragstart'",
+    "row.addEventListener('dragover'",
+    "row.addEventListener('drop'",
+    "handle.addEventListener('keydown'",
     'XMLHttpRequest',
     "orders: order",
     "mode: 'move'",
