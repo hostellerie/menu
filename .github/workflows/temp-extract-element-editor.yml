@@ -1,0 +1,28 @@
+name: Temporary element editor extraction
+
+on:
+  push:
+    branches: [modernize-1.3.0]
+    paths:
+      - .github/workflows/temp-extract-element-editor.yml
+      - tools/temp_extract_element_editor_js.py
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: modernize-1.3.0
+      - run: python3 tools/temp_extract_element_editor_js.py
+      - run: php -l admin_element_views.php && php -l tests/element_editor_asset_contract.php
+      - run: php tests/element_editor_asset_contract.php
+      - run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add admin_element_views.php admin/js/element-editor.js tests/element_editor_asset_contract.php
+          git commit -m "Use shared element editor JavaScript" || exit 0
+          git push origin HEAD:modernize-1.3.0
