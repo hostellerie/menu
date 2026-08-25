@@ -37,7 +37,7 @@ if (strpos($module, 'MENU_adminTokenInput()') === false) {
 $treeStart = strpos($module, 'function MENU_displayTree');
 $treeEnd = strpos($module, 'function MENU_createElement', $treeStart);
 $treeBody = substr($module, $treeStart, $treeEnd - $treeStart);
-if (strpos($treeBody, "$_SCRIPTS->setJavaScriptLibrary('jquery');") === false) {
+if (strpos($treeBody, '$_SCRIPTS->setJavaScriptLibrary(\'jquery\');') === false) {
     fwrite(STDERR, "Admin tree view does not explicitly require Geeklog jQuery\n");
     exit(1);
 }
