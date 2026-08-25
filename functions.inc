@@ -53,6 +53,7 @@ if (stripos($_SERVER['PHP_SELF'], basename(__FILE__)) !== false) {
 $plugin_path = $_CONF['path'] . 'plugins/menu/';
 require_once $plugin_path . 'storage.php';
 require_once $plugin_path . 'presentation.php';
+require_once $plugin_path . 'cache_filesystem.php';
 $langfile = $plugin_path . 'language/' . $_CONF['language'] . '.php';
 
 if (file_exists($langfile)) {
@@ -573,32 +574,6 @@ $MENU_TEMPLATE_OPTIONS = array(
                       ),
     'hook' => array(),
 );
-
-function MENU_cache_clean_directories($path, $needle = '', $since = 0)
-{
-    $retval = true;
-
-    if ($dir = @opendir($path)) {
-        while (false !== ($entry = readdir($dir))) {
-            if ($entry == '.' || $entry == '..' || $entry == '.svn' || is_link($entry)) {
-            } elseif (is_dir($path . '/' . $entry)) {
-                $retval = $retval && MENU_cache_clean_directories($path . '/' . $entry, $needle);
-                $retval = $retval && @rmdir($path . '/' . $entry);
-            } elseif (empty($needle) || strpos($entry, $needle) !== false) {
-                if (!$since || @filectime($path . '/' . $entry) <= $since) {
-                    $retval = $retval && @unlink($path . '/' . $entry);
-                } else {
-                    $retval = false;
-                }
-            } else {
-                $retval = false;
-            }
-        }
-        @closedir($dir);
-    }
-
-    return $retval;
-}
 
 function MENU_CACHE_cleanup_plugin($plugin)
 {
