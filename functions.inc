@@ -82,6 +82,7 @@ $_TABLES['menu_elements']= $_DB_table_prefix . 'menu_elements';
 
 
 require_once $_CONF['path'] . 'plugins/menu/classes/classMenuElement.php';
+require_once $_CONF['path'] . 'plugins/menu/runtime_loader.php';
 
 // +---------------------------------------------------------------------------+
 // | Geeklog Plugin API Implementation                                         |
@@ -409,83 +410,12 @@ function plugin_getheadercode_menu() {
     return $menu_header;
 }
 
-function MENU_initMenu() {
-    global $Menus,$_GROUPS, $_MENU_CONF, $_TABLES, $_USER;
+function MENU_initMenu($force = false) {
+    global $Menus, $_GROUPS;
 
     $mbadmin = SEC_hasRights('menu.admin');
-    $root    = SEC_inGroup('Root');
-
-    if (empty($_USER['uid'])) {
-        $uid = 1;
-    } else {
-        $uid = $_USER['uid'];
-    }
-
-    $result = DB_query("SELECT * FROM {$_TABLES['menu']}",1);
-    while ($menu = DB_fetchArray($result)) {
-        $menuID = $menu['id'];
-        $Menus[$menu['id']]['menu_name']   = $menu['menu_name'];
-        $Menus[$menu['id']]['menu_id']     = $menu['id'];
-        $Menus[$menu['id']]['active']      = $menu['menu_active'];
-        $Menus[$menu['id']]['menu_type']   = $menu['menu_type'];
-        $Menus[$menu['id']]['group_id']    = $menu['group_id'];
-
-        if ($mbadmin || $root) {
-            $Menus[$menu['id']]['menu_perm'] = 3;
-        } else {
-            if ($menu['group_id'] == 998) {
-                if (COM_isAnonUser()) {
-                    $Menus[$menu['id']]['menu_perm'] = 3;
-                } else {
-                    $Menus[$menu['id']]['menu_perm'] = 0;
-                }
-            } else {
-                if (in_array($menu['group_id'], $_GROUPS)) {
-                    $Menus[$menu['id']]['menu_perm'] = 3;
-                }
-            }
-        }
-
-        $cfgResult = DB_query("SELECT * FROM {$_TABLES['menu_config']} WHERE menu_id=".intval($menu['id']));
-        while ($cfgRow = DB_fetchArray($cfgResult)) {
-            $Menus[$menu['id']]['config'][$cfgRow['conf_name']] = $cfgRow['conf_value'];
-        }
-
-        $sql = "SELECT * FROM {$_TABLES['menu_elements']} WHERE menu_id=".intval($menuID)." ORDER BY element_order ASC";
-        $elementResult      = DB_query($sql, 1);
-        $element            = new mbElement();
-        $element->id        = 0;
-        $element->menu_id   = $menuID;
-        $element->label     = 'Top Level Menu';
-        $element->type      = -1;
-        $element->pid       = 0;
-        $element->order     = 0;
-        $element->url       = '';
-        $element->owner_id  = $mbadmin;
-        $element->group_id  = $root;
-        if ($mbadmin) {
-            $element->access = 3;
-        }
-        $Menus[$menuID]['elements'][0] = $element;
-
-        while ($A = DB_fetchArray($elementResult)) {
-            $element = new mbElement();
-            $element->constructor($A,$mbadmin,$root,$_GROUPS);
-            if ($element->access > 0) {
-                $Menus[$menuID]['elements'][$element->id] = $element;
-            }
-        }
-    }
-
-    if (is_array($Menus)) {
-        foreach ($Menus as $name => $menu) {
-            foreach ($Menus[$name]['elements'] as $id => $element) {
-                if ($id != 0 && isset($Menus[$name]['elements'][$element->pid]->id)) {
-                    $Menus[$name]['elements'][$element->pid]->setChild($id);
-                }
-            }
-        }
-    }
+    $root = SEC_inGroup('Root');
+    $Menus = MENU_loadRuntimeMenus($mbadmin, $root, $_GROUPS);
 }
 
 function MENU_getMenu($name='navigation',$wrapper='',$ulclass='',$liclass='',$parentclass='',$lastclass='',$selected='',$noid=0) {
