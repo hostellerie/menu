@@ -19,6 +19,11 @@ if (!is_file($root . '/admin/js/menu-order-handle.js')) {
     exit(1);
 }
 
+$references = array(
+    'tablednd.js',
+    'tablednd_0_5.js',
+    'tablednd_0_6.js',
+);
 $extensions = array('php', 'inc', 'thtml', 'js', 'css');
 $iterator = new RecursiveIteratorIterator(
     new RecursiveDirectoryIterator($root, FilesystemIterator::SKIP_DOTS)
@@ -36,10 +41,12 @@ foreach ($iterator as $file) {
         continue;
     }
 
-    $content = file_get_contents($file->getPathname());
-    if (stripos($content, 'tablednd') !== false) {
-        fwrite(STDERR, "Legacy tableDnD reference remains in " . $file->getPathname() . "\n");
-        exit(1);
+    $content = strtolower(file_get_contents($file->getPathname()));
+    foreach ($references as $reference) {
+        if (strpos($content, $reference) !== false) {
+            fwrite(STDERR, "Legacy tableDnD asset reference remains in " . $file->getPathname() . "\n");
+            exit(1);
+        }
     }
 }
 
