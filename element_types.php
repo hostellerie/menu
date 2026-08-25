@@ -63,8 +63,13 @@ function MENU_defaultElementType($types)
 /**
  * Return whether an element type is normally available for a menu type.
  *
- * Horizontal-simple and vertical-simple menus cannot contain submenu holder
- * (type 1) or Geeklog core menu (type 3) elements. Static-page elements are
+ * Submenu/container elements are structural data and are valid for every menu
+ * presentation type. Modern themes may render that hierarchy themselves, so
+ * the legacy simple/cascading presentation choice must not remove hierarchy
+ * from the underlying menu model.
+ *
+ * Geeklog core menu elements (type 3) remain unavailable for horizontal-simple
+ * and vertical-simple legacy presentations. Static-page elements are
  * unavailable when the Static Pages plugin is not active. Topic elements are
  * unavailable for new items when no topics currently exist.
  *
@@ -91,8 +96,7 @@ function MENU_elementTypeIsAllowed($menuType, $elementType, $hasStaticPages, $ha
         return false;
     }
 
-    if (($menuType === 2 || $menuType === 4)
-        && ($elementType === 1 || $elementType === 3)) {
+    if (($menuType === 2 || $menuType === 4) && $elementType === 3) {
         return false;
     }
 
