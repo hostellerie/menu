@@ -1,0 +1,28 @@
+name: Temporary harden admin element values
+
+on:
+  push:
+    branches: [modernize-1.3.0]
+    paths:
+      - .github/workflows/temp-harden-admin-element-values.yml
+      - tools/temp_harden_admin_element_values.py
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: modernize-1.3.0
+      - run: python3 tools/temp_harden_admin_element_values.py
+      - run: php -l admin_element_views.php && php -l tests/admin_view_escaping_contract.php
+      - run: php tests/admin_view_escaping_contract.php
+      - run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add admin_element_views.php tests/admin_view_escaping_contract.php
+          git commit -m "Harden admin element template values" || exit 0
+          git push origin HEAD:modernize-1.3.0
