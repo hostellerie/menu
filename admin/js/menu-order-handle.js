@@ -1,250 +1,144 @@
-(function () {
+(function ($) {
     'use strict';
 
-    function initMenuOrderHandle() {
-        var table = document.getElementById('menu_table');
-        var tokenContainer = document.getElementById('menu-order-token');
-        var token = tokenContainer ? tokenContainer.querySelector('input[type="hidden"]') : null;
+    function initMenuOrderHandle(attempt) {
+        var $table = $('#menu_table');
+        var $token = $('#menu-order-token input[type="hidden"]').first();
 
-        if (!table || !token) {
+        if (!$table.length || !$token.length) {
             return;
         }
 
-        var tbody = table.querySelector('tbody');
-        if (!tbody) {
+        if (typeof $.fn.tableDnD !== 'function') {
+            if (attempt < 50) {
+                window.setTimeout(function () {
+                    initMenuOrderHandle(attempt + 1);
+                }, 100);
+            }
             return;
         }
 
-        var menuId = parseInt(table.getAttribute('data-menuid'), 10) || 0;
-        var postUrl = table.getAttribute('data-post-url') || window.location.href;
-        var tokenName = token.getAttribute('name');
-        var tokenValue = token.value;
-        var draggedRow = null;
-        var dragMoved = false;
-
-        function rows() {
-            return tbody.querySelectorAll('tr[id^="mid_"]');
+        if ($table.data('menu-order-handle-ready')) {
+            return;
         }
+        $table.data('menu-order-handle-ready', true);
 
-        function rowId(row) {
-            return parseInt(String(row.id || '').replace(/^mid_/, ''), 10) || 0;
+        var menuId = parseInt($table.attr('data-menuid'), 10) || 0;
+        var postUrl = $table.attr('data-post-url') || window.location.href;
+        var tokenName = $token.attr('name');
+        var tokenValue = $token.val();
+
+        function addToken(data) {
+            data[tokenName] = tokenValue;
+            return data;
         }
 
         function currentOrder() {
-            var result = [];
-            var list = rows();
-            var i;
+            var parts = [];
+
+            $table.find('tbody tr[id^="mid_"]').each(function () {
+                var mid = parseInt(String(this.id).replace(/^mid_/, ''), 10) || 0;
+                if (mid > 0) {
+                    parts.push('menu_table[]=mid_' + mid);
+                }
+            });
+
+            return parts.join('&');
+        }
+
+        function reloadOnFailure(request) {
+            request.fail(function () {
+                window.location.reload();
+            });
+            return request;
+        }
+
+        $table.find('tbody tr').each(function () {
+            var $row = $(this);
+            var $cells = $row.children('td');
+            var $handle;
             var mid;
 
-            for (i = 0; i < list.length; i += 1) {
-                mid = rowId(list[i]);
-                if (mid > 0) {
-                    result.push('menu_table[]=mid_' + mid);
-                }
+            if ($cells.length < 7) {
+                return;
             }
 
-            return result.join('&');
-        }
+            $handle = $cells.eq($cells.length - 2);
+            mid = parseInt(String($row.attr('id') || '').replace(/^mid_/, ''), 10) || 0;
 
-        function post(data, reloadAlways) {
-            var xhr = new XMLHttpRequest();
-            var parts = [];
-            var key;
-
-            data[tokenName] = tokenValue;
-            for (key in data) {
-                if (Object.prototype.hasOwnProperty.call(data, key)) {
-                    parts.push(encodeURIComponent(key) + '=' + encodeURIComponent(data[key]));
-                }
+            if (!mid) {
+                return;
             }
 
-            xhr.open('POST', postUrl, true);
-            xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded; charset=UTF-8');
-            xhr.onreadystatechange = function () {
-                if (xhr.readyState !== 4) {
-                    return;
-                }
-                if (reloadAlways || xhr.status < 200 || xhr.status >= 300) {
+            $handle
+                .addClass('menu-drag-handle')
+                .attr({
+                    tabindex: '0',
+                    role: 'button',
+                    'aria-label': 'Order',
+                    title: 'Order (↑/↓)',
+                    'data-mid': mid
+                });
+        });
+
+        $table.find('tbody tr')
+            .off('mousedown touchstart')
+            .css('cursor', '');
+
+        $table.tableDnD({
+            dragHandle: 'menu-drag-handle',
+            onDrop: function () {
+                var orders = currentOrder();
+
+                if (!orders || menuId <= 0) {
                     window.location.reload();
+                    return;
                 }
-            };
-            xhr.send(parts.join('&'));
-        }
 
-        function saveOrder() {
-            var order = currentOrder();
-            if (!order || menuId <= 0) {
-                window.location.reload();
-                return;
+                reloadOnFailure($.ajax({
+                    type: 'POST',
+                    url: postUrl,
+                    data: addToken({
+                        orders: orders,
+                        menu_id: menuId
+                    })
+                }));
             }
-            post({orders: order, menu_id: menuId}, false);
-        }
+        });
 
-        function findHandle(row) {
-            var cells = row.children;
-            if (!cells || cells.length < 2) {
-                return null;
+        $table.on('keydown', 'td.menu-drag-handle', function (event) {
+            var direction = null;
+            var key = event.key || '';
+            var keyCode = event.which || event.keyCode;
+
+            if (key === 'ArrowUp' || keyCode === 38) {
+                direction = 'up';
+            } else if (key === 'ArrowDown' || keyCode === 40) {
+                direction = 'down';
             }
-            return cells[cells.length - 2];
-        }
 
-        function rowFromPoint(x, y) {
-            var node = document.elementFromPoint(x, y);
-            while (node && node !== tbody) {
-                if (node.tagName && node.tagName.toLowerCase() === 'tr'
-                    && node.parentNode === tbody
-                    && rowId(node) > 0) {
-                    return node;
-                }
-                node = node.parentNode;
-            }
-            return null;
-        }
-
-        function moveDraggedRow(x, y) {
-            var target;
-            var rect;
-            var before;
-
-            if (!draggedRow) {
+            if (direction === null) {
                 return;
             }
 
-            target = rowFromPoint(x, y);
-            if (!target || target === draggedRow) {
-                return;
-            }
-
-            rect = target.getBoundingClientRect();
-            before = y < rect.top + (rect.height / 2);
-            tbody.insertBefore(draggedRow, before ? target : target.nextSibling);
-            dragMoved = true;
-        }
-
-        function startDrag(row) {
-            if (!row) {
-                return;
-            }
-            draggedRow = row;
-            dragMoved = false;
-            row.setAttribute('data-menu-dragging', '1');
-            document.documentElement.setAttribute('data-menu-ordering', '1');
-        }
-
-        function finishDrag() {
-            if (!draggedRow) {
-                return;
-            }
-
-            draggedRow.removeAttribute('data-menu-dragging');
-            document.documentElement.removeAttribute('data-menu-ordering');
-
-            if (dragMoved) {
-                saveOrder();
-            }
-
-            draggedRow = null;
-            dragMoved = false;
-        }
-
-        function mouseMove(event) {
-            if (!draggedRow) {
-                return;
-            }
             event.preventDefault();
-            moveDraggedRow(event.clientX, event.clientY);
-        }
 
-        function mouseUp() {
-            finishDrag();
-        }
-
-        function touchMove(event) {
-            var touch;
-            if (!draggedRow || !event.touches || !event.touches.length) {
-                return;
-            }
-            event.preventDefault();
-            touch = event.touches[0];
-            moveDraggedRow(touch.clientX, touch.clientY);
-        }
-
-        function touchEnd() {
-            finishDrag();
-        }
-
-        document.addEventListener('mousemove', mouseMove, false);
-        document.addEventListener('mouseup', mouseUp, false);
-        document.addEventListener('touchmove', touchMove, {passive: false});
-        document.addEventListener('touchend', touchEnd, false);
-        document.addEventListener('touchcancel', touchEnd, false);
-
-        function installRow(row) {
-            var mid = rowId(row);
-            var handle = findHandle(row);
-
-            if (!mid || !handle) {
-                return;
-            }
-
-            handle.className += (handle.className ? ' ' : '') + 'menu-drag-handle';
-            handle.setAttribute('tabindex', '0');
-            handle.setAttribute('role', 'button');
-            handle.setAttribute('aria-label', 'Order');
-            handle.setAttribute('title', 'Order (↑/↓)');
-            handle.setAttribute('data-mid', mid);
-
-            handle.addEventListener('mousedown', function (event) {
-                if (event.button !== 0) {
-                    return;
-                }
-                event.preventDefault();
-                startDrag(row);
-            }, false);
-
-            handle.addEventListener('touchstart', function (event) {
-                if (!event.touches || !event.touches.length) {
-                    return;
-                }
-                event.preventDefault();
-                startDrag(row);
-            }, {passive: false});
-
-            handle.addEventListener('keydown', function (event) {
-                var direction = null;
-                var key = event.key || '';
-                var keyCode = event.which || event.keyCode;
-
-                if (key === 'ArrowUp' || keyCode === 38) {
-                    direction = 'up';
-                } else if (key === 'ArrowDown' || keyCode === 40) {
-                    direction = 'down';
-                }
-
-                if (direction === null) {
-                    return;
-                }
-
-                event.preventDefault();
-                post({
+            $.ajax({
+                type: 'POST',
+                url: postUrl,
+                data: addToken({
                     mode: 'move',
                     where: direction,
-                    mid: mid,
+                    mid: parseInt($(this).attr('data-mid'), 10) || 0,
                     menu: menuId
-                }, true);
-            }, false);
-        }
-
-        var list = rows();
-        var i;
-        for (i = 0; i < list.length; i += 1) {
-            installRow(list[i]);
-        }
+                })
+            }).always(function () {
+                window.location.reload();
+            });
+        });
     }
 
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initMenuOrderHandle);
-    } else {
-        initMenuOrderHandle();
-    }
-}());
+    $(function () {
+        initMenuOrderHandle(0);
+    });
+}(jQuery));
