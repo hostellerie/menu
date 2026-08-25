@@ -4,7 +4,6 @@ $root = dirname(__DIR__);
 $obsolete = array(
     'admin/js/tablednd.js',
     'admin/js/tablednd_0_5.js',
-    'admin/js/tablednd_0_6.js',
 );
 
 foreach ($obsolete as $relative) {
@@ -14,15 +13,18 @@ foreach ($obsolete as $relative) {
     }
 }
 
+if (!is_file($root . '/admin/js/tablednd_0_6.js')) {
+    fwrite(STDERR, "Required TableDnD 0.6 ordering asset is missing\n");
+    exit(1);
+}
 if (!is_file($root . '/admin/js/menu-order-handle.js')) {
-    fwrite(STDERR, "Native Menu ordering script is missing\n");
+    fwrite(STDERR, "Menu ordering adapter is missing\n");
     exit(1);
 }
 
 $references = array(
     'tablednd.js',
     'tablednd_0_5.js',
-    'tablednd_0_6.js',
 );
 $extensions = array('php', 'inc', 'thtml', 'js', 'css');
 $iterator = new RecursiveIteratorIterator(
@@ -44,10 +46,16 @@ foreach ($iterator as $file) {
     $content = strtolower(file_get_contents($file->getPathname()));
     foreach ($references as $reference) {
         if (strpos($content, $reference) !== false) {
-            fwrite(STDERR, "Legacy tableDnD asset reference remains in " . $file->getPathname() . "\n");
+            fwrite(STDERR, "Obsolete TableDnD asset reference remains in " . $file->getPathname() . "\n");
             exit(1);
         }
     }
+}
+
+$template = file_get_contents($root . '/templates/default/menutree.thtml');
+if (substr_count($template, '{site_admin_url}/plugins/menu/js/tablednd_0_6.js') !== 1) {
+    fwrite(STDERR, "TableDnD 0.6 must be loaded exactly once by the tree template\n");
+    exit(1);
 }
 
 echo "Legacy admin asset cleanup tests passed\n";
