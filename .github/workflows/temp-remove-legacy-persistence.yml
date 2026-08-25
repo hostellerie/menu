@@ -1,0 +1,27 @@
+name: Temporary legacy persistence cleanup
+
+on:
+  push:
+    branches: [modernize-1.3.0]
+    paths:
+      - .github/workflows/temp-remove-legacy-persistence.yml
+      - tools/temp_remove_legacy_persistence.py
+
+permissions:
+  contents: write
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: modernize-1.3.0
+      - run: python3 tools/temp_remove_legacy_persistence.py
+      - run: php -l admin/index.php
+      - run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add admin/index.php
+          git commit -m "Remove dead legacy persistence paths" || exit 0
+          git push origin HEAD:modernize-1.3.0
