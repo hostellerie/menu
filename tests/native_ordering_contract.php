@@ -23,7 +23,7 @@ foreach ($forbidden as $needle) {
 
 $requiredScript = array(
     "typeof $.fn.tableDnD !== 'function'",
-    "$table.tableDnD({",
+    '$table.tableDnD({',
     "dragHandle: 'menu-drag-handle'",
     "onDrop: function ()",
     "type: 'POST'",
