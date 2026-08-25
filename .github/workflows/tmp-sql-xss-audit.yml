@@ -18,6 +18,10 @@ jobs:
           ref: modernize-1.3.0
           fetch-depth: 0
 
+      - name: Normalize patch source matching
+        run: |
+          python3 -c "from pathlib import Path; p=Path('.github/scripts/sql_xss_harden.py'); s=p.read_text(); s=s.replace('Geeklog\\\\\\\\Input','Geeklog\\\\Input'); s=s.replace('old_sql = \"\u0024sql = \\\"UPDATE', 'old_sql = \"\u0024sql        = \\\"UPDATE'); p.write_text(s)"
+
       - name: Apply SQL and XSS hardening
         run: python3 .github/scripts/sql_xss_harden.py
 
