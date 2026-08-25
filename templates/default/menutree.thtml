@@ -6,21 +6,25 @@
   {menu_select}
 </div><div style="clear:both;"></div>
 
+<div id="menu-order-token" style="display:none;">{security_token_input}</div>
+
 <div>
-  <table style="width:100%;" class="tbl_repeat" id="menu_table" name="menu_table">
+  <table style="width:100%;" class="tbl_repeat" id="menu_table" name="menu_table" data-menuid="{menuid}" data-post-url="{site_admin_url}/plugins/menu/index.php">
     <tr>
       <th>{$LANG_MENU01[menu_element]}</th>
       <th class="aligncenter" style="text-align:center;">{LANG_MENU01[enabled]}</th>
       <th class="aligncenter" style="text-align:center;">{LANG_MENU01[info]}</th>
       <th class="aligncenter" style="text-align:center;">{LANG_MENU01[edit]}</th>
       <th class="aligncenter" style="text-align:center;">{LANG_MENU01[delete]}</th>
-      <th style="text-align:center;">{LANG_MENU01[order]}</th>
+      <th colspan="2" style="text-align:center;">{LANG_MENU01[order]}</th>
     </tr>
 	<tbody>
     {menu_tree}
 	</tbody>
   </table>
 </div>
+
+<script type="text/javascript" src="{site_admin_url}/plugins/menu/js/menu-order-handle.js"></script>
 
 <div class="menu-preview" style="margin:25px 0 5px 0;clear:both;">
   <div style="font-weight:bold;margin-bottom:8px;">Preview</div>
