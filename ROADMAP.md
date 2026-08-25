@@ -1,339 +1,276 @@
 # Menu Plugin Modernization Roadmap
 
-Target version: **1.3.0**
-
+Target version: **1.3.0**  
 Working branch: **modernize-1.3.0**
 
-## Goals
+## Compatibility target
 
-Modernize the Geeklog Menu plugin while preserving existing installations and menu data.
-
-Primary compatibility target:
+Menu 1.3.0 must keep one shared codebase for:
 
 - Geeklog 2.1.1 through 2.2.2
 - PHP 5.6 through 8.1
 - MySQL / MariaDB
-- Single-site and multisite Geeklog installations
-- Direct upgrade from Menu 1.2.6, 1.2.7, 1.2.8 and 1.2.8.1
+- single-site and multisite installations
+- upgrades from Menu 1.2.6, 1.2.7, 1.2.8 and 1.2.8.1
 
-The modernization must remain conservative: stabilize and secure the existing plugin first, then add new functionality.
+The modernization remains conservative: preserve existing menu data and legacy rendering while making the plugin safer, easier to maintain and usable by modern themes such as Eclipse.
 
 ---
 
-## Current implementation status — 2026-08-25
+## Current status — 2026-08-25
 
-The checklist below remains the release checklist. This section records the actual state of the `modernize-1.3.0` branch so completed work is not confused with remaining release validation.
+### Implemented and covered by automated tests
 
-### Completed or substantially implemented
+- multisite-safe private storage in `{path_data}-menu/`;
+- non-destructive migration from legacy `menu_data/`;
+- site-specific public image paths;
+- centralized upload validation and generated image filenames;
+- POST-only state-changing administration operations with CSRF validation;
+- centralized `menu.admin` mutation authorization;
+- strict validation of menu, parent, order and element IDs;
+- SQL string escaping and numeric casting on modernized persistence paths;
+- database `AUTO_INCREMENT` for new elements instead of `MAX(id)+1`;
+- hierarchy-safe menu cloning with old-ID → new-ID parent remapping;
+- reliable menu deletion without orphaned `menu_config` or `menu_elements` rows;
+- safe CSS color/image validation;
+- safe URL rendering and dangerous-scheme rejection;
+- consolidated `classMenuElement.php` implementation;
+- compatibility helpers for Geeklog 2.1.1 through 2.2.2 and PHP 5.6 through 8.1;
+- idempotent database index upgrade for `(menu_id, pid, element_order)`;
+- three-query runtime menu loading instead of the previous `1 + 2 × menus` pattern;
+- centralized runtime cache invalidation;
+- cache traversal/symlink protection;
+- removal of the unused/unsafe HTML menu cache path;
+- SlickNav loaded only for active legacy horizontal cascading menus that need it;
+- native drag ordering with keyboard move controls;
+- restored submenu creation/editing for all presentation types;
+- default `Display After` selection at the end of the current sibling list;
+- theme-facing resolved-tree API;
+- theme presentation hand-off for modern themes;
+- native/theme administration preview;
+- global Geeklog configuration for all 1.3.0 runtime switches;
+- minimal GitHub CI: one PHP 5.6 / PHP 8.1 lint-and-test workflow.
 
-- Phase 1: multisite-safe `{path_data}-menu/` storage, non-destructive legacy migration, isolated cache/CSS storage and site-specific image helpers.
-- Phase 3: Geeklog 2.1.1 → 2.2.2 compatibility helpers and runtime fallbacks; real-world testing is ongoing on both Geeklog 2.1.1 and 2.2.2.
-- Phase 4: PHP 5.6 / 8.1 syntax CI and compatibility-oriented shared code.
-- Phase 7.5: global Geeklog configuration exists for fresh installs and 1.3.0 upgrades; all eight 1.3.0 settings are now connected to runtime behavior through centralized compatibility-safe helpers.
-- Phase 8: administration preview now supports native and theme preview tabs; element create/edit type UX has been normalized.
-- Phase 9: `MENU_getResolvedTree('navigation')` exists with hierarchy, ordering, permissions, resolved destinations and representative regression tests.
-- Phase 10: theme-presentation hand-off exists; Eclipse can own `navigation` rendering while legacy Menu rendering remains available for other themes/menus.
-- Missing plugin/static-page/topic destinations are retained in admin data and omitted from the resolved public tree when the destination no longer exists. Existing private resources are not hidden merely because the current visitor lacks permission; links to private destinations may intentionally lead to Geeklog authentication.
+### Validated locally on Geeklog 2.1.1 and 2.2.2 during modernization
 
-### Partially implemented / still blocking stabilization
+The following paths have been exercised successfully during development:
 
-- Phase 2 CSRF: mutation inventory, explicit tokens and server-side enforcement are implemented; all state-changing controller modes are POST-only and destructive move/delete actions now use native POST forms. The transitional JavaScript token/GET bridge has been removed.
-- Phase 2 SQL safety: numeric casting is partial; create/edit SQL and `DB_save()` string escaping still need a complete audit. Legacy element ID generation also remains to be reviewed.
-- Phase 2 upload safety: legacy presentation-image uploads are centralized, content-validated and site-specific; legacy CSS colors and image URLs are now allow-listed before rendering.
-- Phase 5 database modernization: not started beyond preserving the existing schema during current work.
-- Phase 6 cache/performance: storage separation is implemented, but cache keys, invalidation and query behavior still need a full audit.
-- Phase 7 maintainability: compatibility/path/security helpers have been split out, but `admin/index.php` and the duplicated menu element classes remain major cleanup targets.
-- Phase 7.5 validation: runtime wiring is implemented; manual regression testing of each setting, configuration save/reload and upgrade preservation on Geeklog 2.1.1 and 2.2.2 is still required before 1.3.0 stable.
-- Phase 11: fresh installs are being exercised on Geeklog 2.1.1 and 2.2.2, but the complete upgrade matrix and release validation are not complete.
+- menu administration loading;
+- element creation/editing;
+- submenu creation and parent selection;
+- `Display After` ordering;
+- drag-and-drop ordering;
+- menu activation/deactivation;
+- configuration/color save;
+- image preview;
+- menu cloning;
+- menu/element deletion;
+- public navigation rendering;
+- footer rendering;
+- authenticated/anonymous permission changes.
 
-### Immediate implementation order
+### Remaining blockers before 1.3.0 stable
 
-1. Finish Phase 2 element create/edit validation and SQL escaping, including safe empty-URL handling and validation that menu/parent/order IDs belong to the expected menu.
-2. Audit remaining menu/config mutation validation now that all state-changing controller modes are POST-only with explicit CSRF tokens.
-3. Continue output/upload security hardening and remove remaining legacy mutation assumptions.
-4. Continue Phase 4 warning cleanup and Phase 3 runtime regression testing on Geeklog 2.1.1 and 2.2.2.
-5. Validate the Phase 7.5 global settings on real Geeklog 2.1.1 and 2.2.2 installations, including save/reload and upgrade preservation.
-6. Then continue Phase 5/6 database and cache audits before adding further Phase 9 functionality.
+1. Continue Phase 7 code decomposition, especially `admin/index.php` and legacy rendering responsibilities.
+2. Audit and remove demonstrably unused legacy JavaScript/CSS/images.
+3. Review the bundled SlickNav dependency and decide whether it remains the 1.3.0 compatibility implementation.
+4. Complete manual validation of all eight global configuration switches on both Geeklog 2.1.1 and 2.2.2.
+5. Run the complete upgrade matrix from 1.2.6, 1.2.7, 1.2.8 and 1.2.8.1.
+6. Confirm fresh installation and uninstall behavior on both supported Geeklog generations.
+7. Perform a final warning/error-log audit under PHP 5.6 and PHP 8.1.
+
+There is **no GitHub Actions ZIP packaging requirement**. Release validation concerns the plugin source/package produced for an actual release, not continuous ZIP generation in CI.
 
 ---
 
 ## Phase 0 — Baseline and regression reference
 
-- [ ] Preserve the current `master` behaviour as the 1.2.8.1 reference.
-- [ ] Use Menu 1.2.6 as the Geeklog 2.1.1 compatibility reference.
-- [ ] Inventory all files, database tables, generated files and persistent data.
-- [ ] Document all Geeklog APIs used by the plugin.
-- [ ] Identify changes introduced between 1.2.6 and 1.2.8.1 that raised the declared Geeklog requirement from 1.8.0 to 2.1.2.
-- [ ] Establish a compatibility matrix for Geeklog 2.1.1 / 2.1.2 / 2.2.2 and PHP 5.6 / 7.x / 8.0 / 8.1.
-- [ ] Add syntax/lint checks that remain compatible with PHP 5.6.
+- [ ] Preserve master/1.2.8.1 as the legacy behavior reference.
+- [ ] Preserve 1.2.6 as the Geeklog 2.1.1 compatibility reference.
+- [x] Maintain PHP 5.6-compatible lint and regression tests.
+- [ ] Finish the documented compatibility/release matrix.
 
 ## Phase 1 — Multisite-safe persistent storage
 
-### Private plugin data
-
-Replace direct use of:
-
-```text
-{path_data}/menu_data/
-```
-
-with a site-specific directory derived from `$_CONF['path_data']`:
-
-```text
-{path_data}-menu/
-```
-
-Example:
-
-```text
-data/ecologie/      -> data/ecologie-menu/
-data/site2/         -> data/site2-menu/
-```
-
-Expected structure:
-
-```text
-{site}-menu/
-├── cache/
-└── css/
-```
-
-Rules:
-
-- [ ] Add a single helper such as `MENU_dataDir()`.
-- [ ] All private plugin paths must use that helper.
-- [ ] `cache/` is disposable.
-- [ ] `css/` is persistent and must never be removed by normal cache cleanup.
-- [ ] Cache cleanup must operate only on the plugin cache directory.
-- [ ] The implementation must work identically in single-site and multisite installations.
-
-### Migration
-
-- [ ] Detect legacy `{path_data}/menu_data/` installations.
-- [ ] Migrate recursively to `{path_data}-menu/`.
-- [ ] Never overwrite an existing destination file.
-- [ ] Never automatically delete the legacy directory.
-- [ ] Make migration idempotent and safe to run more than once.
-- [ ] Run the migration before recording the new plugin version.
-- [ ] Add tests for two different multisite `path_data` values to ensure isolation.
-
-### Public menu images
-
-Continue to use the site-specific Geeklog image path:
-
-```php
-$_CONF['path_images'] . 'menu/'
-```
-
-- [ ] Remove hard-coded uses of `$_CONF['path_html'] . 'images/menu/'`.
-- [ ] Remove hard-coded `/images/menu/` URLs where they bypass site-specific image configuration.
-- [ ] Centralize filesystem and public URL generation for menu images.
-- [ ] Preserve existing uploaded menu images during upgrades.
+- [x] Centralize private storage through `MENU_dataDir()`.
+- [x] Store plugin data in site-specific `{path_data}-menu/`.
+- [x] Keep disposable cache separate from persistent custom CSS.
+- [x] Migrate legacy `menu_data/` non-destructively and idempotently.
+- [x] Never overwrite migrated destination files.
+- [x] Keep public menu images site-specific.
+- [x] Test multisite path isolation.
 
 ## Phase 2 — Security hardening
 
-### CSRF protection
+### Administration / CSRF
 
-- [ ] Inventory every state-changing admin action.
-- [ ] Require `menu.admin` permission for every mutation.
-- [ ] Convert destructive GET operations to POST where appropriate.
-- [ ] Add Geeklog security tokens to all state-changing forms/actions.
-- [ ] Validate tokens server-side before mutations.
-- [ ] Protect menu deletion, element deletion, movement/reordering, enable/disable, clone, create, edit and configuration save operations.
-- [ ] Protect AJAX drag-and-drop ordering requests.
+- [x] Inventory and protect state-changing operations.
+- [x] Require `menu.admin` before mutation processing.
+- [x] Make destructive/mutating operations POST-only.
+- [x] Validate Geeklog security tokens server-side.
+- [x] Protect AJAX/native drag ordering.
 
-### SQL safety
+### SQL and mutation validation
 
-- [ ] Audit every SQL query and `DB_save()` call.
-- [ ] Cast numeric IDs and enum-like values explicitly.
-- [ ] Escape all string values using Geeklog database escaping APIs.
-- [ ] Ensure labels, URLs, targets, menu names and configuration values cannot break SQL queries.
-- [ ] Remove `SELECT MAX(id) + 1` element-ID generation and rely on database auto-increment where possible.
+- [x] Cast numeric IDs and enum-like values on modernized mutation paths.
+- [x] Escape stored string values before SQL persistence.
+- [x] Validate parent/order ownership against the selected menu.
+- [x] Replace active element `MAX(id)+1` creation with `AUTO_INCREMENT`.
+- [x] Preserve hierarchy when cloning menus.
 
-### Output/XSS safety
+### Output / CSS / URLs
 
-- [ ] Audit HTML output contexts.
-- [ ] Escape menu names and labels according to output context.
-- [ ] Validate URLs before rendering them.
-- [ ] Encode JavaScript values safely rather than concatenating raw configuration values.
-- [ ] Validate CSS configuration values according to their expected type.
-- [ ] Review autotag output and plugin-provided menu items.
+- [x] Escape stored labels in frontend rendering.
+- [x] Reject unsafe URL schemes.
+- [x] Encode JavaScript values safely where modernized.
+- [x] Strictly validate legacy CSS colors and image filenames.
+- [x] Prevent broken/missing legacy image previews.
+- [ ] Continue contextual escaping cleanup as legacy view code is extracted.
 
-### Upload security
+### Uploads
 
-- [x] Validate uploads with `is_uploaded_file()`.
-- [x] Detect image type server-side from image contents.
-- [x] Keep a strict PNG/GIF/JPEG allow-list unless formats are intentionally expanded.
-- [x] Validate image contents and dimensions.
-- [x] Add file-size and dimension limits.
+- [x] Validate with `is_uploaded_file()`.
+- [x] Detect image type from file contents.
+- [x] Allow only PNG/GIF/JPEG.
+- [x] Apply file-size and dimension limits.
 - [x] Generate server-side filenames.
-- [x] Fix inconsistent old-image deletion paths.
+- [x] Prevent unsafe deletion/path traversal.
 
 ## Phase 3 — Geeklog 2.1.1 → 2.2.2 compatibility
 
-- [ ] Preserve the working behaviour of Menu 1.2.6 on Geeklog 2.1.1.
-- [ ] Preserve the Geeklog 2.2.0/2.2.2 adaptations introduced in Menu 1.2.8/1.2.8.1.
-- [ ] Identify `Geeklog\Input` calls unavailable or behaviourally different in Geeklog 2.1.1.
-- [ ] Add small compatibility wrappers where needed instead of maintaining separate branches.
-- [ ] Preserve template compatibility across Geeklog 2.1.1 through 2.2.2.
-- [ ] Preserve the Geeklog 2.2.2 topics/userindex compatibility fix.
-- [ ] Make `plugin_compatible_with_this_version_menu()` perform meaningful compatibility checks.
-- [ ] Set the declared minimum Geeklog version only after the compatibility tests pass.
+- [x] Use a single shared source tree.
+- [x] Provide compatibility helpers for changed Geeklog APIs.
+- [x] Preserve templates across the supported range.
+- [x] Preserve Geeklog 2.2.x topic/userindex adaptations.
+- [ ] Complete the final install/upgrade regression matrix.
 
 ## Phase 4 — PHP 5.6 → 8.1 compatibility
 
-- [ ] Avoid syntax requiring PHP 7+.
-- [ ] Remove undefined-variable and undefined-index warnings.
-- [ ] Remove invalid assumptions about null values and array offsets.
-- [ ] Audit deprecated/changed PHP behaviour.
-- [ ] Avoid PHP 8-only APIs in shared code.
-- [ ] Test install, upgrade, administration and frontend rendering on supported PHP versions.
+- [x] Keep shared source syntax PHP 5.6 compatible.
+- [x] Run permanent lint/tests under PHP 5.6 and PHP 8.1.
+- [x] Avoid PHP 8-only APIs in shared code.
+- [ ] Complete final runtime warning/error-log audit on both ends of the range.
 
 ## Phase 5 — Database modernization
 
-- [ ] Preserve existing tables and data during upgrade.
-- [ ] Review schema indexes.
-- [ ] Evaluate safe migration from MyISAM to InnoDB.
-- [ ] Ensure character set/collation follows Geeklog database conventions.
-- [ ] Review orphan handling for `menu_config` and `menu_elements`.
-- [ ] Ensure menu deletion reliably removes associated rows.
-- [ ] Do not introduce foreign-key constraints unless they are proven compatible with all supported Geeklog/MySQL environments.
+- [x] Preserve existing tables/data during upgrade.
+- [x] Review schema indexes.
+- [x] Add idempotent `(menu_id, pid, element_order)` index support.
+- [x] Evaluate MyISAM/InnoDB and retain Geeklog's current MySQL convention for 1.3.0.
+- [x] Follow Geeklog charset/collation conventions rather than forcing a plugin-specific conversion.
+- [x] Remove orphan-prone full-menu deletion logic.
+- [x] Reliably delete associated config/elements.
+- [x] Avoid foreign-key constraints for compatibility.
 
 ## Phase 6 — Cache and performance
 
-- [ ] Separate disposable cache from persistent CSS.
-- [ ] Ensure cache keys remain isolated by language, theme and permissions as required.
-- [ ] Review cache invalidation after every menu mutation.
-- [ ] Avoid rewriting cache files unnecessarily.
-- [ ] Review repeated database queries during `MENU_initMenu()`.
-- [ ] Avoid loading or generating CSS/JavaScript for inactive or unused menus where possible.
-- [ ] Ensure cache cleanup cannot traverse outside the plugin cache directory.
+- [x] Separate disposable cache from persistent CSS.
+- [x] Centralize cache invalidation after mutations.
+- [x] Reduce `MENU_initMenu()` to three database queries independent of menu count.
+- [x] Remove the unused HTML rendering cache path whose context key was incomplete.
+- [x] Retain safe CSS cache behavior.
+- [x] Prevent cache cleanup traversal and symlink following.
+- [x] Load SlickNav assets only when an appropriate menu requires them.
+- [x] Extract generic cache infrastructure to `cache.php`.
 
 ## Phase 7 — Code cleanup and maintainability
 
-- [ ] Remove obsolete IE6 support and unused assets.
-- [ ] Review the bundled SlickNav version and dependency strategy.
-- [ ] Prefer dependency-free/vanilla JavaScript for new code where practical.
-- [x] Consolidate the duplicated Menu element class implementation into `classMenuElement.php`.
-- [x] Remove the legacy pre-Geeklog-2 class split now that 1.3.0 supports Geeklog 2.1.1 through 2.2.2.
-- [ ] Gradually split the ~95 KB `admin/index.php` into focused components without breaking old Geeklog versions.
-- [ ] Centralize path handling, input handling and security checks.
-- [ ] Keep the plugin installable using standard Geeklog plugin installation mechanisms.
+- [x] Consolidate duplicated Menu element classes.
+- [x] Remove obsolete legacy persistence paths superseded by dedicated endpoints.
+- [x] Extract runtime DB loading to `runtime_loader.php`.
+- [x] Extract cache filesystem/runtime/cache API responsibilities.
+- [x] Extract menu list/clone/create administration view builders to `admin_menu_views.php`.
+- [x] Centralize path, compatibility and security helpers.
+- [ ] Continue reducing `admin/index.php` into focused components.
+- [ ] Audit/remove unused `tableDnD` generations and other dead administration assets.
+- [ ] Audit obsolete browser-specific code/assets.
+- [ ] Review SlickNav version/dependency strategy.
+- [ ] Prefer vanilla/dependency-free JavaScript for new administration code.
 
 ## Phase 7.5 — Global plugin configuration
 
-Use Geeklog's native `/admin/configuration.php` for settings that apply to the Menu plugin as a whole. Per-menu structure, visual options, permissions and menu-specific behavior remain in the Menu administration UI and plugin tables.
+Implemented settings:
 
-Principles:
+- [x] `enable_cache`
+- [x] `accessibility_markup`
+- [x] `external_link_protection`
+- [x] `allow_php_elements`
+- [x] `legacy_rendering`
+- [x] `load_legacy_css`
+- [x] `load_legacy_js`
+- [x] `debug`
 
-- [x] Remove the obsolete Plugin Toolkit `samplesetting1` / `samplesetting2` defaults from fresh installations.
-- [x] Add an idempotent 1.3.0 upgrade path that removes those legacy rows and preserves existing valid configuration values.
-- [x] Keep one configuration definition compatible with Geeklog 2.1.1 through 2.2.2.
-- [x] Provide shared configuration labels independently of the selected Menu language file so the configuration manager always receives valid arrays.
-- [x] Every exposed option controls actual runtime behavior; no decorative or dead settings.
-- [ ] Keep defaults conservative so upgrading from 1.2.x preserves legacy rendering unless the administrator explicitly changes it.
-- [ ] Add regression tests for fresh install and upgrade from 1.2.6, 1.2.7, 1.2.8 and 1.2.8.1.
-- [ ] Verify configuration rendering and saving on Geeklog 2.1.1 and 2.2.2.
+Also completed:
 
-Initial 1.3.0 global settings:
-
-- [x] `enable_cache` — global Menu cache switch, default enabled.
-- [x] `accessibility_markup` — accessibility / ARIA output switch, default enabled.
-- [x] `external_link_protection` — secure external links opened in a new window, default enabled.
-- [x] `allow_php_elements` — allow PHP-function menu elements, default disabled.
-- [x] `legacy_rendering` — preserve the classic Menu rendering path, default enabled.
-- [x] `load_legacy_css` — load legacy Menu CSS where legacy rendering is used, default enabled.
-- [x] `load_legacy_js` — load legacy Menu JavaScript where legacy rendering is used, default enabled.
-- [x] `debug` — plugin diagnostic logging, default disabled.
-
-The eight settings are wired into runtime paths. Automated helper/syntax tests cover the configuration plumbing; real Geeklog 2.1.1/2.2.2 behavior and upgrade regression tests remain required before this phase is release-complete.
+- [x] Remove obsolete Plugin Toolkit sample settings.
+- [x] Preserve conservative defaults.
+- [x] Provide idempotent 1.3.0 configuration upgrade plumbing.
+- [x] Keep labels/config definitions compatible with Geeklog 2.1.1 through 2.2.2.
+- [ ] Manually validate every switch and save/reload behavior on both Geeklog generations.
+- [ ] Validate preservation during each supported 1.2.x upgrade path.
 
 ## Phase 8 — Administration UX
 
-After stability and security are validated:
+- [x] Modernize drag ordering without relying on legacy `tableDnD` behavior.
+- [x] Provide keyboard up/down ordering controls.
+- [x] Normalize create/edit element type handling.
+- [x] Restore submenu hierarchy editing across presentation types.
+- [x] Default new element ordering to the end of its sibling list.
+- [x] Provide native/theme preview tabs.
+- [ ] Continue responsive/accessibility polish after structural cleanup.
 
-- [ ] Modernize drag-and-drop tree ordering.
-- [ ] Improve menu hierarchy visualization.
-- [ ] Add clear save/error/success feedback.
-- [ ] Improve responsive administration layout.
-- [ ] Add desktop/tablet/mobile preview where practical.
-- [ ] Preserve accessibility for keyboard-only administration.
+## Phase 9 — Theme-facing API and future features
 
-## Phase 9 — New functionality and theme-facing API
+Implemented foundation:
 
-Potential additions after the compatibility baseline is stable:
+- [x] Stable resolved-tree API.
+- [x] Preserve hierarchy/order/permissions.
+- [x] Resolve supported element destinations before exposing them to themes.
+- [x] Return presentation-neutral node data.
+- [x] Keep legacy `MENU_getMenu()` behavior for existing themes.
 
-- [ ] JSON import/export for menus.
-- [ ] Clone/export/import workflows suitable for multisite installations.
+Possible post-stabilization additions:
+
+- [ ] JSON import/export.
+- [ ] Multisite clone/export/import workflows.
 - [ ] Optional SVG/emoji/CSS-class icons.
-- [ ] Additional link attributes: `rel`, `aria-label`, CSS class and safe target handling.
-- [ ] Richer display conditions by authentication state, group, language, page or plugin context.
-- [ ] Reusable/inherited menu structures where useful.
-- [ ] Add a stable resolved-tree API such as `MENU_getResolvedTree('navigation')` for themes and integrations.
-- [ ] The resolved-tree API must preserve hierarchy and ordering and apply Menu permissions, activation and display-condition filtering before returning nodes.
-- [ ] Resolve each supported element type through Menu before exposing it to themes: Geeklog Action, Geeklog Core, plugin, static page, URL, PHP function where applicable, topic and submenu/container elements.
-- [ ] Return presentation-neutral node data including at least stable element ID, label, type, subtype where useful, resolved URL, target, selected/current state and recursively nested `children`.
-- [ ] Do not expose raw database rows as the theme API contract.
-- [ ] Keep `MENU_getMenu()` and existing template variables for backward compatibility with existing themes.
-- [ ] Add regression tests for a representative `navigation` tree containing Home as type 2 — Geeklog Action, core/plugin/static-page/topic/URL items and nested submenu elements.
+- [ ] Additional safe link attributes.
+- [ ] Richer display conditions.
+- [ ] Reusable/inherited menu structures.
 
 ## Phase 10 — Theme integration
 
-Separate menu content from visual presentation as much as possible.
-
-Plugin responsibilities:
-
-- menu structure
-- hierarchy
-- order
-- permissions
-- links and destinations
-- element-type resolution
-- active/current state resolution where possible
-- display conditions
-
-Theme responsibilities where possible:
-
-- semantic HTML rendering
-- colors
-- spacing
-- typography
-- responsive behaviour
-- dropdown interactions
-- mobile navigation
-- animations
-- palette integration
-
-- [ ] Preserve legacy visual configuration and `MENU_getMenu()` output for existing installations and themes.
-- [ ] Make the Menu plugin `navigation` menu the authoritative source for primary navigation integrations.
-- [ ] Allow modern themes such as Eclipse to consume the resolved-tree API and render their own HTML/CSS/JavaScript without duplicating menu data or URL-resolution logic.
-- [ ] Eclipse must preserve Menu hierarchy, permissions, element types, ordering and resolved destinations while controlling only presentation and interaction.
-- [ ] Keep the administration preview presentation-neutral so it validates the same underlying structure consumed by themes.
-- [ ] Do not require physical modification of a theme template merely to make the resolved-tree API available.
+- [x] Keep menu structure/content responsibility in the plugin.
+- [x] Allow modern themes to own HTML/CSS/JS presentation.
+- [x] Expose `navigation` through the resolved-tree hand-off.
+- [x] Preserve legacy rendering for themes that still use it.
+- [x] Support Eclipse consuming Menu navigation without duplicating destination-resolution logic.
+- [ ] Continue real-theme regression testing as Eclipse evolves.
 
 ## Phase 11 — Upgrade and release validation
 
-Before declaring 1.3.0 stable:
+Before 1.3.0 stable:
 
-- [ ] Fresh install tests.
-- [ ] Upgrade test from 1.2.6.
-- [ ] Upgrade test from 1.2.7.
-- [ ] Upgrade test from 1.2.8.
-- [ ] Upgrade test from 1.2.8.1.
-- [ ] Verify existing menu structures and permissions remain unchanged.
-- [ ] Verify existing custom CSS remains available after migration.
-- [ ] Verify existing uploaded images remain available.
-- [ ] Verify migration is idempotent.
-- [ ] Verify two-site multisite isolation.
-- [ ] Verify cache cleanup does not remove persistent plugin data.
-- [ ] Verify uninstall behaviour separately from cache cleanup.
-- [ ] Run compatibility tests across the supported Geeklog/PHP matrix.
-- [ ] Build and validate an installable ZIP before release.
+- [ ] Fresh install on Geeklog 2.1.1.
+- [ ] Fresh install on Geeklog 2.2.2.
+- [ ] Upgrade from 1.2.6.
+- [ ] Upgrade from 1.2.7.
+- [ ] Upgrade from 1.2.8.
+- [ ] Upgrade from 1.2.8.1.
+- [ ] Confirm existing menu structure and permissions remain unchanged.
+- [ ] Confirm custom CSS survives migration.
+- [ ] Confirm uploaded images remain available.
+- [x] Automated migration idempotence coverage.
+- [x] Automated multisite isolation coverage.
+- [x] Automated cache/data separation coverage.
+- [ ] Verify uninstall behavior separately from normal cache cleanup.
+- [ ] Run final supported Geeklog/PHP regression matrix.
+- [ ] Validate the actual release package/install procedure when preparing the release.
 
 ## Compatibility principle
 
-The plugin must not solve compatibility by maintaining separate source trees for old and new Geeklog releases. Prefer small compatibility helpers and runtime capability/version checks so one release can support the full declared range.
+Do not maintain separate source trees for old and new Geeklog releases. Prefer small compatibility helpers and runtime capability checks so one Menu release supports the full declared range.
 
 ## Data-safety principle
 
-Existing user data must take precedence over cleanup or migration convenience. Upgrade routines must be non-destructive, repeatable and conservative. Legacy files/directories may be left in place after successful migration and documented for optional manual cleanup later.
+Existing user data takes precedence over cleanup convenience. Upgrade routines must remain non-destructive, repeatable and conservative. Legacy files/directories may remain after successful migration and can be documented for optional manual cleanup.
