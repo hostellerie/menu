@@ -380,14 +380,29 @@ function MENU_displayTree( $menu_id ) {
            $_MENU_CONF, $Menus, $_SCRIPTS;
 
     $retval = '';
-        
+
+    $dragTokenName = MENU_adminTokenName();
+    $dragToken = MENU_adminCreateToken();
+    $dragPostUrl = $_CONF['site_admin_url'] . '/plugins/menu/index.php';
+
     $js = 'jQuery(function() {
 
     jQuery(".tbl_repeat tbody").tableDnD({
         onDrop: function(table, row) {
             var orders = jQuery.tableDnD.serialize();
-            var menu_id = ' . $menu_id . ';
-            jQuery.post(\'' . $_CONF['site_admin_url']. '/plugins/menu/index.php\', { orders : orders, menu_id : menu_id });
+            var data = {
+                orders: orders,
+                menu_id: ' . (int) $menu_id . '
+            };
+            data[' . json_encode($dragTokenName) . '] = ' . json_encode($dragToken) . ';
+
+            jQuery.ajax({
+                type: "POST",
+                url: ' . json_encode($dragPostUrl) . ',
+                data: data
+            }).fail(function() {
+                window.location.reload();
+            });
         }
     });
 
