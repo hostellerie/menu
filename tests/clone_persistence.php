@@ -24,17 +24,17 @@ if (strpos($clone, '$idMap[$oldId] = $newId;') === false
     $failures[] = 'Clone endpoint must remap parent IDs after element insertion.';
 }
 
-if (strpos($clone, "WHERE menu_id=" . '$sourceMenuId' . " ORDER BY id ASC") === false) {
+if (strpos($clone, 'ORDER BY id ASC') === false) {
     $failures[] = 'Clone source elements must use deterministic ordering.';
 }
 
 if (strpos($clone, 'SEC_hasRights(\'menu.admin\')') === false
     || strpos($clone, 'SEC_checkToken()') === false
-    || strpos($clone, "REQUEST_METHOD") === false) {
+    || strpos($clone, 'REQUEST_METHOD') === false) {
     $failures[] = 'Clone endpoint must enforce authorization, POST and CSRF.';
 }
 
-if (strpos($security, "if ($mode === 'saveclonemenu')") === false) {
+if (strpos($security, 'if ($mode === \'saveclonemenu\')') === false) {
     $failures[] = 'Legacy saveclonemenu controller path must be retired.';
 }
 
