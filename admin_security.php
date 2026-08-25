@@ -13,6 +13,7 @@ if (!defined('VERSION')) {
 }
 
 require_once __DIR__ . '/admin_element_validation.php';
+require_once __DIR__ . '/database.php';
 
 function MENU_adminMutationModes()
 {
@@ -205,6 +206,8 @@ function MENU_adminRejectInvalidRequest($message)
 
 function MENU_adminEnforceCsrf()
 {
+    global $_CONF, $_TABLES;
+
     if (!MENU_adminIsControllerRequest()) {
         return;
     }
@@ -246,6 +249,24 @@ function MENU_adminEnforceCsrf()
     }
     if ($validationError !== '') {
         MENU_adminRejectInvalidRequest($validationError);
+    }
+
+    // A whole-menu delete is simpler and safer as three menu_id-scoped SQL
+    // deletes than as recursive element deletion. This prevents orphan rows
+    // while remaining compatible with the existing MyISAM schema.
+    if ($mode === 'deletemenu') {
+        $menuId = isset($_POST['id']) ? (int) $_POST['id'] : 0;
+        if (!MENU_deleteMenuData($menuId)) {
+            MENU_adminRejectInvalidRequest('Unable to delete the selected menu.');
+        }
+
+        MENU_CACHE_remove_instance('menu');
+        MENU_CACHE_remove_instance('css');
+        if (isset($_TABLES['vars'])) {
+            DB_save($_TABLES['vars'], 'name,value', "'cacheid'," . rand());
+        }
+        MENU_initMENU(true);
+        COM_redirect($_CONF['site_admin_url'] . '/plugins/menu/index.php');
     }
 }
 
