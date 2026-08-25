@@ -132,6 +132,10 @@ function MENU_resolveElementNode($menuId, $elementId)
             break;
 
         case 7:
+            if (!MENU_runtimeConfigEnabled('allow_php_elements', false)) {
+                MENU_debugLog('Resolved PHP menu element ' . (int) $element->id . ' skipped by configuration.');
+                return null;
+            }
             // Arbitrary PHP callbacks historically return HTML. Preserve the
             // item in the data API, but do not pretend that HTML is a resolved
             // child tree. Themes can detect resolved=false and choose a legacy
@@ -174,6 +178,9 @@ function MENU_resolveElementNode($menuId, $elementId)
         'subtype' => $subtype,
         'url' => $url,
         'target' => (string) $element->target,
+        'rel' => MENU_resolvedLinkRel($url, (string) $element->target),
+        'aria_label' => MENU_runtimeConfigEnabled('accessibility_markup', true)
+            ? strip_tags((string) $element->label) : '',
         'active' => true,
         'selected' => MENU_resolvedNodeSelected($url),
         'resolved' => $resolved,
@@ -411,6 +418,9 @@ function MENU_resolvedSyntheticNode($label, $url, $type = 0, $subtype = '')
         'subtype' => $subtype,
         'url' => (string) $url,
         'target' => '',
+        'rel' => '',
+        'aria_label' => MENU_runtimeConfigEnabled('accessibility_markup', true)
+            ? strip_tags((string) $label) : '',
         'active' => true,
         'selected' => MENU_resolvedNodeSelected($url),
         'resolved' => true,

@@ -835,6 +835,10 @@ class mbElement {
                 $this->replace_macros();
                 break;
             case '7' : // php function
+                if (!MENU_runtimeConfigEnabled('allow_php_elements', false)) {
+                    MENU_debugLog('PHP menu element ' . (int) $this->id . ' skipped by configuration.');
+                    break;
+                }
                 $functionName = $this->subtype;
                 if (function_exists($functionName)) {
                     /* Pass the type of menu to custom php function */
@@ -867,12 +871,12 @@ class mbElement {
                 }
 
                 if ( $this->type == 1 && $parentaclass != '' ) {
-                    $retval .= "<li".$lastClass.">" . '<a class="' . $parentaclass . '" name="'.$parentaclass.'" href="' . ($this->url == '' ? '#' : $this->url) . '">' . strip_tags($this->label) . '</a>' . LB;
+                    $retval .= "<li".$lastClass.">" . '<a class="' . $parentaclass . '" name="'.$parentaclass.'" href="' . ($this->url == '' ? '#' : $this->url) . '"' . MENU_legacyParentAttributes() . '>' . strip_tags($this->label) . '</a>' . LB;
                 } else {
                     if ($this->type == 8 ) {
                         $retval .= "<li".$lastClass.'><a><strong>' . strip_tags($this->label) . '</strong></a></li>' . LB;
                     } else {
-                        $retval .= "<li".$lastClass.">" . '<a href="' . $this->url . '"' . ($this->target != '' ? ' target="' . $this->target . '"' : '') . '>' . strip_tags($this->label) . '</a></li>' . LB;
+                        $retval .= "<li".$lastClass.">" . '<a href="' . $this->url . '"' . MENU_legacyLinkAttributes($this->url, $this->target) . '>' . strip_tags($this->label) . '</a></li>' . LB;
                     }
                 }
             }

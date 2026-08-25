@@ -77,6 +77,10 @@ function MENU_elementTypeIsAllowed($menuType, $elementType, $hasStaticPages, $ha
     $menuType = (int) $menuType;
     $elementType = (int) $elementType;
 
+    if ($elementType === 7 && !MENU_runtimeConfigEnabled('allow_php_elements', false)) {
+        return false;
+    }
+
     if (!$hasStaticPages && $elementType === 5) {
         return false;
     }

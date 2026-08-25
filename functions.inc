@@ -237,6 +237,14 @@ function plugin_getheadercode_menu() {
     $menu_header = '';
     $js = '';
     $needsLegacyAssets = false;
+    $legacyRendering = MENU_runtimeConfigEnabled('legacy_rendering', true);
+    $loadLegacyCss = MENU_runtimeConfigEnabled('load_legacy_css', true);
+    $loadLegacyJs = MENU_runtimeConfigEnabled('load_legacy_js', true);
+
+    if (!$legacyRendering) {
+        MENU_debugLog('Legacy header rendering disabled by configuration.');
+        return '';
+    }
 
     if (is_array($Menus)) {
         foreach ($Menus as $menu) {
@@ -248,8 +256,10 @@ function plugin_getheadercode_menu() {
         }
     }
 
-    if ($needsLegacyAssets) {
+    if ($needsLegacyAssets && $loadLegacyCss) {
         $_SCRIPTS->setCSSFile('menu_slicknav', '/menu/css/slicknav.css');
+    }
+    if ($needsLegacyAssets && $loadLegacyJs) {
         $_SCRIPTS->setJavaScriptFile('slicknav', '/menu/js/jquery.slicknav.js');
     }
 
@@ -279,7 +289,9 @@ function plugin_getheadercode_menu() {
 
                 if ($retval) {
                     $css_minify = MENU_compress($retval . $custom_ccs_code);
-                    $menu_header .= LB . '<style type="text/css">' . $css_minify . '</style>' . LB;
+                    if ($loadLegacyCss) {
+                        $menu_header .= LB . '<style type="text/css">' . $css_minify . '</style>' . LB;
+                    }
                 } else {
                     $ms = new Template($_CONF['path'].'plugins/menu/templates/');
                     $ms->set_var('under',50);
@@ -340,7 +352,9 @@ function plugin_getheadercode_menu() {
                     $fCSS = $fCSS . $slicknave_css;
                     MENU_CACHE_create_instance($cacheInstance, $fCSS, 0);
                     $css_minify = MENU_compress($fCSS . $custom_ccs_code);
-                    $menu_header .= LB . '<style type="text/css">' . $css_minify . '</style>' . LB;
+                    if ($loadLegacyCss) {
+                        $menu_header .= LB . '<style type="text/css">' . $css_minify . '</style>' . LB;
+                    }
                 }
 
                 $siteName = json_encode((string) $_CONF['site_name']);
@@ -358,7 +372,7 @@ function plugin_getheadercode_menu() {
         }
     }
 
-    if ($needsLegacyAssets) {
+    if ($needsLegacyAssets && $loadLegacyJs) {
         $_SCRIPTS->setJavaScriptLibrary('jquery');
         if ($js !== '') {
             $_SCRIPTS->setJavaScript($js, true);
@@ -450,6 +464,11 @@ function MENU_initMenu() {
 function MENU_getMenu($name='navigation',$wrapper='',$ulclass='',$liclass='',$parentclass='',$lastclass='',$selected='',$noid=0) {
     global $Menus, $_CONF;
 
+    if (!MENU_runtimeConfigEnabled('legacy_rendering', true)) {
+        MENU_debugLog('Legacy render skipped for menu ' . (string) $name . '.');
+        return '';
+    }
+
     $optionHash = md5($wrapper.$ulclass.$liclass.$parentclass.$lastclass.$selected);
 
     $menuID = '';
@@ -489,7 +508,8 @@ function MENU_getMenu($name='navigation',$wrapper='',$ulclass='',$liclass='',$pa
     }
     if ($menuID != '' && $Menus[$menuID]['active'] == 1 && $Menus[$menuID]['menu_perm'] == 3) {
         if ($Menus[$menuID]['menu_type'] == 1) {
-            $retval .= '<div id="gl_menu'.($noid == 0 ? $menuID : '').'">'. LB;
+            $retval .= '<div id="gl_menu'.($noid == 0 ? $menuID : '').'"'
+                . MENU_legacyNavigationAttributes($name) . '>'. LB;
         }
         if ($wrapper != '') {
             $retval .= '<div class="'.$wrapper.($noid == 0 ? $menuID : '').'">' . LB;
@@ -656,6 +676,10 @@ function MENU_CACHE_create_instance($iid, $data, $bypass_lang = false)
 {
     global $MENU_TEMPLATE_OPTIONS, $_CONF;
 
+    if (!MENU_runtimeConfigEnabled('enable_cache', true)) {
+        return;
+    }
+
     if ($MENU_TEMPLATE_OPTIONS['cache_by_language']) {
         if (!is_dir($MENU_TEMPLATE_OPTIONS['path_cache'] . $_CONF['language'])) {
             @mkdir($MENU_TEMPLATE_OPTIONS['path_cache'] . $_CONF['language'], 0755, true);
@@ -669,6 +693,10 @@ function MENU_CACHE_create_instance($iid, $data, $bypass_lang = false)
 
 function MENU_CACHE_check_instance($iid, $bypass_lang = false)
 {
+    if (!MENU_runtimeConfigEnabled('enable_cache', true)) {
+        return false;
+    }
+
     $filename = MENU_CACHE_instance_filename($iid, $bypass_lang);
     if (file_exists($filename)) {
         $str = @file_get_contents($filename);
@@ -679,6 +707,10 @@ function MENU_CACHE_check_instance($iid, $bypass_lang = false)
 
 function MENU_CACHE_get_instance_update($iid, $bypass_lang = false)
 {
+    if (!MENU_runtimeConfigEnabled('enable_cache', true)) {
+        return false;
+    }
+
     $filename = MENU_CACHE_instance_filename($iid, $bypass_lang);
     return @filemtime($filename);
 }
