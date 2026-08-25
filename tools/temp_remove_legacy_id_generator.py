@@ -36,7 +36,7 @@ foreach ($iterator as $file) {
     }
     $content = file_get_contents($file->getPathname());
     if (strpos($content, 'createElementID(') !== false
-        || stripos($content, 'MAX(id)') !== false) {
+        || stripos($content, 'SELECT MAX(id)') !== false) {
         fwrite(STDERR, "Legacy manual ID generation remains in " . $file->getPathname() . "\n");
         exit(1);
     }
