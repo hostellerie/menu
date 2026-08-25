@@ -61,18 +61,9 @@ if old_create_parent not in s:
     raise SystemExit('create parent block not found')
 s = s.replace(old_create_parent, new_create_parent, 1)
 
-old_edit_types = '''    $type_select = '<select id="menutype" name="menutype" onChange="toggleFields();">' . LB;
-    while ( $types = current($LANG_MENU_TYPES) ) {
-        if ( key($LANG_MENU_TYPES) < 4 ){
-            // skip it
-        } else {
-            $type_select .= '<option value="' . key($LANG_MENU_TYPES) . '"';
-            $type_select .= ($Menus[$menu_id]['elements'][$mid]->type==key($LANG_MENU_TYPES) ? ' selected="selected"' : '') . '>' . $types . '</option>' . LB;
-        }
-        next($LANG_MENU_TYPES);
-    }
-    $type_select .= '</select>' . LB;
-'''
+edit_start = s.index('function MENU_editElement')
+type_start = s.index("    $type_select = '<select id=\"menutype\"", edit_start)
+type_end = s.index("    $glfunction_select = '<select id=\"glfunction\"", type_start)
 new_edit_types = '''    $type_select = '<select id="menutype" name="menutype" onChange="toggleFields();">' . LB;
     $allowedTypes = MENU_getAllowedElementTypes(
         $LANG_MENU_TYPES,
@@ -87,23 +78,13 @@ new_edit_types = '''    $type_select = '<select id="menutype" name="menutype" on
             . '>' . MENU_escapeHTML($typeLabel) . '</option>' . LB;
     }
     $type_select .= '</select>' . LB;
-'''
-if old_edit_types not in s:
-    raise SystemExit('edit type block not found')
-s = s.replace(old_edit_types, new_edit_types, 1)
 
-old_edit_parent = '''    if ( $Menus[$menu_id]['menu_type'] == 2 || $Menus[$menu_id]['menu_type'] == 4 ) {
-        $parent_select = '<input type="hidden" name="pid" id="pid" value="0"'.XHTML.'>'.$LANG_MENU01['top_level'];
-    } else {
-        $parent_select = '<select id="pid" name="pid">' . LB;
-        $parent_select .= '<option value="0">' . $LANG_MENU01['top_level'] . '</option>' . LB;
-        $result = DB_query("SELECT id,element_label FROM {$_TABLES['menu_elements']} WHERE menu_id='" . $menu_id . "' AND element_type=1");
-        while ($row = DB_fetchArray($result)) {
-            $parent_select .= '<option value="' . $row['id'] . '" ' . ($Menus[$menu_id]['elements'][$mid]->pid==$row['id'] ? 'selected="selected"' : '') . '>' . MENU_escapeStoredText($row['element_label']) . '</option>' . LB;
-        }
-        $parent_select .= '</select>' . LB;
-    }
 '''
+s = s[:type_start] + new_edit_types + s[type_end:]
+
+edit_start = s.index('function MENU_editElement')
+parent_start = s.index("    if ( $Menus[$menu_id]['menu_type'] == 2 || $Menus[$menu_id]['menu_type'] == 4 ) {", edit_start)
+parent_end = s.index('    // build group select', parent_start)
 new_edit_parent = '''    $parent_select = '<select id="pid" name="pid">' . LB;
     $parent_select .= '<option value="0">' . $LANG_MENU01['top_level'] . '</option>' . LB;
     $result = DB_query("SELECT id,element_label FROM {$_TABLES['menu_elements']} WHERE menu_id='" . $menu_id . "' AND element_type=1 ORDER BY element_order ASC, id ASC");
@@ -116,9 +97,8 @@ new_edit_parent = '''    $parent_select = '<select id="pid" name="pid">' . LB;
             . '>' . MENU_escapeStoredText($row['element_label']) . '</option>' . LB;
     }
     $parent_select .= '</select>' . LB;
+
 '''
-if old_edit_parent not in s:
-    raise SystemExit('edit parent block not found')
-s = s.replace(old_edit_parent, new_edit_parent, 1)
+s = s[:parent_start] + new_edit_parent + s[parent_end:]
 
 p.write_text(s)
