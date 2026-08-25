@@ -6,7 +6,6 @@
   {menu_select}
 </div><div style="clear:both;"></div>
 
-<form method="post" id="menusel" action="{site_admin_url}/plugins/menu/index.php">
 <div>
   <table style="width:100%;" class="tbl_repeat" id="menu_table" name="menu_table">
     <tr>
@@ -15,12 +14,13 @@
       <th class="aligncenter" style="text-align:center;">{LANG_MENU01[info]}</th>
       <th class="aligncenter" style="text-align:center;">{LANG_MENU01[edit]}</th>
       <th class="aligncenter" style="text-align:center;">{LANG_MENU01[delete]}</th>
-      <th colspan="2" style="text-align:center;">{LANG_MENU01[order]}</th>
+      <th style="text-align:center;">{LANG_MENU01[order]}</th>
     </tr>
 	<tbody>
     {menu_tree}
 	</tbody>
   </table>
+</div>
 
 <div class="menu-preview" style="margin:25px 0 5px 0;clear:both;">
   <div style="font-weight:bold;margin-bottom:8px;">Preview</div>
@@ -30,4 +30,3 @@
     style="display:block;width:100%;height:560px;border:1px solid #ccc;background:#fff;box-sizing:border-box;"
   ></iframe>
 </div>
-
