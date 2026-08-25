@@ -183,7 +183,7 @@ function MENU_displayTree( $menu_id ) {
 });';
 
     $_SCRIPTS->setJavaScript($js, true);
-    $_SCRIPTS->setJavaScriptFile('menu', '/admin/plugins/menu/js/tablednd_0_6.js');
+    $_SCRIPTS->setJavaScriptFile('menu_order_handle', '/admin/plugins/menu/js/menu-order-handle.js');
 
     $menu_arr = array(
             array('url'  => $_CONF['site_admin_url'] .'/plugins/menu/index.php?mode=new&amp;menuid='.$menu_id,
