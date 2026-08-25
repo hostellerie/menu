@@ -19,7 +19,7 @@
     white-space: nowrap;
 }
 #menu_table tbody tr > td:nth-last-child(2) form {
-    display: none;
+    display: none !important;
 }
 #menu_table tbody tr > td:nth-last-child(2)::after {
     content: "\22EE\22EE";
