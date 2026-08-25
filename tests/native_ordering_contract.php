@@ -40,7 +40,8 @@ foreach ($requiredScript as $needle) {
 }
 
 if (strpos($library, 'jQuery.tableDnD') === false
-    || strpos($library, '$.fn.tableDnD') === false) {
+    || strpos($library, 'jQuery.fn.extend') === false
+    || strpos($library, 'tableDnD : jQuery.tableDnD.build') === false) {
     fwrite(STDERR, "TableDnD 0.6 library contract is incomplete\n");
     exit(1);
 }
