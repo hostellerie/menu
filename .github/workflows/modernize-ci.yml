@@ -8,73 +8,7 @@ on:
     branches:
       - master
 
-permissions:
-  contents: write
-
 jobs:
-  apply-native-drag-handle:
-    if: github.event_name == 'push' && github.actor != 'github-actions[bot]'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: modernize-1.3.0
-      - name: Apply patch
-        shell: python
-        run: |
-          from pathlib import Path
-          p = Path('classes/classMenuElement2.php')
-          s = p.read_text()
-          old = '''            $moveup = '<form method="post" action="' . $actionUrl . '" style="display:inline">' . $tokenInput . '<input type="hidden" name="mode" value="move"' . XHTML . '><input type="hidden" name="where" value="up"' . XHTML . '><input type="hidden" name="mid" value="' . (int) $this->id . '"' . XHTML . '><input type="hidden" name="menu" value="' . (int) $this->menu_id . '"' . XHTML . '><button type="submit" style="border:0;background:none;padding:0;cursor:pointer">';
-            $movedown = '<form method="post" action="' . $actionUrl . '" style="display:inline">' . $tokenInput . '<input type="hidden" name="mode" value="move"' . XHTML . '><input type="hidden" name="where" value="down"' . XHTML . '><input type="hidden" name="mid" value="' . (int) $this->id . '"' . XHTML . '><input type="hidden" name="menu" value="' . (int) $this->menu_id . '"' . XHTML . '><button type="submit" style="border:0;background:none;padding:0;cursor:pointer">';
-'''
-          s = s.replace(old, '', 1)
-          old = '''            $retval .= '<td class="aligncenter">' . $moveup . '<img src="' . $_CONF['site_admin_url'] . '/plugins/menu/images/up.png" alt="' . $LANG_MENU01['move_up'] . '"' . XHTML . '></button></form></td><td class="aligncenter">' . $movedown . '<img src="' . $_CONF['site_admin_url'] . '/plugins/menu/images/down.png" alt="' . $LANG_MENU01['move_down'] . '"' . XHTML . '></button></form></td>';
-'''
-          new = '''            $moveLabel = isset($LANG_MENU01['order']) ? $LANG_MENU01['order'] : 'Move';
-            $retval .= '<td class="aligncenter menu-drag-handle" tabindex="0" role="button"'
-                . ' aria-label="' . htmlspecialchars($moveLabel, ENT_QUOTES, 'UTF-8') . '"'
-                . ' title="' . htmlspecialchars($moveLabel, ENT_QUOTES, 'UTF-8') . '"'
-                . ' data-mid="' . (int) $this->id . '"'
-                . ' style="cursor:grab;touch-action:none;font-size:18px;line-height:1;user-select:none;white-space:nowrap;">'
-                . '<span aria-hidden="true">&#8942;&#8942;</span></td>';
-'''
-          if old not in s:
-              raise SystemExit('move output not found')
-          s = s.replace(old, new, 1)
-          p.write_text(s)
-
-          p = Path('admin/index.php')
-          s = p.read_text()
-          old = '    jQuery(".tbl_repeat tbody").tableDnD({\n        onDrop: function(table, row) {'
-          new = '    jQuery(".tbl_repeat tbody").tableDnD({\n        dragHandle: "menu-drag-handle",\n        onDrop: function(table, row) {'
-          if old not in s:
-              raise SystemExit('tableDnD init not found')
-          s = s.replace(old, new, 1)
-          p.write_text(s)
-
-          p = Path('templates/default/menutree.thtml')
-          s = p.read_text()
-          s = s.replace('<th colspan="2" style="text-align:center;">{LANG_MENU01[order]}</th>', '<th class="aligncenter" style="text-align:center;">{LANG_MENU01[order]}</th>')
-          s = s.replace('<script type="text/javascript" src="{site_admin_url}/plugins/menu/js/menu-order-handle.js"></script>\n\n', '')
-          p.write_text(s)
-      - name: Validate patch
-        run: |
-          php -l classes/classMenuElement2.php
-          php -l admin/index.php
-          php tests/resolved_tree.php
-          grep -q 'dragHandle: "menu-drag-handle"' admin/index.php
-          grep -q 'class="aligncenter menu-drag-handle"' classes/classMenuElement2.php
-          ! grep -q 'images/up.png' classes/classMenuElement2.php
-          ! grep -q 'images/down.png' classes/classMenuElement2.php
-      - name: Commit patch
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add classes/classMenuElement2.php admin/index.php templates/default/menutree.thtml
-          git commit -m "Use native drag handle for Menu ordering"
-          git push origin HEAD:modernize-1.3.0
-
   php-lint:
     name: PHP ${{ matrix.php }} syntax and storage tests
     runs-on: ubuntu-latest
@@ -85,11 +19,13 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
           coverage: none
+
       - name: Lint PHP and INC files
         shell: bash
         run: |
@@ -97,22 +33,31 @@ jobs:
           while IFS= read -r -d '' file; do
             php -l "$file"
           done < <(find . -type f \( -name '*.php' -o -name '*.inc' \) -print0)
+
       - name: Test multisite storage migration
         run: php tests/storage_migration.php
+
       - name: Test frontend rendering assets
         run: php tests/render_assets.php
+
       - name: Test element type rules
         run: php tests/element_types.php
+
       - name: Test element editor UI contract
         run: php tests/element_editor.php
+
       - name: Test resolved menu tree API
         run: php tests/resolved_tree.php
+
       - name: Test theme presentation hand-off
         run: php tests/theme_presentation.php
+
       - name: Test admin security helpers
         run: php tests/admin_security.php
+
       - name: Test element mutation validation
         run: php tests/admin_element_validation.php
+
       - name: Test tabbed preview contract
         run: php tests/preview_contract.php
 
@@ -123,6 +68,7 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
       - name: Build package
         shell: bash
         run: |
@@ -138,6 +84,7 @@ jobs:
           cd build
           zip -qr menu-1.3.0-alpha1.zip menu
           sha256sum menu-1.3.0-alpha1.zip > menu-1.3.0-alpha1.zip.sha256
+
       - name: Upload package
         uses: actions/upload-artifact@v4
         with:
