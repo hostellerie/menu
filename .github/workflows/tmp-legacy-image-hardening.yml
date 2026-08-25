@@ -1,0 +1,39 @@
+name: Temporary legacy image hardening
+
+on:
+  push:
+    branches:
+      - modernize-1.3.0
+
+permissions:
+  contents: write
+
+jobs:
+  harden:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: modernize-1.3.0
+          fetch-depth: 0
+
+      - name: Apply legacy image hardening
+        run: python3 .github/scripts/legacy_image_hardening.py
+
+      - name: Validate image hardening
+        run: |
+          php -l image_upload.php
+          php -l admin/index.php
+          php -l sql/mysql_install.php
+          php -l tests/image_upload_contract.php
+          php tests/image_upload_contract.php
+          ! grep -RIn "menu_bg.gif\|menu_hover_bg.gif\|menu_parent.png\|vmenu_parent.gif" sql/mysql_install.php admin/index.php
+
+      - name: Commit legacy image hardening
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add admin/index.php sql/mysql_install.php ROADMAP.md
+          git commit -m "Secure legacy Menu image uploads and defaults"
+          git push origin HEAD:modernize-1.3.0
