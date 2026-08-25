@@ -53,7 +53,7 @@ foreach ($requiredModules as $module) {
     }
 }
 
-if (substr_count($index, "$currentSelect = $LANG_MENU01['configuration'];") > 0) {
+if (strpos($index, '$currentSelect = $LANG_MENU01[\'configuration\'];') !== false) {
     fwrite(STDERR, "Obsolete overwritten configuration selection remains\n");
     exit(1);
 }
