@@ -168,7 +168,8 @@ function MENU_createElement ( $menu_id ) {
 
     $num_plugins = count($plugin_menus);
     for( $i = 1; $i <= $num_plugins; $i++ ) {
-        $plugin_select .= '<option value="' . key($plugin_menus) . '">' . key($plugin_menus) . '</option>' . LB;
+        $pluginKey = (string) key($plugin_menus);
+        $plugin_select .= '<option value="' . MENU_escapeHTML($pluginKey) . '">' . MENU_escapeHTML($pluginKey) . '</option>' . LB;
         next( $plugin_menus );
     }
     $plugin_select .= '</select>' . LB;
@@ -231,8 +232,8 @@ function MENU_createElement ( $menu_id ) {
         'site_admin_url'    => $_CONF['site_admin_url'],
         'site_url'          => $_CONF['site_url'],
         'form_action'       => $_CONF['site_admin_url'] . '/plugins/menu/index.php',
-        'birdseed'          => '<a href="'.$_CONF['site_admin_url'].'/plugins/menu/index.php">'.$LANG_MENU01['menu_list'].'</a> :: <a href="'.$_CONF['site_admin_url'].'/plugins/menu/index.php?mode=menu&amp;menu='.$menu_id.'">'.$Menus[$menu_id]['menu_name'].'</a> :: '.$LANG_MENU01['create_element'],
-        'menuname'          => isset($menu_name) ? $menu_name : '',
+        'birdseed'          => '<a href="' . MENU_escapeHTML($_CONF['site_admin_url']) . '/plugins/menu/index.php">' . MENU_escapeHTML($LANG_MENU01['menu_list']) . '</a> :: <a href="' . MENU_escapeHTML($_CONF['site_admin_url']) . '/plugins/menu/index.php?mode=menu&amp;menu=' . (int) $menu_id . '">' . $safeMenuName . '</a> :: ' . MENU_escapeHTML($LANG_MENU01['create_element']),
+        'menuname'          => $safeMenuName,
         'menuid'            => $menu_id,
         'type_select'       => $type_select,
         'gl_select'         => $gl_select,
@@ -337,13 +338,14 @@ function MENU_editElement( $menu_id, $mid ) {
     $num_plugins = count($plugin_menus);
     for( $i = 1; $i <= $num_plugins; $i++ )
     {
-        $plugin_select .= '<option value="' . key($plugin_menus) . '"';
+        $pluginKey = (string) key($plugin_menus);
+        $plugin_select .= '<option value="' . MENU_escapeHTML($pluginKey) . '"';
 
         if ( $Menus[$menu_id]['elements'][$mid]->subtype==key($plugin_menus) ) {
             $plugin_select .= ' selected="selected"';
             $found++;
         }
-        $plugin_select .= '>' . key($plugin_menus) . '</option>' . LB;
+        $plugin_select .= '>' . MENU_escapeHTML($pluginKey) . '</option>' . LB;
 
         next( $plugin_menus );
     }
@@ -444,11 +446,11 @@ $parent_select = '<select id="pid" name="pid">' . LB;
         'site_url'          => $_CONF['site_url'],
         'form_action'       => $_CONF['site_admin_url'] . '/plugins/menu/index.php',
         'birdseed'          => '<a href="' . MENU_escapeHTML($_CONF['site_admin_url']) . '/plugins/menu/index.php">Menu List</a> :: <a href="' . MENU_escapeHTML($_CONF['site_admin_url']) . '/plugins/menu/index.php?mode=menu&amp;menu=' . (int) $menu_id . '">' . $safeMenuName . '</a> :: Edit Element',
-        'menulabel'         => $Menus[$menu_id]['elements'][$mid]->label,
+        'menulabel'         => MENU_escapeHTML($Menus[$menu_id]['elements'][$mid]->label),
         'menuorder'         => $Menus[$menu_id]['elements'][$mid]->order,
         'order_select'      => $order_select,
-        'menuurl'           => $Menus[$menu_id]['elements'][$mid]->url,
-        'phpfunction'       => $Menus[$menu_id]['elements'][$mid]->subtype,
+        'menuurl'           => MENU_escapeHTML($Menus[$menu_id]['elements'][$mid]->url),
+        'phpfunction'       => MENU_escapeHTML($Menus[$menu_id]['elements'][$mid]->subtype),
         'type_select'       => $type_select,
         'gl_select'         => $gl_select,
         'plugin_select'     => $plugin_select,

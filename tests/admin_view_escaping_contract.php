@@ -15,4 +15,24 @@ if (strpos($view, "'menuname'          => \$Menus[\$menu_id]['menu_name']") !== 
     exit(1);
 }
 
+if (strpos($view, "'menuname'          => isset($menu_name)") !== false) {
+    fwrite(STDERR, "Undefined legacy menu_name fallback remains in create view\n");
+    exit(1);
+}
+$escapedAttributeNeedles = array(
+    "'menulabel'         => MENU_escapeHTML(",
+    "'menuurl'           => MENU_escapeHTML(",
+    "'phpfunction'       => MENU_escapeHTML("
+);
+foreach ($escapedAttributeNeedles as $needle) {
+    if (strpos($view, $needle) === false) {
+        fwrite(STDERR, "Stored element attribute value is not escaped: {$needle}\n");
+        exit(1);
+    }
+}
+if (substr_count($view, 'MENU_escapeHTML($pluginKey)') < 3) {
+    fwrite(STDERR, "Plugin-provided option identifiers are not escaped\n");
+    exit(1);
+}
+
 echo "Admin view escaping contract tests passed\n";
