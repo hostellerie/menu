@@ -1,0 +1,171 @@
+name: Temporary wire Menu global configuration
+
+on:
+  push:
+    branches:
+      - modernize-1.3.0
+
+permissions:
+  contents: write
+
+jobs:
+  wire:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: modernize-1.3.0
+
+      - name: Wire runtime configuration
+        shell: python
+        run: |
+          from pathlib import Path
+
+          def replace(path, old, new, count=None):
+              p = Path(path)
+              text = p.read_text(encoding='utf-8')
+              found = text.count(old)
+              if found == 0:
+                  raise SystemExit('Pattern not found in %s:\n%s' % (path, old[:180]))
+              if count is not None and found != count:
+                  raise SystemExit('Expected %d matches in %s, found %d' % (count, path, found))
+              text = text.replace(old, new)
+              p.write_text(text, encoding='utf-8')
+
+          # Load runtime helpers before the files that use them.
+          replace(
+              'storage.php',
+              "require_once __DIR__ . '/compat.php';\n",
+              "require_once __DIR__ . '/compat.php';\nrequire_once __DIR__ . '/runtime_config.php';\n",
+              1
+          )
+
+          # Global legacy-rendering and asset switches.
+          replace(
+              'functions.inc',
+              "function plugin_getheadercode_menu() {\n    global $_CONF, $Menus, $_SCRIPTS;\n\n    $menu_header = '';\n    $js = '';\n    $needsLegacyAssets = false;\n",
+              "function plugin_getheadercode_menu() {\n    global $_CONF, $Menus, $_SCRIPTS;\n\n    $menu_header = '';\n    $js = '';\n    $needsLegacyAssets = false;\n    $legacyRendering = MENU_runtimeConfigEnabled('legacy_rendering', true);\n    $loadLegacyCss = MENU_runtimeConfigEnabled('load_legacy_css', true);\n    $loadLegacyJs = MENU_runtimeConfigEnabled('load_legacy_js', true);\n\n    if (!$legacyRendering) {\n        MENU_debugLog('Legacy header rendering disabled by configuration.');\n        return '';\n    }\n",
+              1
+          )
+          replace(
+              'functions.inc',
+              "    if ($needsLegacyAssets) {\n        $_SCRIPTS->setCSSFile('menu_slicknav', '/menu/css/slicknav.css');\n        $_SCRIPTS->setJavaScriptFile('slicknav', '/menu/js/jquery.slicknav.js');\n    }\n",
+              "    if ($needsLegacyAssets && $loadLegacyCss) {\n        $_SCRIPTS->setCSSFile('menu_slicknav', '/menu/css/slicknav.css');\n    }\n    if ($needsLegacyAssets && $loadLegacyJs) {\n        $_SCRIPTS->setJavaScriptFile('slicknav', '/menu/js/jquery.slicknav.js');\n    }\n",
+              1
+          )
+          replace(
+              'functions.inc',
+              "                    $menu_header .= LB . '<style type=\"text/css\">' . $css_minify . '</style>' . LB;",
+              "                    if ($loadLegacyCss) {\n                        $menu_header .= LB . '<style type=\"text/css\">' . $css_minify . '</style>' . LB;\n                    }",
+              2
+          )
+          replace(
+              'functions.inc',
+              "    if ($needsLegacyAssets) {\n        $_SCRIPTS->setJavaScriptLibrary('jquery');\n        if ($js !== '') {\n            $_SCRIPTS->setJavaScript($js, true);\n        }\n    }\n",
+              "    if ($needsLegacyAssets && $loadLegacyJs) {\n        $_SCRIPTS->setJavaScriptLibrary('jquery');\n        if ($js !== '') {\n            $_SCRIPTS->setJavaScript($js, true);\n        }\n    }\n",
+              1
+          )
+
+          # Legacy renderer switch and accessibility attributes.
+          replace(
+              'functions.inc',
+              "function MENU_getMenu($name='navigation',$wrapper='',$ulclass='',$liclass='',$parentclass='',$lastclass='',$selected='',$noid=0) {\n    global $Menus, $_CONF;\n\n    $optionHash",
+              "function MENU_getMenu($name='navigation',$wrapper='',$ulclass='',$liclass='',$parentclass='',$lastclass='',$selected='',$noid=0) {\n    global $Menus, $_CONF;\n\n    if (!MENU_runtimeConfigEnabled('legacy_rendering', true)) {\n        MENU_debugLog('Legacy render skipped for menu ' . (string) $name . '.');\n        return '';\n    }\n\n    $optionHash",
+              1
+          )
+          replace(
+              'functions.inc',
+              "$retval .= '<div id=\"gl_menu'.($noid == 0 ? $menuID : '').'\">'. LB;",
+              "$retval .= '<div id=\"gl_menu'.($noid == 0 ? $menuID : '').'\"'\n                . MENU_legacyNavigationAttributes($name) . '>'. LB;",
+              1
+          )
+
+          # Global cache switch applies to all Menu cache consumers.
+          replace(
+              'functions.inc',
+              "function MENU_CACHE_create_instance($iid, $data, $bypass_lang = false)\n{\n    global $MENU_TEMPLATE_OPTIONS, $_CONF;\n",
+              "function MENU_CACHE_create_instance($iid, $data, $bypass_lang = false)\n{\n    global $MENU_TEMPLATE_OPTIONS, $_CONF;\n\n    if (!MENU_runtimeConfigEnabled('enable_cache', true)) {\n        return;\n    }\n",
+              1
+          )
+          replace(
+              'functions.inc',
+              "function MENU_CACHE_check_instance($iid, $bypass_lang = false)\n{\n    $filename",
+              "function MENU_CACHE_check_instance($iid, $bypass_lang = false)\n{\n    if (!MENU_runtimeConfigEnabled('enable_cache', true)) {\n        return false;\n    }\n\n    $filename",
+              1
+          )
+          replace(
+              'functions.inc',
+              "function MENU_CACHE_get_instance_update($iid, $bypass_lang = false)\n{\n    $filename",
+              "function MENU_CACHE_get_instance_update($iid, $bypass_lang = false)\n{\n    if (!MENU_runtimeConfigEnabled('enable_cache', true)) {\n        return false;\n    }\n\n    $filename",
+              1
+          )
+
+          # PHP elements disappear from new-item choices when disabled.
+          replace(
+              'element_types.php',
+              "    if (!$hasStaticPages && $elementType === 5) {\n        return false;\n    }\n",
+              "    if ($elementType === 7 && !MENU_runtimeConfigEnabled('allow_php_elements', false)) {\n        return false;\n    }\n\n    if (!$hasStaticPages && $elementType === 5) {\n        return false;\n    }\n",
+              1
+          )
+
+          # Enforce PHP-element execution and secure link attributes in legacy output.
+          replace(
+              'classes/classMenuElement2.php',
+              "            case '7' : // php function\n                $functionName = $this->subtype;\n                if (function_exists($functionName)) {",
+              "            case '7' : // php function\n                if (!MENU_runtimeConfigEnabled('allow_php_elements', false)) {\n                    MENU_debugLog('PHP menu element ' . (int) $this->id . ' skipped by configuration.');\n                    break;\n                }\n                $functionName = $this->subtype;\n                if (function_exists($functionName)) {",
+              1
+          )
+          replace(
+              'classes/classMenuElement2.php',
+              "'<a class=\"' . $parentaclass . '\" name=\"'.$parentaclass.'\" href=\"' . ($this->url == '' ? '#' : $this->url) . '\">'",
+              "'<a class=\"' . $parentaclass . '\" name=\"'.$parentaclass.'\" href=\"' . ($this->url == '' ? '#' : $this->url) . '\"' . MENU_legacyParentAttributes() . '>'",
+              1
+          )
+          replace(
+              'classes/classMenuElement2.php',
+              "'<a href=\"' . $this->url . '\"' . ($this->target != '' ? ' target=\"' . $this->target . '\"' : '') . '>'",
+              "'<a href=\"' . $this->url . '\"' . MENU_legacyLinkAttributes($this->url, $this->target) . '>'",
+              1
+          )
+
+          # Resolved-tree API honours PHP policy and exposes rel/ARIA metadata.
+          replace(
+              'resolved_tree.php',
+              "        case 7:\n            // Arbitrary PHP callbacks historically return HTML.",
+              "        case 7:\n            if (!MENU_runtimeConfigEnabled('allow_php_elements', false)) {\n                MENU_debugLog('Resolved PHP menu element ' . (int) $element->id . ' skipped by configuration.');\n                return null;\n            }\n            // Arbitrary PHP callbacks historically return HTML.",
+              1
+          )
+          replace(
+              'resolved_tree.php',
+              "        'target' => (string) $element->target,\n        'active' => true,",
+              "        'target' => (string) $element->target,\n        'rel' => MENU_resolvedLinkRel($url, (string) $element->target),\n        'aria_label' => MENU_runtimeConfigEnabled('accessibility_markup', true)\n            ? strip_tags((string) $element->label) : '',\n        'active' => true,",
+              1
+          )
+          replace(
+              'resolved_tree.php',
+              "        'target' => '',\n        'active' => true,",
+              "        'target' => '',\n        'rel' => '',\n        'aria_label' => MENU_runtimeConfigEnabled('accessibility_markup', true)\n            ? strip_tags((string) $label) : '',\n        'active' => true,",
+              1
+          )
+
+      - name: PHP syntax checks
+        run: |
+          php -l runtime_config.php
+          php -l storage.php
+          php -l functions.inc
+          php -l element_types.php
+          php -l resolved_tree.php
+          php -l classes/classMenuElement2.php
+          php tests/runtime_config.php
+
+      - name: Commit runtime wiring
+        run: |
+          if git diff --quiet; then
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add storage.php functions.inc element_types.php resolved_tree.php classes/classMenuElement2.php
+          git commit -m "Wire Menu global configuration into runtime"
+          git push origin HEAD:modernize-1.3.0
