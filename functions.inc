@@ -238,7 +238,7 @@ function plugin_getheadercode_menu() {
 
     $menu_header = '';
     $js = '';
-    $needsLegacyAssets = false;
+    $needsSlickNav = false;
     $legacyRendering = MENU_runtimeConfigEnabled('legacy_rendering', true);
     $loadLegacyCss = MENU_runtimeConfigEnabled('load_legacy_css', true);
     $loadLegacyJs = MENU_runtimeConfigEnabled('load_legacy_js', true);
@@ -251,17 +251,18 @@ function plugin_getheadercode_menu() {
     if (is_array($Menus)) {
         foreach ($Menus as $menu) {
             if (!empty($menu['active'])
+                && (int) $menu['menu_type'] === 1
                 && !MENU_themeHandlesPresentation(isset($menu['menu_name']) ? $menu['menu_name'] : '')) {
-                $needsLegacyAssets = true;
+                $needsSlickNav = true;
                 break;
             }
         }
     }
 
-    if ($needsLegacyAssets && $loadLegacyCss) {
+    if ($needsSlickNav && $loadLegacyCss) {
         $_SCRIPTS->setCSSFile('menu_slicknav', '/menu/css/slicknav.css');
     }
-    if ($needsLegacyAssets && $loadLegacyJs) {
+    if ($needsSlickNav && $loadLegacyJs) {
         $_SCRIPTS->setJavaScriptFile('slicknav', '/menu/js/jquery.slicknav.js');
     }
 
@@ -386,22 +387,24 @@ function plugin_getheadercode_menu() {
                     }
                 }
 
-                $siteName = json_encode((string) $_CONF['site_name']);
-                if ($siteName === false) {
-                    $siteName = '"Menu"';
+                if ((int) $menu['menu_type'] === 1 && $loadLegacyJs) {
+                    $siteName = json_encode((string) $_CONF['site_name']);
+                    if ($siteName === false) {
+                        $siteName = '"Menu"';
+                    }
+                    $js .= LB . "jQuery(document).ready(function() {
+                        jQuery('#gl_menu" . $menu['menu_id'] . "').slicknav(({
+                            label: " . $siteName . ",
+                            allowParentLinks: true,
+                        }));
+                        jQuery( '.slicknav_nav .gl_menu" . $menu['menu_id'] . "' ).removeClass( 'gl_menu" . $menu['menu_id'] . "' );
+                    });" . LB;
                 }
-                $js .= LB . "jQuery(document).ready(function() {
-                    jQuery('#gl_menu" . $menu['menu_id'] . "').slicknav(({
-                        label: " . $siteName . ",
-                        allowParentLinks: true,
-                    }));
-                    jQuery( '.slicknav_nav .gl_menu" . $menu['menu_id'] . "' ).removeClass( 'gl_menu" . $menu['menu_id'] . "' );
-                });" . LB;
             }
         }
     }
 
-    if ($needsLegacyAssets && $loadLegacyJs) {
+    if ($needsSlickNav && $loadLegacyJs) {
         $_SCRIPTS->setJavaScriptLibrary('jquery');
         if ($js !== '') {
             $_SCRIPTS->setJavaScript($js, true);
