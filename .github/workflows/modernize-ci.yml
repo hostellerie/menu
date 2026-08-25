@@ -1,103 +1,36 @@
-name: Menu modernization CI
+name: Menu CI
 
 on:
   push:
-    branches:
-      - modernize-1.3.0
-  pull_request:
-    branches:
-      - master
+    branches: [modernize-1.3.0]
 
 jobs:
-  php-lint:
-    name: PHP ${{ matrix.php }} syntax and storage tests
+  test:
+    name: PHP ${{ matrix.php }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
         php: ['5.6', '8.1']
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
 
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
           coverage: none
 
-      - name: Lint PHP and INC files
+      - name: Lint and test
         shell: bash
         run: |
           set -e
+
           while IFS= read -r -d '' file; do
-            php -l "$file"
+            php -l "$file" >/dev/null
           done < <(find . -type f \( -name '*.php' -o -name '*.inc' \) -print0)
 
-      - name: Test multisite storage migration
-        run: php tests/storage_migration.php
-
-      - name: Test frontend rendering assets
-        run: php tests/render_assets.php
-
-      - name: Test element type rules
-        run: php tests/element_types.php
-
-      - name: Test element editor UI contract
-        run: php tests/element_editor.php
-
-      - name: Test resolved menu tree API
-        run: php tests/resolved_tree.php
-
-      - name: Test theme presentation hand-off
-        run: php tests/theme_presentation.php
-
-      - name: Test admin security helpers
-        run: php tests/admin_security.php
-
-      - name: Test element mutation validation
-        run: php tests/admin_element_validation.php
-
-      - name: Test SQL and XSS hardening
-        run: php tests/sql_xss_contract.php
-
-      - name: Test legacy image upload hardening
-        run: php tests/image_upload_contract.php
-
-      - name: Test legacy CSS security
-        run: php tests/css_security_contract.php
-
-      - name: Test tabbed preview contract
-        run: php tests/preview_contract.php
-
-  package:
-    name: Build installable ZIP
-    runs-on: ubuntu-latest
-    needs: php-lint
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Build package
-        shell: bash
-        run: |
-          set -e
-          rm -rf build
-          mkdir -p build/menu
-          rsync -a ./ build/menu/ \
-            --exclude '.git/' \
-            --exclude '.github/' \
-            --exclude 'build/' \
-            --exclude 'ROADMAP.md' \
-            --exclude 'tests/'
-          cd build
-          zip -qr menu-1.3.0-alpha1.zip menu
-          sha256sum menu-1.3.0-alpha1.zip > menu-1.3.0-alpha1.zip.sha256
-
-      - name: Upload package
-        uses: actions/upload-artifact@v4
-        with:
-          name: menu-1.3.0-alpha1
-          path: |
-            build/menu-1.3.0-alpha1.zip
-            build/menu-1.3.0-alpha1.zip.sha256
+          for test in tests/*.php; do
+            echo "==> $test"
+            php "$test"
+          done
