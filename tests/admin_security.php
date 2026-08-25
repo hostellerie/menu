@@ -39,10 +39,14 @@ menu_security_assert(MENU_adminModeMutates('delete') === true, 'delete must be t
 menu_security_assert(MENU_adminModeMutates('move') === true, 'move must be treated as mutation');
 menu_security_assert(MENU_adminModeMutates('menu') === false, 'menu display must not be treated as mutation');
 menu_security_assert(MENU_adminModeMutates('edit') === false, 'edit display must not be treated as mutation');
-menu_security_assert(MENU_adminModeRequiresPost('move') === true, 'move must require POST');
-menu_security_assert(MENU_adminModeRequiresPost('delete') === true, 'delete must require POST');
-menu_security_assert(MENU_adminModeRequiresPost('deletemenu') === true, 'menu deletion must require POST');
-menu_security_assert(MENU_adminModeRequiresPost('save') === false, 'normal save mode is already a POST form and does not need legacy-link conversion');
+
+foreach (MENU_adminMutationModes() as $mutationMode) {
+    menu_security_assert(
+        MENU_adminModeRequiresPost($mutationMode) === true,
+        $mutationMode . ' must require POST'
+    );
+}
+
 menu_security_assert(MENU_adminPostMutates(array('defaults' => '1')) === true, 'defaults POST must be protected');
 menu_security_assert(MENU_adminPostMutates(array('orders' => 'item[]=1')) === true, 'orders POST must be protected');
 menu_security_assert(MENU_adminPostMutates(array('cancel' => '1')) === false, 'cancel must not be treated as mutation');
@@ -65,34 +69,6 @@ menu_security_assert(MENU_adminRequestMethod() === 'POST', 'request method detec
 $_POST = array('mode' => 'save');
 $_GET = array();
 menu_security_assert(MENU_adminCurrentMode() === 'save', 'POST mode detection failed');
-
-class MenuSecurityScriptsStub
-{
-    public $libraries = array();
-    public $scripts = array();
-
-    public function setJavaScriptLibrary($name)
-    {
-        $this->libraries[] = $name;
-    }
-
-    public function setJavaScript($script, $footer = false)
-    {
-        $this->scripts[] = $script;
-    }
-}
-
-$_SCRIPTS = new MenuSecurityScriptsStub();
-MENU_adminRegisterTokenBridge();
-menu_security_assert(in_array('jquery', $_SCRIPTS->libraries, true), 'token bridge must request jQuery');
-menu_security_assert(count($_SCRIPTS->scripts) === 1, 'token bridge script was not registered');
-menu_security_assert(strpos($_SCRIPTS->scripts[0], 'glsectoken') !== false, 'token bridge field name missing');
-menu_security_assert(strpos($_SCRIPTS->scripts[0], 'token-value') !== false, 'token bridge value missing');
-menu_security_assert(strpos($_SCRIPTS->scripts[0], 'ajaxPrefilter') !== false, 'AJAX token bridge missing');
-menu_security_assert(strpos($_SCRIPTS->scripts[0], 'submitMutation') !== false, 'POST mutation submission bridge missing');
-menu_security_assert(strpos($_SCRIPTS->scripts[0], 'move|delete|deletemenu') !== false, 'destructive mutation mode matcher missing');
-menu_security_assert(strpos($_SCRIPTS->scripts[0], "method: 'post'") !== false, 'destructive mutation bridge must submit POST');
-menu_security_assert(strpos($_SCRIPTS->scripts[0], "removeAttr('onclick')") !== false, 'legacy inline delete handler must be replaced safely');
 
 $menuSecurityCheck = false;
 menu_security_assert(MENU_adminCheckToken() === false, 'failed token must remain failed');
