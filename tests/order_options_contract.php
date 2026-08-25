@@ -14,8 +14,14 @@ $endpoint = file_get_contents($root . '/admin/getorder.php');
 $index = file_get_contents($root . '/admin/index.php');
 
 menu_order_test_assert(
-    strpos($template, "orderSelect.prop('selectedIndex', orderSelect[0].options.length - 1)") !== false,
-    'Create form must select the last Display After option by default'
+    strpos($index, '$lastOrderIndex = count($orderRows) - 1;') !== false
+        && strpos($index, '$orderIndex === $lastOrderIndex') !== false
+        && strpos($index, ' selected="selected"') !== false,
+    'Create form must select the last Display After option server-side'
+);
+menu_order_test_assert(
+    strpos($template, "orderSelect.prop('selectedIndex'") === false,
+    'Create form must not rely on JavaScript to choose the default order'
 );
 menu_order_test_assert(
     strpos($index, "getorder.php?optionid='+option_id+'&menuid='+menu_id") !== false,
