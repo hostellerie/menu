@@ -20,7 +20,7 @@ The modernization must remain conservative: stabilize and secure the existing pl
 
 ---
 
-## Current implementation status — 2026-08-24
+## Current implementation status — 2026-08-25
 
 The checklist below remains the release checklist. This section records the actual state of the `modernize-1.3.0` branch so completed work is not confused with remaining release validation.
 
@@ -29,7 +29,7 @@ The checklist below remains the release checklist. This section records the actu
 - Phase 1: multisite-safe `{path_data}-menu/` storage, non-destructive legacy migration, isolated cache/CSS storage and site-specific image helpers.
 - Phase 3: Geeklog 2.1.1 → 2.2.2 compatibility helpers and runtime fallbacks; real-world testing is ongoing on both Geeklog 2.1.1 and 2.2.2.
 - Phase 4: PHP 5.6 / 8.1 syntax CI and compatibility-oriented shared code.
-- Phase 7.5: global Geeklog configuration foundation now exists for fresh installs and 1.3.0 upgrades, with idempotent migration from the old Plugin Toolkit sample settings.
+- Phase 7.5: global Geeklog configuration exists for fresh installs and 1.3.0 upgrades; all eight 1.3.0 settings are now connected to runtime behavior through centralized compatibility-safe helpers.
 - Phase 8: administration preview now supports native and theme preview tabs; element create/edit type UX has been normalized.
 - Phase 9: `MENU_getResolvedTree('navigation')` exists with hierarchy, ordering, permissions, resolved destinations and representative regression tests.
 - Phase 10: theme-presentation hand-off exists; Eclipse can own `navigation` rendering while legacy Menu rendering remains available for other themes/menus.
@@ -43,7 +43,7 @@ The checklist below remains the release checklist. This section records the actu
 - Phase 5 database modernization: not started beyond preserving the existing schema during current work.
 - Phase 6 cache/performance: storage separation is implemented, but cache keys, invalidation and query behavior still need a full audit.
 - Phase 7 maintainability: compatibility/path/security helpers have been split out, but `admin/index.php` and the duplicated menu element classes remain major cleanup targets.
-- Phase 7.5 behavior wiring: global settings are now stored and migrated, but each exposed option must be fully wired to runtime behavior before 1.3.0 is declared stable.
+- Phase 7.5 validation: runtime wiring is implemented; manual regression testing of each setting, configuration save/reload and upgrade preservation on Geeklog 2.1.1 and 2.2.2 is still required before 1.3.0 stable.
 - Phase 11: fresh installs are being exercised on Geeklog 2.1.1 and 2.2.2, but the complete upgrade matrix and release validation are not complete.
 
 ### Immediate implementation order
@@ -52,7 +52,7 @@ The checklist below remains the release checklist. This section records the actu
 2. Finish Phase 2 element create/edit validation and SQL escaping, including safe empty-URL handling and validation that menu/parent/order IDs belong to the expected menu.
 3. Audit the remaining menu/config mutations and remove the transitional CSRF bridge where explicit tokens exist.
 4. Continue Phase 4 warning cleanup and Phase 3 runtime regression testing on Geeklog 2.1.1 and 2.2.2.
-5. Wire and validate the Phase 7.5 global settings against real runtime behavior.
+5. Validate the Phase 7.5 global settings on real Geeklog 2.1.1 and 2.2.2 installations, including save/reload and upgrade preservation.
 6. Then continue Phase 5/6 database and cache audits before adding further Phase 9 functionality.
 
 ---
@@ -230,7 +230,7 @@ Principles:
 - [x] Add an idempotent 1.3.0 upgrade path that removes those legacy rows and preserves existing valid configuration values.
 - [x] Keep one configuration definition compatible with Geeklog 2.1.1 through 2.2.2.
 - [x] Provide shared configuration labels independently of the selected Menu language file so the configuration manager always receives valid arrays.
-- [ ] Every exposed option must control actual runtime behavior before 1.3.0 stable; no decorative or dead settings.
+- [x] Every exposed option controls actual runtime behavior; no decorative or dead settings.
 - [ ] Keep defaults conservative so upgrading from 1.2.x preserves legacy rendering unless the administrator explicitly changes it.
 - [ ] Add regression tests for fresh install and upgrade from 1.2.6, 1.2.7, 1.2.8 and 1.2.8.1.
 - [ ] Verify configuration rendering and saving on Geeklog 2.1.1 and 2.2.2.
@@ -246,7 +246,7 @@ Initial 1.3.0 global settings:
 - [x] `load_legacy_js` — load legacy Menu JavaScript where legacy rendering is used, default enabled.
 - [x] `debug` — plugin diagnostic logging, default disabled.
 
-The configuration layer is considered complete only when these settings are wired into their corresponding runtime paths and covered by tests.
+The eight settings are wired into runtime paths. Automated helper/syntax tests cover the configuration plumbing; real Geeklog 2.1.1/2.2.2 behavior and upgrade regression tests remain required before this phase is release-complete.
 
 ## Phase 8 — Administration UX
 

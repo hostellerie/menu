@@ -343,7 +343,7 @@ function plugin_getheadercode_menu() {
                     $ms->parse('output', 'style');
                     $fCSS = $ms->finish($ms->get_var('output'));
 
-                    if ($menu['menu_type'] == 1) {
+                    if ($menu['menu_type'] == 1 && $loadLegacyJs) {
                         $slicknave_css = " .slicknav_menu { display:none; } @media screen and (max-width: 750px) { #gl_menu" . $menu['menu_id'] . " { display:none; } .slicknav_menu { display:block; } }";
                     } else {
                         $slicknave_css = '';
