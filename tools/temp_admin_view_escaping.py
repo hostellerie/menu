@@ -47,18 +47,21 @@ p.write_text(s)
 Path('tests/admin_view_escaping_contract.php').write_text(r'''<?php
 $view = file_get_contents(dirname(__DIR__) . '/admin_element_views.php');
 
-if (substr_count($view, 'MENU_escapeStoredText($Menus[$menu_id][\'menu_name\'])') < 3) {
+if (substr_count($view, '$safeMenuName = MENU_escapeStoredText(') < 3) {
     fwrite(STDERR, "Stored menu names are not normalized in all admin element views\n");
     exit(1);
 }
-if (strpos($view, "if ((int) $row['id'] === (int) $mid) {\n            continue;\n        }\n        if ((int) $row['id'] === (int) $mid)") !== false) {
-    fwrite(STDERR, "Duplicate self-parent filter remains\n");
+$selfGuard = 'if ((int) $row[\'id\'] === (int) $mid || isset($blockedParentIds[(int) $row[\'id\']]))';
+if (substr_count($view, $selfGuard) !== 1) {
+    fwrite(STDERR, "Parent selector hierarchy guard is missing or duplicated\n");
     exit(1);
 }
-if (strpos($view, ".$Menus[$menu_id]['menu_name'].' :: '.$LANG_MENU01['elements']") !== false) {
-    fwrite(STDERR, "Raw stored menu name remains in tree breadcrumb\n");
+if (strpos($view, "'menuname'          => \$Menus[\$menu_id]['menu_name']") !== false) {
+    fwrite(STDERR, "Raw stored menu name remains in tree template variable\n");
     exit(1);
 }
 
 echo "Admin view escaping contract tests passed\n";
 ''')
+
+# Trigger retry after fixing the contract test quoting.
