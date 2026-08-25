@@ -1,0 +1,28 @@
+name: Temporary SlickNav asset patch
+
+on:
+  push:
+    branches: [modernize-1.3.0]
+    paths:
+      - .github/workflows/temp-slicknav-assets.yml
+      - tools/temp_slicknav_assets_patch.py
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: modernize-1.3.0
+      - run: python3 tools/temp_slicknav_assets_patch.py
+      - run: php -l functions.inc
+      - run: php tests/render_assets.php
+      - run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add functions.inc
+          git commit -m "Load SlickNav only for compatible menus" || exit 0
+          git push origin HEAD:modernize-1.3.0
