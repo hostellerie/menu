@@ -74,28 +74,6 @@ if (!SEC_hasRights('menu.admin')) {
 
 
 
-function MENU_hexrgb($hexstr, $rgb) {
-    $int = hexdec($hexstr);
-    switch($rgb) {
-        case "r":
-            return 0xFF & $int >> 0x10;
-            break;
-        case "g":
-            return 0xFF & ($int >> 0x8);
-            break;
-        case "b":
-            return 0xFF & $int;
-            break;
-        default:
-            return array(
-                "r" => 0xFF & $int >> 0x10,
-                "g" => 0xFF & ($int >> 0x8),
-                "b" => 0xFF & $int
-            );
-            break;
-    }
-}
-
 /*
  * Main processing loop
  */
@@ -169,7 +147,6 @@ if ( (isset($_POST['execute']) || $mode != '') && !isset($_POST['cancel']) && !i
             exit;
         case 'config' :
             $content = MENU_menuConfig($menu_id);
-            $currentSelect = $LANG_MENU01['configuration'];
             $currentSelect = $LANG_MENU01['menu_builder'];
             break;
         case 'savecfg' :
