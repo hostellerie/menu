@@ -187,6 +187,61 @@ menu_validation_assert(
     MENU_adminMutationReferenceError('deletemenu', array('id' => 99)) !== '',
     'unknown menu deletion must fail'
 );
+menu_validation_assert(
+    MENU_adminMutationReferenceError('savecfg', array('menu_id' => 3)) === '',
+    'existing menu configuration save must pass'
+);
+menu_validation_assert(
+    MENU_adminMutationReferenceError('savecfg', array('menu_id' => 99)) !== '',
+    'unknown menu configuration save must fail'
+);
+menu_validation_assert(
+    MENU_adminMutationReferenceError('disablemenu', array('menutodisable' => 3, 'menuactive' => 1)) === '',
+    'valid disablemenu mutation must pass'
+);
+menu_validation_assert(
+    MENU_adminMutationReferenceError('disablemenu', array('menutodisable' => 99, 'menuactive' => 1)) !== '',
+    'disablemenu must reject an unknown menu'
+);
+menu_validation_assert(
+    MENU_adminMutationReferenceError('disablemenu', array('menutodisable' => 3, 'menuactive' => 8)) !== '',
+    'disablemenu must reject invalid activation state'
+);
+
+// Special POST-only mutations.
+menu_validation_assert(
+    MENU_adminPostMutationError('', array('defaults' => 1, 'menu_id' => 1)) === '',
+    'defaults must accept an existing menu'
+);
+menu_validation_assert(
+    MENU_adminPostMutationError('', array('defaults' => 1, 'menu_id' => 99)) !== '',
+    'defaults must reject an unknown menu'
+);
+menu_validation_assert(
+    MENU_adminPostMutationError('', array('orders' => 'row[]=mid_1&row[]=mid_2', 'menu_id' => 1)) === '',
+    'valid drag order must pass'
+);
+menu_validation_assert(
+    MENU_adminPostMutationError('', array('orders' => 'row[]=mid_1&row[]=mid_20', 'menu_id' => 1)) !== '',
+    'drag order must reject elements from another menu'
+);
+menu_validation_assert(
+    MENU_adminPostMutationError('', array('orders' => 'row[]=mid_1&row[]=mid_1', 'menu_id' => 1)) !== '',
+    'drag order must reject duplicate elements'
+);
+menu_validation_assert(
+    MENU_adminPostMutationError('', array('orders' => 'row[]=bad', 'menu_id' => 1)) !== '',
+    'drag order must reject malformed row identifiers'
+);
+
+// URL safety.
+menu_validation_assert(MENU_adminUrlIsSafe('', true) === true, 'empty optional URL must pass');
+menu_validation_assert(MENU_adminUrlIsSafe('', false) === false, 'empty required URL must fail');
+menu_validation_assert(MENU_adminUrlIsSafe('/local/path', false) === true, 'relative URL must pass');
+menu_validation_assert(MENU_adminUrlIsSafe('https://example.test/', false) === true, 'HTTPS URL must pass');
+menu_validation_assert(MENU_adminUrlIsSafe('javascript:alert(1)', false) === false, 'javascript URL must fail');
+menu_validation_assert(MENU_adminUrlIsSafe('data:text/html,x', false) === false, 'data URL must fail');
+menu_validation_assert(MENU_adminUrlIsSafe("https://example.test/\nInjected", false) === false, 'control characters must fail');
 
 // Element create/edit structure and destination validation.
 $valid = menu_validation_base_create();
@@ -253,12 +308,21 @@ $editMissingStatic = menu_validation_base_edit(5, 5);
 $editMissingStatic['spname'] = 'missing-page';
 menu_validation_assert(MENU_adminElementMutationError('saveedit', $editMissingStatic) === '', 'stored missing Static Page must remain preservable');
 
+$submenu = $valid;
+$submenu['menutype'] = 1;
+$submenu['menuurl'] = '';
+menu_validation_assert(MENU_adminElementMutationError('save', $submenu) === '', 'empty submenu URL must remain valid');
+$submenu['menuurl'] = 'javascript:alert(1)';
+menu_validation_assert(MENU_adminElementMutationError('save', $submenu) !== '', 'unsafe submenu URL must fail');
+
 $url = $valid;
 $url['menutype'] = 6;
 $url['menuurl'] = '';
 menu_validation_assert(MENU_adminElementMutationError('save', $url) !== '', 'empty External URL must fail');
 $url['menuurl'] = 'https://example.test/';
-menu_validation_assert(MENU_adminElementMutationError('save', $url) === '', 'non-empty External URL must pass');
+menu_validation_assert(MENU_adminElementMutationError('save', $url) === '', 'safe External URL must pass');
+$url['menuurl'] = 'javascript:alert(1)';
+menu_validation_assert(MENU_adminElementMutationError('save', $url) !== '', 'unsafe External URL must fail');
 
 $topic = $valid;
 $topic['menutype'] = 9;
