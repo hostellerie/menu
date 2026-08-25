@@ -2,54 +2,52 @@
 
 $root = dirname(__DIR__);
 $script = file_get_contents($root . '/admin/js/menu-order-handle.js');
-$views = file_get_contents($root . '/admin_element_views.php');
 $template = file_get_contents($root . '/templates/default/menutree.thtml');
+$library = file_get_contents($root . '/admin/js/tablednd_0_6.js');
 
 $forbidden = array(
-    'tableDnD',
     'tablednd.js',
     'tablednd_0_5.js',
-    'tablednd_0_6.js',
     "addEventListener('dragstart'",
-    "addEventListener('dragover'",
-    "addEventListener('drop'",
+    "document.addEventListener('mousemove'",
+    'document.elementFromPoint',
 );
 
 foreach ($forbidden as $needle) {
     if (stripos($script, $needle) !== false
-        || stripos($views, $needle) !== false
         || stripos($template, $needle) !== false) {
-        fwrite(STDERR, "Legacy ordering dependency remains: {$needle}\n");
+        fwrite(STDERR, "Obsolete ordering path remains: {$needle}\n");
         exit(1);
     }
 }
 
 $requiredScript = array(
-    "handle.addEventListener('mousedown'",
-    "document.addEventListener('mousemove'",
-    "document.addEventListener('mouseup'",
-    "handle.addEventListener('touchstart'",
-    "document.addEventListener('touchmove'",
-    "handle.addEventListener('keydown'",
-    'document.elementFromPoint',
-    'XMLHttpRequest',
-    "orders: order",
+    "typeof $.fn.tableDnD !== 'function'",
+    "$table.tableDnD({",
+    "dragHandle: 'menu-drag-handle'",
+    "onDrop: function ()",
+    "type: 'POST'",
+    "orders: orders",
     "mode: 'move'",
+    "where: direction",
 );
 foreach ($requiredScript as $needle) {
     if (strpos($script, $needle) === false) {
-        fwrite(STDERR, "Pointer ordering behavior missing: {$needle}\n");
+        fwrite(STDERR, "TableDnD ordering behavior missing: {$needle}\n");
         exit(1);
     }
 }
 
-if (strpos($views, "setJavaScriptFile('menu_order_handle'") !== false) {
-    fwrite(STDERR, "Ordering script must not rely on Geeklog script registration\n");
+if (strpos($library, 'jQuery.tableDnD') === false
+    || strpos($library, '$.fn.tableDnD') === false) {
+    fwrite(STDERR, "TableDnD 0.6 library contract is incomplete\n");
     exit(1);
 }
 
-if (substr_count($template, '{site_admin_url}/plugins/menu/js/menu-order-handle.js') !== 1) {
-    fwrite(STDERR, "Ordering script must be loaded exactly once by the tree template\n");
+$libraryPos = strpos($template, '{site_admin_url}/plugins/menu/js/tablednd_0_6.js');
+$adapterPos = strpos($template, '{site_admin_url}/plugins/menu/js/menu-order-handle.js');
+if ($libraryPos === false || $adapterPos === false || $libraryPos >= $adapterPos) {
+    fwrite(STDERR, "TableDnD must load before the Menu ordering adapter\n");
     exit(1);
 }
 
@@ -60,4 +58,4 @@ if (strpos($template, 'id="menu-order-token"') === false
     exit(1);
 }
 
-echo "Pointer menu ordering contract tests passed\n";
+echo "TableDnD menu ordering contract tests passed\n";
