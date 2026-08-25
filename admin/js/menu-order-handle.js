@@ -90,9 +90,14 @@
         function clearDragState() {
             var list = rows();
             var i;
+            var handle;
+
             for (i = 0; i < list.length; i += 1) {
-                list[i].draggable = false;
                 list[i].removeAttribute('data-menu-dragging');
+                handle = findHandle(list[i]);
+                if (handle) {
+                    handle.removeAttribute('data-menu-dragging');
+                }
             }
             draggedRow = null;
         }
@@ -111,24 +116,13 @@
             handle.setAttribute('aria-label', 'Order');
             handle.setAttribute('title', 'Order (↑/↓)');
             handle.setAttribute('data-mid', mid);
+            handle.setAttribute('draggable', 'true');
 
-            handle.addEventListener('mousedown', function () {
-                row.draggable = true;
-            });
-
-            handle.addEventListener('mouseup', function () {
-                if (draggedRow !== row) {
-                    row.draggable = false;
-                }
-            });
-
-            row.addEventListener('dragstart', function (event) {
-                if (!row.draggable) {
-                    event.preventDefault();
-                    return;
-                }
+            handle.addEventListener('dragstart', function (event) {
                 draggedRow = row;
                 row.setAttribute('data-menu-dragging', '1');
+                handle.setAttribute('data-menu-dragging', '1');
+
                 if (event.dataTransfer) {
                     event.dataTransfer.effectAllowed = 'move';
                     event.dataTransfer.setData('text/plain', String(mid));
@@ -144,6 +138,9 @@
                 }
 
                 event.preventDefault();
+                if (event.dataTransfer) {
+                    event.dataTransfer.dropEffect = 'move';
+                }
                 rect = row.getBoundingClientRect();
                 before = event.clientY < rect.top + (rect.height / 2);
                 tbody.insertBefore(draggedRow, before ? row : row.nextSibling);
@@ -158,7 +155,7 @@
                 clearDragState();
             });
 
-            row.addEventListener('dragend', function () {
+            handle.addEventListener('dragend', function () {
                 if (draggedRow) {
                     saveOrder();
                 }
