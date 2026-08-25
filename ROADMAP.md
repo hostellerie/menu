@@ -42,7 +42,7 @@ The modernization remains conservative: preserve existing menu data and legacy r
 - cache traversal/symlink protection;
 - removal of the unused/unsafe HTML menu cache path;
 - SlickNav loaded only for active legacy horizontal cascading menus that need it;
-- native drag ordering with keyboard move controls;
+- stable TableDnD 0.6 drag ordering loaded through Geeklog's jQuery stack, with keyboard move controls;
 - restored submenu creation/editing for all presentation types;
 - default `Display After` selection at the end of the current sibling list;
 - theme-facing resolved-tree API;
@@ -71,7 +71,7 @@ The following paths have been exercised successfully during development:
 
 ### Remaining blockers before 1.3.0 stable
 
-1. Continue Phase 7 code decomposition, especially `admin/index.php` and legacy rendering responsibilities.
+1. Finish Phase 7 legacy asset/browser-specific cleanup and remaining contextual escaping review.
 2. Audit and remove demonstrably unused legacy JavaScript/CSS/images.
 3. Review the bundled SlickNav dependency and decide whether it remains the 1.3.0 compatibility implementation.
 4. Complete manual validation of all eight global configuration switches on both Geeklog 2.1.1 and 2.2.2.
@@ -181,10 +181,13 @@ There is **no GitHub Actions ZIP packaging requirement**. Release validation con
 - [x] Extract cache filesystem/runtime/cache API responsibilities.
 - [x] Extract menu list/clone/create administration view builders to `admin_menu_views.php`.
 - [x] Centralize path, compatibility and security helpers.
-- [ ] Continue reducing `admin/index.php` into focused components.
-- [ ] Audit/remove unused `tableDnD` generations and other dead administration assets.
+- [x] Reduce `admin/index.php` to routing/page composition only, with mutations and view builders extracted.
+- [x] Remove obsolete TableDnD generations and retain only `tablednd_0_6.js` as the tested compatibility implementation.
+- [ ] Audit/remove other dead administration assets.
 - [ ] Audit obsolete browser-specific code/assets.
 - [ ] Review SlickNav version/dependency strategy.
+- [x] Remove the dead `createElementID()` / `SELECT MAX(id)+1` generator and enforce `AUTO_INCREMENT` creation paths.
+- [x] Reject hierarchy cycles server-side and filter descendants from the edit-parent selector.
 - [ ] Prefer vanilla/dependency-free JavaScript for new administration code.
 
 ## Phase 7.5 — Global plugin configuration
@@ -211,7 +214,7 @@ Also completed:
 
 ## Phase 8 — Administration UX
 
-- [x] Modernize drag ordering without relying on legacy `tableDnD` behavior.
+- [x] Stabilize drag ordering on the retained TableDnD 0.6 compatibility layer, loaded after Geeklog-managed jQuery.
 - [x] Provide keyboard up/down ordering controls.
 - [x] Normalize create/edit element type handling.
 - [x] Restore submenu hierarchy editing across presentation types.
