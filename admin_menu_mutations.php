@@ -13,6 +13,30 @@ if (!defined('VERSION')) {
  */
 
 /*
+ * Moves a menu element up or down
+ */
+function MENU_moveElement( $menu_id, $mid, $direction ) {
+    global $_CONF, $_TABLES, $_MENU_CONF, $Menus;
+
+    switch ( $direction ) {
+        case 'up' :
+            $neworder = $Menus[$menu_id]['elements'][$mid]->order - 11;
+            DB_query("UPDATE {$_TABLES['menu_elements']} SET element_order=" . $neworder . " WHERE menu_id=".$menu_id." AND id=" . $mid);
+            break;
+        case 'down' :
+            $neworder = $Menus[$menu_id]['elements'][$mid]->order + 11;
+            DB_query("UPDATE {$_TABLES['menu_elements']} SET element_order=" . $neworder . " WHERE menu_id=".$menu_id." AND id=" . $mid);
+            break;
+    }
+    $pid = $Menus[$menu_id]['elements'][$mid]->pid;
+
+    $Menus[$menu_id]['elements'][$pid]->reorderMenu();
+    MENU_invalidateRuntimeCache(true);
+
+    return;
+}
+
+/*
  * Saves a new menu element
  */
 
@@ -220,6 +244,92 @@ function MENU_deleteChildElements( $id, $menu_id ){
     }
     $sql = "DELETE FROM " . $_TABLES['menu_elements'] . " WHERE id=" . $id . " AND menu_id=" . (int) $menu_id;
     DB_query($sql);
+}
+
+/**
+ * Delete one element and all of its descendants, then normalize the root
+ * branch order and invalidate runtime caches once.
+ *
+ * @param int $id
+ * @param int $menuId
+ */
+function MENU_deleteElementTree($id, $menuId)
+{
+    global $Menus;
+
+    $id = (int) $id;
+    $menuId = (int) $menuId;
+    if ($id <= 0 || $menuId <= 0) {
+        return;
+    }
+
+    MENU_deleteChildElements($id, $menuId);
+    if (isset($Menus[$menuId]['elements'][0])) {
+        $Menus[$menuId]['elements'][0]->reorderMenu();
+    }
+    MENU_invalidateRuntimeCache(true);
+}
+
+/**
+ * Toggle whether legacy rendering/configuration is enabled for one menu.
+ *
+ * @param int $menuId
+ * @param int $active
+ */
+function MENU_setMenuConfigEnabled($menuId, $active)
+{
+    global $_TABLES;
+
+    $menuId = (int) $menuId;
+    $active = ((int) $active === 1) ? 1 : 0;
+    if ($menuId <= 0) {
+        return;
+    }
+
+    DB_query("UPDATE {$_TABLES['menu_config']} SET enabled=" . $active
+        . " WHERE menu_id=" . $menuId);
+    MENU_invalidateRuntimeCache(true);
+}
+
+/**
+ * Persist a drag/drop order previously validated by admin_security.php.
+ *
+ * @param int    $menuId
+ * @param string $ordersString
+ */
+function MENU_saveElementOrder($menuId, $ordersString)
+{
+    global $_TABLES, $Menus;
+
+    $menuId = (int) $menuId;
+    if ($menuId <= 0) {
+        return;
+    }
+
+    $orders = explode('&', (string) $ordersString);
+    $elementIds = array();
+    foreach ($orders as $item) {
+        $parts = explode('=', $item, 2);
+        if (count($parts) !== 2) {
+            continue;
+        }
+        $rowId = rawurldecode($parts[1]);
+        if (!preg_match('/^mid_([1-9][0-9]*)$/', $rowId, $matches)) {
+            continue;
+        }
+        $mid = (int) $matches[1];
+        if (isset($Menus[$menuId]['elements'][$mid])) {
+            $elementIds[] = $mid;
+        }
+    }
+
+    foreach ($elementIds as $key => $mid) {
+        $newOrder = ((int) $key + 1) * 10;
+        DB_query("UPDATE {$_TABLES['menu_elements']} SET element_order=" . $newOrder
+            . " WHERE menu_id=" . $menuId . " AND id=" . (int) $mid);
+    }
+
+    MENU_invalidateRuntimeCache(false);
 }
 
 /*

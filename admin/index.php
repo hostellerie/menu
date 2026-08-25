@@ -74,48 +74,6 @@ if (!SEC_hasRights('menu.admin')) {
 
 
 
-/*
- * Moves a menu element up or down
- */
-function MENU_moveElement( $menu_id, $mid, $direction ) {
-    global $_CONF, $_TABLES, $_MENU_CONF, $Menus;
-
-    switch ( $direction ) {
-        case 'up' :
-            $neworder = $Menus[$menu_id]['elements'][$mid]->order - 11;
-            DB_query("UPDATE {$_TABLES['menu_elements']} SET element_order=" . $neworder . " WHERE menu_id=".$menu_id." AND id=" . $mid);
-            break;
-        case 'down' :
-            $neworder = $Menus[$menu_id]['elements'][$mid]->order + 11;
-            DB_query("UPDATE {$_TABLES['menu_elements']} SET element_order=" . $neworder . " WHERE menu_id=".$menu_id." AND id=" . $mid);
-            break;
-    }
-    $pid = $Menus[$menu_id]['elements'][$mid]->pid;
-
-    $Menus[$menu_id]['elements'][$pid]->reorderMenu();
-    MENU_invalidateRuntimeCache(true);
-
-    return;
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 function MENU_hexrgb($hexstr, $rgb) {
     $int = hexdec($hexstr);
     switch($rgb) {
@@ -204,15 +162,11 @@ if ( (isset($_POST['execute']) || $mode != '') && !isset($_POST['cancel']) && !i
             $currentSelect = $LANG_MENU01['menu_builder'];
             break;
         case 'delete' :
-            // delete the element
             $id      = (int) Geeklog\Input::fPost('mid');
             $menu_id = (int) Geeklog\Input::fPost('menuid');
-            MENU_deleteChildElements($id, $menu_id);
-            $Menus[$menu_id]['elements'][0]->reorderMenu();
-            MENU_invalidateRuntimeCache(true);
+            MENU_deleteElementTree($id, $menu_id);
             echo COM_refresh($_CONF['site_admin_url'] . '/plugins/menu/index.php?mode=menu&amp;menu=' . $menu_id);
             exit;
-            break;
         case 'config' :
             $content = MENU_menuConfig($menu_id);
             $currentSelect = $LANG_MENU01['configuration'];
@@ -227,8 +181,7 @@ if ( (isset($_POST['execute']) || $mode != '') && !isset($_POST['cancel']) && !i
         case 'disablemenu' :
             $action = (int) Geeklog\Input::fPost('menuactive');
             $mid    = (int) Geeklog\Input::fPost('menutodisable');
-            $sql = "UPDATE {$_TABLES['menu_config']} SET enabled = " . $action . " WHERE menu_id=" . $mid . ";";
-            DB_query($sql);
+            MENU_setMenuConfigEnabled($mid, $action);
             COM_redirect($_CONF['site_admin_url'] . '/plugins/menu/index.php?mode=menu&amp;mid=' . $mid);
             break;
         case 'menucolor' :
@@ -295,33 +248,9 @@ if ( (isset($_POST['execute']) || $mode != '') && !isset($_POST['cancel']) && !i
     $content = MENU_displayTree( $menu_id );
 } else if ( isset($_POST['orders']) && isset($_POST['menu_id']) ) {
     $menu_id = (int) Geeklog\Input::fPost('menu_id');
-    $orders = explode('&', (string) Geeklog\Input::post('orders', ''));
-    $array = array();
-
-    foreach ($orders as $item) {
-        $parts = explode('=', $item, 2);
-        if (count($parts) !== 2) {
-            continue;
-        }
-        $rowId = rawurldecode($parts[1]);
-        if (!preg_match('/^mid_([1-9][0-9]*)$/', $rowId, $matches)) {
-            continue;
-        }
-        $mid = (int) $matches[1];
-        if (isset($Menus[$menu_id]['elements'][$mid])) {
-            $array[] = $mid;
-        }
-    }
-
-    foreach ($array as $key => $mid) {
-        $newOrder = ((int) $key + 1) * 10;
-        DB_query("UPDATE {$_TABLES['menu_elements']} SET element_order=" . $newOrder
-            . " WHERE menu_id=" . $menu_id . " AND id=" . (int) $mid);
-    }
-
-    MENU_invalidateRuntimeCache(false);
-
+    MENU_saveElementOrder($menu_id, Geeklog\Input::post('orders', ''));
     exit;
+
 } else {
     // display the tree
     $content = MENU_displayMenuList( );

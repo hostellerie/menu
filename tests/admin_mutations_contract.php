@@ -9,7 +9,11 @@ $functions = array(
     'MENU_saveEditMenuElement',
     'MENU_changeActiveStatusElement',
     'MENU_changeActiveStatusMenu',
+    'MENU_moveElement',
     'MENU_deleteChildElements',
+    'MENU_deleteElementTree',
+    'MENU_setMenuConfigEnabled',
+    'MENU_saveElementOrder',
     'MENU_saveMenuConfig',
 );
 
@@ -28,6 +32,19 @@ foreach ($functions as $name) {
 if (strpos($index, "admin_menu_mutations.php") === false) {
     fwrite(STDERR, "admin/index.php does not load admin_menu_mutations.php\n");
     exit(1);
+}
+
+
+$forbiddenIndexSql = array(
+    "UPDATE {$_TABLES['menu_elements']} SET element_order=",
+    "UPDATE {$_TABLES['menu_config']} SET enabled",
+    'MENU_deleteChildElements($id, $menu_id)',
+);
+foreach ($forbiddenIndexSql as $needle) {
+    if (strpos($index, $needle) !== false) {
+        fwrite(STDERR, "State-changing SQL still remains in admin/index.php: {$needle}\n");
+        exit(1);
+    }
 }
 
 if (strpos($module, 'MENU_invalidateRuntimeCache(') === false) {
