@@ -175,62 +175,6 @@ function MENU_cloneMenu( $menu_id ) {
  * Saves a clone menu element
  */
 
-function MENU_saveCloneMenu( ) {
-    global $_CONF, $_TABLES, $LANG_MENU00, $_MENU_CONF, $Menus, $_GROUPS;
-
-    $menu_name = Geeklog\Input::fPost('menuname');
-    $menu      = (int) Geeklog\Input::post('menu');
-
-    $sql = "SELECT * FROM {$_TABLES['menu']} WHERE id=".$menu;
-    $result = DB_query($sql);
-    if ( DB_numRows($result) > 0 ) {
-        $M = DB_fetchArray($result);
-        $menu_type   = $M['menu_type'];
-        $menu_active = $M['menu_active'];
-        $group_id    = $M['group_id'];
-
-        $sqlFieldList  = 'menu_name,menu_type,menu_active,group_id';
-        $menuNameSql = MENU_dbEscape($menu_name);
-        $menu_type = (int) $menu_type;
-        $menu_active = (int) $menu_active;
-        $group_id = (int) $group_id;
-        $sqlDataValues = "'$menuNameSql',$menu_type,$menu_active,$group_id";
-        DB_save($_TABLES['menu'], $sqlFieldList, $sqlDataValues);
-        $menu_id = DB_insertId();
-        $sql = "SELECT * FROM {$_TABLES['menu_config']} WHERE menu_id='".$menu."'";
-        $result = DB_query($sql);
-        while ($C = DB_fetchArray($result) ) {
-            $confNameSql = MENU_dbEscape($C['conf_name']);
-            $confValueSql = MENU_dbEscape($C['conf_value']);
-            DB_save($_TABLES['menu_config'], 'menu_id,conf_name,conf_value', "$menu_id,'$confNameSql','$confValueSql'");
-        }
-
-        $meadmin    = SEC_hasRights('menu.admin');
-        $root       = SEC_inGroup('Root');
-        $groups     = $_GROUPS;
-
-        $sql = "SELECT * FROM {$_TABLES['menu_elements']} WHERE menu_id=".$menu;
-        $result = DB_query($sql);
-        while ($M = DB_fetchArray($result)) {
-            $M['menu_id'] = $menu_id;
-            $element            = new mbElement();
-            $element->constructor( $M, $meadmin, $root, $groups );
-            $element->id        = $element->createElementID($M['menu_id']);
-            $element->saveElement();
-        }
-    }
-    MENU_CACHE_remove_instance('menu');
-    MENU_CACHE_remove_instance('css');
-    $randID = rand();
-    DB_save($_TABLES['vars'],'name,value',"'cacheid',$randID");
-    MENU_initMENU(true);
-}
-
-
-/*
- * Create a new menu
- */
-
 function MENU_createMenu( ) {
     global $_CONF, $_TABLES, $LANG_MENU00, $LANG_MENU01, $LANG_MENU_ADMIN, $_MENU_CONF,
            $LANG_MENU_MENU_TYPES, $LANG_ADMIN, $Menus;
@@ -810,97 +754,6 @@ function MENU_createElement ( $menu_id ) {
 
 /*
  * Saves a new menu element
- */
-
-function MENU_saveNewMenuElement ( ) {
-    global $_CONF, $_TABLES, $LANG_MENU00, $_MENU_CONF, $Menus, $_GROUPS;
-
-    // build post vars
-    $E['menu_id']        = (int) Geeklog\Input::fPost('menuid');
-    $E['pid']            = (int) Geeklog\Input::fPost('pid');
-    $E['element_label']  = trim(strip_tags(COM_checkWords(Geeklog\Input::post('menulabel'))));
-    $E['element_type']   = (int) Geeklog\Input::fPost('menutype');
-    $E['element_target'] = Geeklog\Input::fPost('urltarget');
-    $afterElementID      = (int) Geeklog\Input::fPost('menuorder');
-    $E['element_active'] = (int) Geeklog\Input::fPost('menuactive');
-    $E['element_url']    = trim(Geeklog\Input::fPost('menuurl'));
-    $E['group_id']       = (int) Geeklog\Input::fPost('group');
-
-    switch($E['element_type']) {
-        case 2 :
-            $E['element_subtype'] = Geeklog\Input::fPost('glfunction');
-            break;
-        case 3 :
-            $E['element_subtype'] = (int) Geeklog\Input::fPost('gltype');
-            break;
-        case 4 :
-            $E['element_subtype'] = Geeklog\Input::fPost('pluginname');
-            break;
-        case 5 :
-            $E['element_subtype'] = Geeklog\Input::fPost('spname');
-            break;
-        case 6 :
-            $E['element_subtype'] = Geeklog\Input::fPost('menuurl');
-            /*
-             * check URL if it needs http:// appended...
-             */
-            if ( trim($E['element_subtype']) != '' ) {
-                if(strpos($E['element_subtype'], "http") !== 0 && strpos($E['element_subtype'],"%site") === false && rtrim($E['element_subtype']) != '') {
-                    $E['element_subtype'] = 'http://' . $E['element_subtype'];
-                }
-            }
-            break;
-        case 7 :
-            $E['element_subtype'] = Geeklog\Input::fPost('phpfunction');
-            break;
-        case 9 :
-            $E['element_subtype'] = Geeklog\Input::fPost('topicname');
-            break;
-        default :
-            $E['element_subtype'] = '';
-            break;
-    }
-
-    // check if URL needs the http:// added
-
-    if ( trim($E['element_url']) != '' ) {
-        if ( strpos($E['element_url'],"http") !== 0 && strpos($E['element_url'],"%site") === false && $E['element_url'][0] != '#' && rtrim($E['element_url']) != '' ) {
-            $E['element_url'] = 'http://' . $E['element_url'];
-        }
-    }
-
-    /*
-     * Pull some constants..
-     */
-
-    $meadmin    = SEC_hasRights('menu.admin');
-    $root       = SEC_inGroup('Root');
-    $groups     = $_GROUPS;
-
-    /* set element order */
-    if ( $afterElementID == 0 ) {
-        $aorder = 0;
-    } else {
-        $aorder = DB_getItem($_TABLES['menu_elements'],'element_order','id=' . $afterElementID);
-    }
-    $E['element_order'] = $aorder + 1;
-
-    /*
-     * build our class
-     */
-
-    $element            = new mbElement();
-    $element->constructor( $E, $meadmin, $root, $groups );
-    $element->id        = $element->createElementID($E['menu_id']);
-    $element->saveElement();
-    $pid                = $E['pid'];
-    $menu_id            = $E['menu_id'];
-    $Menus[$menu_id]['elements'][$pid]->reorderMenu();
-    MENU_CACHE_remove_instance('menu');
-}
-
-/*
- * Edit an existing menu element
  */
 
 function MENU_editElement( $menu_id, $mid ) {
@@ -1852,19 +1705,8 @@ if ( (isset($_POST['execute']) || $mode != '') && !isset($_POST['cancel']) && !i
             MENU_CACHE_remove_instance('menu');
             COM_redirect($_CONF['site_admin_url'] . '/plugins/menu/index.php?mode=menu&amp;menu=' . $menu_id);
             break;
-        case 'save' :
-            // save the new or edited element
-            $menu_id = (int) Geeklog\Input::fPost('menuid');
-            MENU_saveNewMenuElement();
-            MENU_CACHE_remove_instance('menu');
-            COM_redirect($_CONF['site_admin_url'] . '/plugins/menu/index.php?mode=menu&amp;menu=' . $menu_id);
-            break;
         case 'savenewmenu' :
             MENU_saveNewMenu();
-            $content = MENU_displayMenuList( );
-            break;
-        case 'saveclonemenu' :
-            MENU_saveCloneMenu();
             $content = MENU_displayMenuList( );
             break;
         case 'saveeditmenu' :
