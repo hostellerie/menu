@@ -1,0 +1,49 @@
+name: Temporary fix Menu drag-drop token
+
+on:
+  push:
+    branches:
+      - modernize-1.3.0
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: modernize-1.3.0
+
+      - name: Fix drag-drop CSRF POST
+        shell: python
+        run: |
+          from pathlib import Path
+          p = Path('admin/index.php')
+          s = p.read_text()
+
+          old = '''    $retval = '';\n        \n    $js = 'jQuery(function() {\n\n    jQuery(\".tbl_repeat tbody\").tableDnD({\n        onDrop: function(table, row) {\n            var orders = jQuery.tableDnD.serialize();\n            var menu_id = ' . $menu_id . ';\n            jQuery.post(\\'' . $_CONF['site_admin_url']. '/plugins/menu/index.php\\', { orders : orders, menu_id : menu_id });\n        }\n    });\n\n});';'''
+
+          new = '''    $retval = '';\n\n    $dragTokenName = MENU_adminTokenName();\n    $dragToken = MENU_adminCreateToken();\n    $dragPostUrl = $_CONF['site_admin_url'] . '/plugins/menu/index.php';\n\n    $js = 'jQuery(function() {\n\n    jQuery(\".tbl_repeat tbody\").tableDnD({\n        onDrop: function(table, row) {\n            var orders = jQuery.tableDnD.serialize();\n            var data = {\n                orders: orders,\n                menu_id: ' . (int) $menu_id . '\n            };\n            data[' . json_encode($dragTokenName) . '] = ' . json_encode($dragToken) . ';\n\n            jQuery.ajax({\n                type: \"POST\",\n                url: ' . json_encode($dragPostUrl) . ',\n                data: data\n            }).fail(function() {\n                window.location.reload();\n            });\n        }\n    });\n\n});';'''
+
+          if old not in s:
+              raise SystemExit('drag-drop javascript pattern not found')
+          s = s.replace(old, new, 1)
+          p.write_text(s)
+
+      - name: Validate fix
+        run: |
+          php -l admin/index.php
+          grep -q 'MENU_adminTokenName' admin/index.php
+          grep -q 'MENU_adminCreateToken' admin/index.php
+          grep -q 'data\[' admin/index.php
+
+      - name: Commit fix
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add admin/index.php
+          git commit -m "Fix drag-and-drop CSRF persistence"
+          git push origin HEAD:modernize-1.3.0
