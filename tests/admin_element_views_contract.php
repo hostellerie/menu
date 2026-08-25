@@ -37,14 +37,21 @@ if (strpos($module, 'MENU_adminTokenInput()') === false) {
 $treeStart = strpos($module, 'function MENU_displayTree');
 $treeEnd = strpos($module, 'function MENU_createElement', $treeStart);
 $treeBody = substr($module, $treeStart, $treeEnd - $treeStart);
-if (strpos($treeBody, '$_SCRIPTS->setJavaScriptLibrary(\'jquery\');') === false) {
-    fwrite(STDERR, "Admin tree view does not explicitly require Geeklog jQuery\n");
-    exit(1);
+$requirements = array(
+    "setJavaScriptLibrary('jquery')",
+    "setJavaScriptFile('menu_tablednd', '/admin/plugins/menu/js/tablednd_0_6.js')",
+    "setJavaScriptFile('menu_order_handle', '/admin/plugins/menu/js/menu-order-handle.js')",
+);
+foreach ($requirements as $needle) {
+    if (strpos($treeBody, $needle) === false) {
+        fwrite(STDERR, "Admin tree view lost required ordering asset registration: {$needle}\n");
+        exit(1);
+    }
 }
 
-if (strpos($template, 'tablednd_0_6.js') === false
-    || strpos($template, 'menu-order-handle.js') === false) {
-    fwrite(STDERR, "Admin tree template does not load ordering assets\n");
+if (strpos($template, 'tablednd_0_6.js') !== false
+    || strpos($template, 'menu-order-handle.js') !== false) {
+    fwrite(STDERR, "Admin tree template must not inject ordering assets directly\n");
     exit(1);
 }
 
