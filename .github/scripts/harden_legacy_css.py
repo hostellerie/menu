@@ -5,31 +5,18 @@ p = Path('storage.php')
 s = p.read_text()
 needle = "require_once __DIR__ . '/runtime_config.php';\n"
 if "css_security.php" not in s:
+    if needle not in s:
+        raise SystemExit('storage include point missing')
     s = s.replace(needle, needle + "require_once __DIR__ . '/css_security.php';\n", 1)
 p.write_text(s)
 
-# Frontend legacy CSS: never feed stored values directly into CSS.
+# Frontend legacy CSS: replace the whole raw config-to-template block by bounds.
 p = Path('functions.inc')
 s = p.read_text()
-old = '''                    $ms->set_var('menu_id',$menu['menu_id']);
-                    $ms->set_var('site_url',$_CONF['site_url']);
-                    if (is_array($menu['config'])) {
-                        foreach ($menu['config'] AS $name => $value) {
-                            if ($name == 'use_images' && $value == 0) {
-                                $ms->set_var('url1','');
-                                $ms->set_var('url2','');
-                                continue;
-                            } else if ($name == 'use_images' && $value == 1) {
-                                $url1 = "url({$_CONF['site_url']}/images/menu/{menu_bg_filename}) repeat-x";
-                                $url2 = "url({$_CONF['site_url']}/images/menu/{menu_hover_filename}) repeat-x";
-                                $ms->set_var('url1',$url1);
-                                $ms->set_var('url2',$url2);
-                                continue;
-                            }
-                            $ms->set_var($name,$value);
-                        }
-                    }
-'''
+start = s.find("                    $ms->set_var('menu_id',$menu['menu_id']);")
+end = s.find("                    if ($menu['config']['menu_alignment'] == 1) {", start)
+if start == -1 or end == -1:
+    raise SystemExit('functions.inc CSS block bounds not found')
 new = '''                    $ms->set_var('menu_id', (int) $menu['menu_id']);
                     $ms->set_var('url1', '');
                     $ms->set_var('url2', '');
@@ -47,63 +34,31 @@ new = '''                    $ms->set_var('menu_id', (int) $menu['menu_id']);
                                 $ms->set_var($name, MENU_cssColor($value));
                                 continue;
                             }
-                            if ($name === 'menu_bg_filename'
-                                || $name === 'menu_hover_filename'
-                                || $name === 'menu_parent_filename') {
+                            if ($name === 'menu_bg_filename' || $name === 'menu_hover_filename' || $name === 'menu_parent_filename') {
                                 $ms->set_var($name, MENU_cssImageFilename($value));
-                                continue;
-                            }
-                            if ($name === 'use_images') {
                                 continue;
                             }
                             if ($name === 'menu_alignment') {
                                 $ms->set_var($name, ((int) $value === 1) ? 1 : 0);
-                                continue;
                             }
                         }
                         if (isset($menu['config']['use_images']) && (int) $menu['config']['use_images'] === 1) {
-                            $ms->set_var('url1', MENU_cssImageBackground(
-                                isset($menu['config']['menu_bg_filename']) ? $menu['config']['menu_bg_filename'] : '',
-                                'repeat-x'
-                            ));
-                            $ms->set_var('url2', MENU_cssImageBackground(
-                                isset($menu['config']['menu_hover_filename']) ? $menu['config']['menu_hover_filename'] : '',
-                                'repeat-x'
-                            ));
-                            $ms->set_var('menu_parent_background', MENU_cssImageBackground(
-                                isset($menu['config']['menu_parent_filename']) ? $menu['config']['menu_parent_filename'] : ''
-                            ));
+                            $ms->set_var('url1', MENU_cssImageBackground(isset($menu['config']['menu_bg_filename']) ? $menu['config']['menu_bg_filename'] : '', 'repeat-x'));
+                            $ms->set_var('url2', MENU_cssImageBackground(isset($menu['config']['menu_hover_filename']) ? $menu['config']['menu_hover_filename'] : '', 'repeat-x'));
+                            $ms->set_var('menu_parent_background', MENU_cssImageBackground(isset($menu['config']['menu_parent_filename']) ? $menu['config']['menu_parent_filename'] : ''));
                         }
                     }
 '''
-if old not in s:
-    raise SystemExit('functions.inc CSS block not found')
-s = s.replace(old, new, 1)
+s = s[:start] + new + s[end:]
 p.write_text(s)
 
-# Preview uses exactly the same safe CSS contract.
+# Preview uses the same allow-listed CSS values.
 p = Path('admin/preview.php')
 s = p.read_text()
-old = '''$T->set_var('menu_id', $menu_id);
-$T->set_var('site_url', $_CONF['site_url']);
-$T->set_var('url1', '');
-$T->set_var('url2', '');
-
-$image_url = MENU_imageUrl();
-
-if (isset($Menus[$menu_id]['config']) && is_array($Menus[$menu_id]['config'])) {
-    foreach ($Menus[$menu_id]['config'] as $name => $value) {
-        if ($name == 'use_images') {
-            if ((int) $value === 1) {
-                $T->set_var('url1', 'url(' . $image_url . '{menu_bg_filename}) repeat-x');
-                $T->set_var('url2', 'url(' . $image_url . '{menu_hover_filename}) repeat-x');
-            }
-            continue;
-        }
-        $T->set_var($name, $value);
-    }
-}
-'''
+start = s.find("$T->set_var('menu_id', $menu_id);")
+end = s.find("$alignment = 1;", start)
+if start == -1 or end == -1:
+    raise SystemExit('preview CSS block bounds not found')
 new = '''$T->set_var('menu_id', $menu_id);
 $T->set_var('url1', '');
 $T->set_var('url2', '');
@@ -116,55 +71,37 @@ $colorNames = array(
     'submenu_background_color', 'submenu_hover_bg_color',
     'submenu_highlight_color', 'submenu_shadow_color',
 );
-
 if (isset($Menus[$menu_id]['config']) && is_array($Menus[$menu_id]['config'])) {
     foreach ($Menus[$menu_id]['config'] as $name => $value) {
         if (in_array($name, $colorNames, true)) {
             $T->set_var($name, MENU_cssColor($value));
-            continue;
-        }
-        if ($name === 'menu_bg_filename'
-            || $name === 'menu_hover_filename'
-            || $name === 'menu_parent_filename') {
+        } elseif ($name === 'menu_bg_filename' || $name === 'menu_hover_filename' || $name === 'menu_parent_filename') {
             $T->set_var($name, MENU_cssImageFilename($value));
-            continue;
-        }
-        if ($name === 'menu_alignment') {
+        } elseif ($name === 'menu_alignment') {
             $T->set_var($name, ((int) $value === 1) ? 1 : 0);
         }
     }
-
-    if (isset($Menus[$menu_id]['config']['use_images'])
-        && (int) $Menus[$menu_id]['config']['use_images'] === 1) {
-        $T->set_var('url1', MENU_cssImageBackground(
-            isset($Menus[$menu_id]['config']['menu_bg_filename']) ? $Menus[$menu_id]['config']['menu_bg_filename'] : '',
-            'repeat-x'
-        ));
-        $T->set_var('url2', MENU_cssImageBackground(
-            isset($Menus[$menu_id]['config']['menu_hover_filename']) ? $Menus[$menu_id]['config']['menu_hover_filename'] : '',
-            'repeat-x'
-        ));
-        $T->set_var('menu_parent_background', MENU_cssImageBackground(
-            isset($Menus[$menu_id]['config']['menu_parent_filename']) ? $Menus[$menu_id]['config']['menu_parent_filename'] : ''
-        ));
+    if (isset($Menus[$menu_id]['config']['use_images']) && (int) $Menus[$menu_id]['config']['use_images'] === 1) {
+        $T->set_var('url1', MENU_cssImageBackground(isset($Menus[$menu_id]['config']['menu_bg_filename']) ? $Menus[$menu_id]['config']['menu_bg_filename'] : '', 'repeat-x'));
+        $T->set_var('url2', MENU_cssImageBackground(isset($Menus[$menu_id]['config']['menu_hover_filename']) ? $Menus[$menu_id]['config']['menu_hover_filename'] : '', 'repeat-x'));
+        $T->set_var('menu_parent_background', MENU_cssImageBackground(isset($Menus[$menu_id]['config']['menu_parent_filename']) ? $Menus[$menu_id]['config']['menu_parent_filename'] : ''));
     }
 }
 
 $image_url = MENU_imageUrl();
+
 '''
-if old not in s:
-    raise SystemExit('preview CSS block not found')
-s = s.replace(old, new, 1)
+s = s[:start] + new + s[end:]
 p.write_text(s)
 
-# Vertical cascading templates consume a complete validated background fragment.
+# Vertical legacy templates no longer build image URLs themselves.
 for fn in ['templates/gl_vertical-cascading.thtml', 'templates/default/gl_vertical-cascading.thtml']:
     p = Path(fn)
     s = p.read_text()
     s = s.replace('url({site_url}/images/menu/{menu_parent_filename})', '{menu_parent_background}')
     p.write_text(s)
 
-# Validate posted legacy color settings before persistence and before admin inline CSS.
+# Validate POSTed colors before saving.
 p = Path('admin/index.php')
 s = p.read_text()
 needle = "    $mc['use_images']                 = (int) Geeklog\\Input::fPost('gorc', 0);\n"
@@ -187,7 +124,7 @@ if needle not in s:
     raise SystemExit('admin save config insertion point missing')
 s = s.replace(needle, insert, 1)
 
-# Stored values shown by the admin editor are sanitized too.
+# Sanitize stored colors before values reach admin attributes/inline CSS.
 needle = "    $use_colors_checked = ($menuConfig['use_images'] == 0 ? ' checked=\"checked\"' : '');\n"
 insert = '''    $use_colors_checked = ($menuConfig['use_images'] == 0 ? ' checked="checked"' : '');
 
@@ -207,7 +144,6 @@ if needle not in s:
 s = s.replace(needle, insert, 1)
 p.write_text(s)
 
-# Roadmap.
 p = Path('ROADMAP.md')
 s = p.read_text()
 s = s.replace(
