@@ -203,46 +203,8 @@ if ( (isset($_POST['execute']) || $mode != '') && !isset($_POST['cancel']) && !i
     }
 } else if ( isset($_POST['defaults']) ) {
     $menu_id = (int) Geeklog\Input::fPost('menu_id');
-
-    switch ( $Menus[$menu_id]['menu_type']) {
-        case 1: // horizontal cascading (navigation menu)
-            DB_save($_TABLES['menu_config'],"menu_id,conf_name,conf_value","$menu_id,'main_menu_bg_color','#151515'");
-            DB_save($_TABLES['menu_config'],"menu_id,conf_name,conf_value","$menu_id,'main_menu_hover_bg_color','#3667c0'");
-            DB_save($_TABLES['menu_config'],"menu_id,conf_name,conf_value","$menu_id,'main_menu_text_color','#CCCCCC'");
-            DB_save($_TABLES['menu_config'],"menu_id,conf_name,conf_value","$menu_id,'main_menu_hover_text_color','#FFFFFF'");
-            DB_save($_TABLES['menu_config'],"menu_id,conf_name,conf_value","$menu_id,'submenu_text_color','#FFFFFF'");
-            DB_save($_TABLES['menu_config'],"menu_id,conf_name,conf_value","$menu_id,'submenu_hover_text_color','#679EF1'");
-            DB_save($_TABLES['menu_config'],"menu_id,conf_name,conf_value","$menu_id,'submenu_background_color','#151515'");
-            DB_save($_TABLES['menu_config'],"menu_id,conf_name,conf_value","$menu_id,'submenu_hover_bg_color','#333333'");
-            DB_save($_TABLES['menu_config'],"menu_id,conf_name,conf_value","$menu_id,'submenu_highlight_color','#333333'");
-            DB_save($_TABLES['menu_config'],"menu_id,conf_name,conf_value","$menu_id,'submenu_shadow_color','#000000'");
-            DB_save($_TABLES['menu_config'],"menu_id,conf_name,conf_value","$menu_id,'use_images','0'");
-            DB_save($_TABLES['menu_config'],"menu_id,conf_name,conf_value","$menu_id,'menu_bg_filename',''");
-            DB_save($_TABLES['menu_config'],"menu_id,conf_name,conf_value","$menu_id,'menu_hover_filename',''");
-            DB_save($_TABLES['menu_config'],"menu_id,conf_name,conf_value","$menu_id,'menu_parent_filename',''");
-            DB_save($_TABLES['menu_config'],"menu_id,conf_name,conf_value","$menu_id,'menu_alignment','1'");
-            break;
-        case 2: // horizontal simple (footer menu)
-            DB_save($_TABLES['menu_config'],"menu_id,conf_name,conf_value","$menu_id,'main_menu_text_color','#3677C0'");
-            DB_save($_TABLES['menu_config'],"menu_id,conf_name,conf_value","$menu_id,'main_menu_hover_text_color','#679EF1'");
-            DB_save($_TABLES['menu_config'],"menu_id,conf_name,conf_value","$menu_id,'submenu_highlight_color','#999999'");
-            DB_save($_TABLES['menu_config'],"menu_id,conf_name,conf_value","$menu_id,'menu_alignment','1'");
-            break;
-        case 3: //vertical simple
-        case 4: // vertical cascading (block)
-            DB_save($_TABLES['menu_config'],"menu_id,conf_name,conf_value","$menu_id,'main_menu_bg_color','#DDDDDD'");
-            DB_save($_TABLES['menu_config'],"menu_id,conf_name,conf_value","$menu_id,'main_menu_hover_bg_color','#BBBBBB'");
-            DB_save($_TABLES['menu_config'],"menu_id,conf_name,conf_value","$menu_id,'main_menu_text_color','#0000FF'");
-            DB_save($_TABLES['menu_config'],"menu_id,conf_name,conf_value","$menu_id,'main_menu_hover_text_color','#FFFFFF'");
-            DB_save($_TABLES['menu_config'],"menu_id,conf_name,conf_value","$menu_id,'submenu_text_color','#0000FF'");
-            DB_save($_TABLES['menu_config'],"menu_id,conf_name,conf_value","$menu_id,'submenu_hover_text_color','#FFFFFF'");
-            DB_save($_TABLES['menu_config'],"menu_id,conf_name,conf_value","$menu_id,'submenu_highlight_color','#999999'");
-            DB_save($_TABLES['menu_config'],"menu_id,conf_name,conf_value","$menu_id,'menu_parent_filename',''");
-            DB_save($_TABLES['menu_config'],"menu_id,conf_name,conf_value","$menu_id,'menu_alignment','1'");
-            break;
-    }
-    MENU_invalidateRuntimeCache(true);
-    $content = MENU_displayMenuList( );
+    MENU_restoreMenuDefaults($menu_id);
+    $content = MENU_displayMenuList();
 } else if ( isset($_POST['cancel']) && isset($_POST['menu']) ) {
     $menu_id = (int) Geeklog\Input::fPost('menu');
     $content = MENU_displayTree( $menu_id );

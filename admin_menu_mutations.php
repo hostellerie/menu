@@ -332,6 +332,89 @@ function MENU_saveElementOrder($menuId, $ordersString)
     MENU_invalidateRuntimeCache(false);
 }
 
+
+/**
+ * Return legacy presentation defaults for a Menu presentation type.
+ *
+ * @param int $menuType
+ * @return array
+ */
+function MENU_defaultConfigValues($menuType)
+{
+    switch ((int) $menuType) {
+        case 1:
+            return array(
+                'main_menu_bg_color' => '#151515',
+                'main_menu_hover_bg_color' => '#3667c0',
+                'main_menu_text_color' => '#CCCCCC',
+                'main_menu_hover_text_color' => '#FFFFFF',
+                'submenu_text_color' => '#FFFFFF',
+                'submenu_hover_text_color' => '#679EF1',
+                'submenu_background_color' => '#151515',
+                'submenu_hover_bg_color' => '#333333',
+                'submenu_highlight_color' => '#333333',
+                'submenu_shadow_color' => '#000000',
+                'use_images' => '0',
+                'menu_bg_filename' => '',
+                'menu_hover_filename' => '',
+                'menu_parent_filename' => '',
+                'menu_alignment' => '1',
+            );
+
+        case 2:
+            return array(
+                'main_menu_text_color' => '#3677C0',
+                'main_menu_hover_text_color' => '#679EF1',
+                'submenu_highlight_color' => '#999999',
+                'menu_alignment' => '1',
+            );
+
+        case 3:
+        case 4:
+            return array(
+                'main_menu_bg_color' => '#DDDDDD',
+                'main_menu_hover_bg_color' => '#BBBBBB',
+                'main_menu_text_color' => '#0000FF',
+                'main_menu_hover_text_color' => '#FFFFFF',
+                'submenu_text_color' => '#0000FF',
+                'submenu_hover_text_color' => '#FFFFFF',
+                'submenu_highlight_color' => '#999999',
+                'menu_parent_filename' => '',
+                'menu_alignment' => '1',
+            );
+    }
+
+    return array();
+}
+
+/**
+ * Restore legacy presentation defaults for one menu.
+ *
+ * @param int $menuId
+ */
+function MENU_restoreMenuDefaults($menuId)
+{
+    global $_TABLES, $Menus;
+
+    $menuId = (int) $menuId;
+    if ($menuId <= 0 || !isset($Menus[$menuId])) {
+        return;
+    }
+
+    $values = MENU_defaultConfigValues((int) $Menus[$menuId]['menu_type']);
+    foreach ($values as $name => $value) {
+        $nameSql = MENU_dbEscape($name);
+        $valueSql = MENU_dbEscape($value);
+        DB_save(
+            $_TABLES['menu_config'],
+            'menu_id,conf_name,conf_value',
+            "$menuId,'$nameSql','$valueSql'"
+        );
+    }
+
+    MENU_invalidateRuntimeCache(true);
+}
+
 /*
  * Saves the menu configuration
  */

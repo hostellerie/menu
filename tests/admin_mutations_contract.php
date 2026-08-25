@@ -14,6 +14,8 @@ $functions = array(
     'MENU_deleteElementTree',
     'MENU_setMenuConfigEnabled',
     'MENU_saveElementOrder',
+    'MENU_defaultConfigValues',
+    'MENU_restoreMenuDefaults',
     'MENU_saveMenuConfig',
 );
 
@@ -44,6 +46,21 @@ foreach ($forbiddenIndexSql as $needle) {
         fwrite(STDERR, "State-changing SQL still remains in admin/index.php: {$needle}\n");
         exit(1);
     }
+}
+
+
+if (strpos($index, 'DB_save(') !== false || strpos($index, 'DB_query(') !== false) {
+    fwrite(STDERR, "admin/index.php still contains direct database writes\n");
+    exit(1);
+}
+if (strpos($index, 'MENU_restoreMenuDefaults($menu_id)') === false) {
+    fwrite(STDERR, "Defaults branch is not routed through mutation module\n");
+    exit(1);
+}
+if (strpos($module, 'function MENU_defaultConfigValues(') === false
+    || strpos($module, 'function MENU_restoreMenuDefaults(') === false) {
+    fwrite(STDERR, "Centralized defaults helpers are missing\n");
+    exit(1);
 }
 
 if (strpos($module, 'MENU_invalidateRuntimeCache(') === false) {
