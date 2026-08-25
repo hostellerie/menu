@@ -269,7 +269,7 @@ function MENU_createMenu( ) {
     $group_select = '<select id="group" name="group">' . LB;
     for ($i = 0; $i < count($usergroups); $i++) {
         $group_select .= '<option value="' . $usergroups[key($usergroups)] . '"';
-        $group_select .= '>' . key($usergroups) . '</option>' . LB;
+        $group_select .= '>' . MENU_escapeHTML(key($usergroups)) . '</option>' . LB;
         next($usergroups);
     }
     $group_select .= '</select>' . LB;
@@ -752,7 +752,7 @@ function MENU_createElement ( $menu_id ) {
 
     for ($i = 0; $i < count($usergroups); $i++) {
         $group_select .= '<option value="' . $usergroups[key($usergroups)] . '"';
-        $group_select .= '>' . key($usergroups) . '</option>' . LB;
+        $group_select .= '>' . MENU_escapeHTML(key($usergroups)) . '</option>' . LB;
         next($usergroups);
     }
     $group_select .= '</select>' . LB;
@@ -1147,7 +1147,7 @@ function MENU_editElement( $menu_id, $mid ) {
         if ($Menus[$menu_id]['elements'][$mid]->group_id==$usergroups[key($usergroups)] ) {
             $group_select .= ' selected="selected"';
         }
-        $group_select .= '>' . key($usergroups) . '</option>' . LB;
+        $group_select .= '>' . MENU_escapeHTML(key($usergroups)) . '</option>' . LB;
         next($usergroups);
     }
     $group_select .= '</select>' . LB;
@@ -1292,7 +1292,7 @@ function MENU_saveEditMenuElement ( ) {
 
     $group_id = (int) Geeklog\Input::fPost('group');
     $aid      = (int) Geeklog\Input::fPost('menuorder');
-    $aorder   = DB_getItem($_TABLES['menu_elements'],'element_order','id=' . $aid);
+    $aorder   = (int) DB_getItem($_TABLES['menu_elements'], 'element_order', 'id=' . $aid . ' AND menu_id=' . $menu_id);
     $neworder = $aorder + 1;
 
     $labelSql = MENU_dbEscape($label);
@@ -1568,7 +1568,7 @@ function MENU_menuConfig( $mid ) {
         if ( $usergroups[key($usergroups)] == $Menus[$menu_id]['group_id']) {
             $group_select .= ' selected="selected"';
         }
-        $group_select .= '>' . key($usergroups) . '</option>' . LB;
+        $group_select .= '>' . MENU_escapeHTML(key($usergroups)) . '</option>' . LB;
         next($usergroups);
     }
     $group_select .= '</select>' . LB;

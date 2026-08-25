@@ -110,7 +110,7 @@ class mbElement {
         while ($M = DB_fetchArray($result)) {
             $M['element_order'] = $orderCount;
             $orderCount += 10;
-            DB_query("UPDATE {$_TABLES['menu_elements']} SET `element_order`=" . $M['element_order'] . " WHERE menu_id=".$menu_id." AND id=" . $M['id'] );
+            DB_query("UPDATE {$_TABLES['menu_elements']} SET `element_order`=" . (int) $M['element_order'] . " WHERE menu_id=" . $menu_id . " AND id=" . (int) $M['id']);
         }
     }
 
@@ -408,7 +408,7 @@ class mbElement {
                             {
                                 $url = $_CONF['site_admin_url'] . '/index.php';
                                 $label =  $LANG29[34];
-                                $menu .= '<li><a href="' . $url . '">' . $label . '</a></li>' . LB;
+                                $menu .= '<li><a href="' . MENU_safeHref($url) . '">' . MENU_escapeStoredText($label) . '</a></li>' . LB;
                             }
                             // what's our current URL?
                             $thisUrl = COM_getCurrentURL();
@@ -426,19 +426,19 @@ class mbElement {
                                     $label .= ' (' . $plg->numsubmissions . ')';
                                 }
                                 $url = $plg->adminurl;
-                                $menu .= '<li><a href="' . $url . '">' . $label . '</a></li>' . LB;
+                                $menu .= '<li><a href="' . MENU_safeHref($url) . '">' . MENU_escapeStoredText($label) . '</a></li>' . LB;
                                 next( $plugin_options );
                             }
                             $url = $_CONF['site_url'] . '/usersettings.php?mode=edit';
                             $label = $LANG01[48];
-                            $menu .= '<li><a href="' . $url . '">' . $label . '</a></li>' . LB;
+                            $menu .= '<li><a href="' . MENU_safeHref($url) . '">' . MENU_escapeStoredText($label) . '</a></li>' . LB;
                             $url = $_CONF['site_url'] . '/users.php?mode=logout';
                             $label = $LANG01[19];
-                            $menu .= '<li><a href="' . $url . '">' . $label . '</a></li>' . LB;
+                            $menu .= '<li><a href="' . MENU_safeHref($url) . '">' . MENU_escapeStoredText($label) . '</a></li>' . LB;
                         } else {
                             $url = $_CONF['site_url'] . '/users.php?mode=login';
                             $label = 'Login';
-                            $menu .= '<li><a href="' . $url . '">' . $label . '</a></li>' . LB;
+                            $menu .= '<li><a href="' . MENU_safeHref($url) . '">' . MENU_escapeStoredText($label) . '</a></li>' . LB;
                         }
                         $menu .= '</ul>' . LB . '</li>' . LB;
                         break;
@@ -554,7 +554,7 @@ class mbElement {
                                     }
 
                                     $label .= ' (' . COM_numberFormat($numstories) . ')';
-                                    $link_array[$LANG01[11]] = '<li><a href="' . $url . '">' . $label . '</a></li>' . LB;
+                                    $link_array[$LANG01[11]] = '<li><a href="' . MENU_safeHref($url) . '">' . MENU_escapeStoredText($label) . '</a></li>' . LB;
                                 }
 
                                 if( SEC_hasRights( 'block.edit' )) {
@@ -563,7 +563,7 @@ class mbElement {
 
                                     $url = $_CONF['site_admin_url'] . '/block.php';
                                     $label = $LANG01[12] . ' (' . COM_numberFormat($count) . ')';
-                                    $link_array[$LANG01[12]] = '<li><a href="' . $url . '">' . $label . '</a></li>' . LB;
+                                    $link_array[$LANG01[12]] = '<li><a href="' . MENU_safeHref($url) . '">' . MENU_escapeStoredText($label) . '</a></li>' . LB;
                                 }
 
                                 if( SEC_hasRights( 'topic.edit' )) {
@@ -572,13 +572,13 @@ class mbElement {
 
                                     $url = $_CONF['site_admin_url'] . '/topic.php';
                                     $label = $LANG01[13] . ' (' . COM_numberFormat($count) . ')';
-                                    $link_array[$LANG01[13]] = '<li><a href="' . $url . '">' . $label . '</a></li>' . LB;
+                                    $link_array[$LANG01[13]] = '<li><a href="' . MENU_safeHref($url) . '">' . MENU_escapeStoredText($label) . '</a></li>' . LB;
                                 }
 
                                 if( SEC_hasRights( 'user.edit' )) {
                                     $url = $_CONF['site_admin_url'] . '/user.php';
                                     $label = $LANG01[17] . ' (' . COM_numberFormat(DB_count($_TABLES['users']) -1) . ')';
-                                    $link_array[$LANG01[17]] = '<li><a href="' . $url . '">' . $label . '</a></li>' . LB;
+                                    $link_array[$LANG01[17]] = '<li><a href="' . MENU_safeHref($url) . '">' . MENU_escapeStoredText($label) . '</a></li>' . LB;
                                 }
 
                                 if( SEC_hasRights( 'group.edit' )) {
@@ -593,35 +593,35 @@ class mbElement {
 
                                     $url = $_CONF['site_admin_url'] . '/group.php';
                                     $label = $LANG01[96] . ' (' . COM_numberFormat($A['count']) . ')';
-                                    $link_array[$LANG01[96]] = '<li><a href="' . $url . '">' . $label . '</a></li>' . LB;
+                                    $link_array[$LANG01[96]] = '<li><a href="' . MENU_safeHref($url) . '">' . MENU_escapeStoredText($label) . '</a></li>' . LB;
                                 }
 
                                 if( SEC_hasRights( 'user.mail' )) {
                                     $url = $_CONF['site_admin_url'] . '/mail.php';
                                     $label = $LANG01[105] . ' (N/A)';
-                                    $link_array[$LANG01[105]] = '<li><a href="' . $url . '">' . $label . '</a></li>' . LB;
+                                    $link_array[$LANG01[105]] = '<li><a href="' . MENU_safeHref($url) . '">' . MENU_escapeStoredText($label) . '</a></li>' . LB;
                                 }
 
                                 if(( $_CONF['backend'] == 1 ) && SEC_hasRights( 'syndication.edit' )) {
                                     $url = $_CONF['site_admin_url'] . '/syndication.php';
                                     $label = $LANG01[38] . ' (' . COM_numberFormat(DB_count($_TABLES['syndication'])) . ')';
-                                    $link_array[$LANG01[38]] = '<li><a href="' . $url . '">' . $label . '</a></li>' . LB;
+                                    $link_array[$LANG01[38]] = '<li><a href="' . MENU_safeHref($url) . '">' . MENU_escapeStoredText($label) . '</a></li>' . LB;
                                 }
 
                                 if(( $_CONF['trackback_enabled'] || $_CONF['pingback_enabled'] || $_CONF['ping_enabled'] ) && SEC_hasRights( 'story.ping' )) {
                                     $url = $_CONF['site_admin_url'] . '/trackback.php';
                                     $label = $LANG01[116] . ' (' . COM_numberFormat( DB_count( $_TABLES['pingservice'] )) . ')';
-                                    $link_array[$LANG01[116]] = '<li><a href="' . $url . '">' . $label . '</a></li>' . LB;
+                                    $link_array[$LANG01[116]] = '<li><a href="' . MENU_safeHref($url) . '">' . MENU_escapeStoredText($label) . '</a></li>' . LB;
                                 }
                                 if( SEC_hasRights( 'plugin.edit' )) {
                                     $url = $_CONF['site_admin_url'] . '/plugins.php';
                                     $label = $LANG01[77] . ' (' . COM_numberFormat( DB_count( $_TABLES['plugins'] )) . ')';
-                                    $link_array[$LANG01[77]] = '<li><a href="' . $url . '">' . $label . '</a></li>' . LB;
+                                    $link_array[$LANG01[77]] = '<li><a href="' . MENU_safeHref($url) . '">' . MENU_escapeStoredText($label) . '</a></li>' . LB;
                                 }
                                 if (SEC_inGroup('Root')) {
                                     $url = $_CONF['site_admin_url'] . '/configuration.php';
                                     $label = $LANG01[129] . ' (' . COM_numberFormat(count($config->_get_groups())) . ')';
-                                    $link_array[$LANG01[129]] = '<li><a href="' . $url . '">' . $label . '</a></li>' . LB;
+                                    $link_array[$LANG01[129]] = '<li><a href="' . MENU_safeHref($url) . '">' . MENU_escapeStoredText($label) . '</a></li>' . LB;
                                 }
 
                                 // This will show the admin options for all installed plugins (if any)
@@ -637,7 +637,7 @@ class mbElement {
                                     } else {
                                         $label .= ' (' . COM_numberFormat( $plg->numsubmissions ) . ')';
                                     }
-                                    $link_array[$plg->adminlabel] = '<li><a href="' . $url . '">' . $label . '</a></li>' . LB;
+                                    $link_array[$plg->adminlabel] = '<li><a href="' . MENU_safeHref($url) . '">' . MENU_escapeStoredText($label) . '</a></li>' . LB;
 
                                     next( $plugin_options );
                                 }
@@ -645,7 +645,7 @@ class mbElement {
                                 if(isset($_CONF['allow_mysqldump']) && ( $_CONF['allow_mysqldump'] == 1 ) AND ( $_DB_dbms == 'mysql' ) AND SEC_inGroup( 'Root' )) {
                                     $url = $_CONF['site_admin_url'] . '/database.php';
                                     $label = $LANG01[103] . ' (N/A)';
-                                    $link_array[$LANG01[103]] = '<li><a href="' . $url . '">' . $label . '</a></li>' . LB;
+                                    $link_array[$LANG01[103]] = '<li><a href="' . MENU_safeHref($url) . '">' . MENU_escapeStoredText($label) . '</a></li>' . LB;
                                 }
 
                                 if( $_CONF['link_documentation'] == 1 ) {
@@ -657,18 +657,18 @@ class mbElement {
                                     }
                                     $url = $docUrl;
                                     $label = $LANG01[113] . ' (N/A)';
-                                    $link_array[$LANG01[113]] = '<li><a href="' . $url . '">' . $label . '</a></li>' . LB;
+                                    $link_array[$LANG01[113]] = '<li><a href="' . MENU_safeHref($url) . '">' . MENU_escapeStoredText($label) . '</a></li>' . LB;
                                 }
 
                                 if( SEC_inGroup( 'Root' )) {
                                     $url = 'http://geeklog.net/versionchecker.php?version=' . VERSION;
                                     $label = $LANG01[107] . ' (' . VERSION . ')';
-                                    $link_array[$LANG01[107]] = '<li><a href="' . $url . '">' . $label . '</a></li>' . LB;
+                                    $link_array[$LANG01[107]] = '<li><a href="' . MENU_safeHref($url) . '">' . MENU_escapeStoredText($label) . '</a></li>' . LB;
                                 }
                                 if (SEC_isModerator()) {
                                     $url = $_CONF['site_admin_url'] . '/moderation.php';
                                     $label = $LANG01[10] . ' (' . COM_numberFormat( $modnum ) . ')';
-                                    $link_array[$LANG01[10]] = '<li><a href="' . $url . '">' . $label . '</a></li>' . LB;
+                                    $link_array[$LANG01[10]] = '<li><a href="' . MENU_safeHref($url) . '">' . MENU_escapeStoredText($label) . '</a></li>' . LB;
                                 }
 
                                 if( $_CONF['sort_admin'] ) {
@@ -677,7 +677,7 @@ class mbElement {
                                 // C&C entry
                                 $url = $_CONF['site_admin_url'] . '/index.php';
                                 $label = $LANG29[34];
-                                $menu_item = '<li><a href="' . $url . '">' . $label . '</a></li>' . LB;
+                                $menu_item = '<li><a href="' . MENU_safeHref($url) . '">' . MENU_escapeStoredText($label) . '</a></li>' . LB;
 
                                 $link_array = array( $menu_item ) + $link_array;
 
@@ -711,8 +711,19 @@ class mbElement {
                                 $tids = DB_getItem( $_TABLES['userindex'], 'tids', "uid = {$_USER['uid']}" );
                             }
                             if( !empty( $tids )) {
-                                $sql .= " AND (tid NOT IN ('" . str_replace( ' ', "','", $tids )
-                                     . "'))" . COM_getPermSQL( 'AND' );
+                                $safeTids = array();
+                                foreach (preg_split('/\s+/', trim((string) $tids)) as $tid) {
+                                    $tid = (int) $tid;
+                                    if ($tid > 0) {
+                                        $safeTids[] = $tid;
+                                    }
+                                }
+                                if (!empty($safeTids)) {
+                                    $sql .= " AND (tid NOT IN (" . implode(',', $safeTids)
+                                         . "))" . COM_getPermSQL( 'AND' );
+                                } else {
+                                    $sql .= COM_getPermSQL( 'AND' );
+                                }
                             } else {
                                 $sql .= COM_getPermSQL( 'AND' );
                             }
@@ -758,7 +769,7 @@ class mbElement {
                             }
                             $label .= $countstring;
 							*/
-                            $menu .= '<li><a href="' . $url . '">' . $label . '</a></li>' . LB;
+                            $menu .= '<li><a href="' . MENU_safeHref($url) . '">' . MENU_escapeStoredText($label) . '</a></li>' . LB;
                         }
                         $menu .= '</ul>' . LB . '</li>' . LB;
                         break;
@@ -794,7 +805,7 @@ class mbElement {
                             $A = DB_fetchArray ($result);
                             $url = COM_buildURL ($_CONF['site_url'] . '/staticpages/index.php?page=' . $A['sp_id']);
                             $label = $A['sp_label'];
-                            $menu .= '<li><a href="' . $url . '">' . $label . '</a></li>' . LB;
+                            $menu .= '<li><a href="' . MENU_safeHref($url) . '">' . MENU_escapeStoredText($label) . '</a></li>' . LB;
                         }
                         $menu .= '</ul>' . LB . '</li>' . LB;
                         break;
@@ -816,7 +827,7 @@ class mbElement {
                             for( $i = 1; $i <= count( $plugin_menu ); $i++ ) {
                                 $url = current($plugin_menu);
                                 $label = key($plugin_menu);
-                                $menu .= '<li><a href="' . $url . '">' . $label . '</a></li>' . LB;
+                                $menu .= '<li><a href="' . MENU_safeHref($url) . '">' . MENU_escapeStoredText($label) . '</a></li>' . LB;
                                 next( $plugin_menu );
                             }
                         }
