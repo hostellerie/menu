@@ -3,6 +3,7 @@
 $root = dirname(__DIR__);
 $script = file_get_contents($root . '/admin/js/menu-order-handle.js');
 $template = file_get_contents($root . '/templates/default/menutree.thtml');
+$module = file_get_contents($root . '/admin_element_views.php');
 $library = file_get_contents($root . '/admin/js/tablednd_0_6.js');
 
 $forbidden = array(
@@ -44,10 +45,21 @@ if (strpos($library, 'jQuery.tableDnD') === false
     exit(1);
 }
 
-$libraryPos = strpos($template, '{site_admin_url}/plugins/menu/js/tablednd_0_6.js');
-$adapterPos = strpos($template, '{site_admin_url}/plugins/menu/js/menu-order-handle.js');
-if ($libraryPos === false || $adapterPos === false || $libraryPos >= $adapterPos) {
-    fwrite(STDERR, "TableDnD must load before the Menu ordering adapter\n");
+$treeStart = strpos($module, 'function MENU_displayTree');
+$treeEnd = strpos($module, 'function MENU_createElement', $treeStart);
+$treeBody = substr($module, $treeStart, $treeEnd - $treeStart);
+$jqueryPos = strpos($treeBody, "setJavaScriptLibrary('jquery')");
+$libraryPos = strpos($treeBody, "setJavaScriptFile('menu_tablednd', '/admin/plugins/menu/js/tablednd_0_6.js')");
+$adapterPos = strpos($treeBody, "setJavaScriptFile('menu_order_handle', '/admin/plugins/menu/js/menu-order-handle.js')");
+if ($jqueryPos === false || $libraryPos === false || $adapterPos === false
+    || $jqueryPos >= $libraryPos || $libraryPos >= $adapterPos) {
+    fwrite(STDERR, "Ordering assets must be registered after jQuery and in dependency order\n");
+    exit(1);
+}
+
+if (strpos($template, 'tablednd_0_6.js') !== false
+    || strpos($template, 'menu-order-handle.js') !== false) {
+    fwrite(STDERR, "Ordering assets must not be injected directly by the template\n");
     exit(1);
 }
 
