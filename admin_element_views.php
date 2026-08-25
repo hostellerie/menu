@@ -21,34 +21,6 @@ function MENU_displayTree( $menu_id ) {
 
     $retval = '';
 
-    $dragTokenName = MENU_adminTokenName();
-    $dragToken = MENU_adminCreateToken();
-    $dragPostUrl = $_CONF['site_admin_url'] . '/plugins/menu/index.php';
-
-    $js = 'jQuery(function() {
-
-    jQuery(".tbl_repeat tbody").tableDnD({
-        onDrop: function(table, row) {
-            var orders = jQuery.tableDnD.serialize();
-            var data = {
-                orders: orders,
-                menu_id: ' . (int) $menu_id . '
-            };
-            data[' . json_encode($dragTokenName) . '] = ' . json_encode($dragToken) . ';
-
-            jQuery.ajax({
-                type: "POST",
-                url: ' . json_encode($dragPostUrl) . ',
-                data: data
-            }).fail(function() {
-                window.location.reload();
-            });
-        }
-    });
-
-});';
-
-    $_SCRIPTS->setJavaScript($js, true);
     $_SCRIPTS->setJavaScriptFile('menu_order_handle', '/admin/plugins/menu/js/menu-order-handle.js');
 
     $menu_arr = array(
