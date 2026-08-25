@@ -54,6 +54,7 @@ $plugin_path = $_CONF['path'] . 'plugins/menu/';
 require_once $plugin_path . 'storage.php';
 require_once $plugin_path . 'presentation.php';
 require_once $plugin_path . 'cache_filesystem.php';
+require_once $plugin_path . 'cache.php';
 $langfile = $plugin_path . 'language/' . $_CONF['language'] . '.php';
 
 if (file_exists($langfile)) {
@@ -560,105 +561,3 @@ function plugin_templatesetvars_menu($templatename, &$template)
 
 MENU_ensureDataDirs();
 
-$MENU_TEMPLATE_OPTIONS = array(
-    'path_cache'    => MENU_dataDir() . 'cache' . DIRECTORY_SEPARATOR,
-    'path_prefixes' => array(
-                        $_CONF['path_themes'],
-                        $_CONF['path'],
-                        '/'
-                       ),
-    'incl_phpself_header' => true,
-    'cache_by_language' => true,
-    'default_vars' => array(
-                        'site_url' => $_CONF['site_url'],
-                        'site_admin_url' => $_CONF['site_admin_url'],
-                        'layout_url' => $_CONF['layout_url'],
-                        'xhtml' => (defined('XHTML') ? XHTML : ' /'),
-                      ),
-    'hook' => array(),
-);
-
-function MENU_CACHE_cleanup_plugin($plugin)
-{
-    global $MENU_TEMPLATE_OPTIONS;
-
-    if (!empty($plugin)) {
-        $plugin = str_replace(array('..', '/', '\\'), '', $plugin);
-        $plugin = '__' . $plugin . '__';
-    }
-    $path_cache = substr($MENU_TEMPLATE_OPTIONS['path_cache'], 0, -1);
-    MENU_cache_clean_directories($path_cache, $plugin);
-}
-
-function MENU_CACHE_remove_instance($iid)
-{
-    global $MENU_TEMPLATE_OPTIONS;
-
-    $iid = str_replace(array('..', '/', '\\', ':'), '', $iid);
-    $iid = str_replace('-','_',$iid);
-    $path_cache = substr($MENU_TEMPLATE_OPTIONS['path_cache'], 0, -1);
-    MENU_cache_clean_directories($path_cache, 'instance__'.$iid);
-}
-
-function MENU_CACHE_create_instance($iid, $data, $bypass_lang = false)
-{
-    global $MENU_TEMPLATE_OPTIONS, $_CONF;
-
-    if (!MENU_runtimeConfigEnabled('enable_cache', true)) {
-        return;
-    }
-
-    if ($MENU_TEMPLATE_OPTIONS['cache_by_language']) {
-        if (!is_dir($MENU_TEMPLATE_OPTIONS['path_cache'] . $_CONF['language'])) {
-            @mkdir($MENU_TEMPLATE_OPTIONS['path_cache'] . $_CONF['language'], 0755, true);
-            @touch($MENU_TEMPLATE_OPTIONS['path_cache'] . $_CONF['language'] . '/index.html');
-        }
-    }
-
-    $filename = MENU_CACHE_instance_filename($iid, $bypass_lang);
-    @file_put_contents($filename, $data);
-}
-
-function MENU_CACHE_check_instance($iid, $bypass_lang = false)
-{
-    if (!MENU_runtimeConfigEnabled('enable_cache', true)) {
-        return false;
-    }
-
-    $filename = MENU_CACHE_instance_filename($iid, $bypass_lang);
-    if (file_exists($filename)) {
-        $str = @file_get_contents($filename);
-        return $str === false ? false : $str;
-    }
-    return false;
-}
-
-function MENU_CACHE_get_instance_update($iid, $bypass_lang = false)
-{
-    if (!MENU_runtimeConfigEnabled('enable_cache', true)) {
-        return false;
-    }
-
-    $filename = MENU_CACHE_instance_filename($iid, $bypass_lang);
-    return @filemtime($filename);
-}
-
-function MENU_CACHE_instance_filename($iid,$bypass_lang = false)
-{
-    global $MENU_TEMPLATE_OPTIONS, $_CONF;
-
-    $path_cache = $MENU_TEMPLATE_OPTIONS['path_cache'];
-    if (!$bypass_lang && $MENU_TEMPLATE_OPTIONS['cache_by_language']) {
-        $path_cache .= $_CONF['language'] . '/';
-    }
-    $iid = COM_sanitizeFilename($iid, true);
-    $filename = $path_cache.'instance__'.$iid.'.php';
-
-    return $filename;
-}
-
-function MENU_compress($buffer) {
-    $buffer = preg_replace('!/\*[^*]*\*+([^/][^*]*\*+)*/!', '', $buffer);
-    $buffer = str_replace(array("\r\n", "\r", "\n"), '', $buffer);
-    return $buffer;
-}
