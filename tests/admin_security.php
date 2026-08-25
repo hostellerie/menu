@@ -26,6 +26,12 @@ function DB_escapeString($value)
 
 require_once dirname(__DIR__) . '/admin_security.php';
 
+$securitySource = file_get_contents(dirname(__DIR__) . '/admin_security.php');
+if (preg_match('/if\s*\(MENU_adminIsControllerRequest\(\)\)\s*\{\s*MENU_adminEnforceCsrf\(\);/s', $securitySource)) {
+    fwrite(STDERR, 'FAIL: admin_security.php must not auto-enforce during include' . PHP_EOL);
+    exit(1);
+}
+
 function menu_security_assert($condition, $message)
 {
     if (!$condition) {

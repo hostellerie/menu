@@ -47,6 +47,8 @@ require_once $_CONF['path'].'system/lib-admin.php';
 $display = '';
 
 // Only let admin users access this page
+MENU_adminEnforceCsrf();
+
 if (!SEC_hasRights('menu.admin')) {
     // Someone is trying to illegally access this page
     COM_errorLog("Someone has tried to illegally access the Menu Administration page.  User id: {$_USER['uid']}, Username: {$_USER['username']}, IP: " . $_SERVER['REMOTE_ADDR'],1);

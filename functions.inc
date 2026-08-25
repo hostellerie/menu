@@ -599,7 +599,11 @@ MENU_initMenu();
 
 function plugin_templatesetvars_menu($templatename, &$template)
 {
-    if (!DB_checkTableExists('menu')) return;
+    global $_TABLES;
+
+    if (!isset($_TABLES['menu']) || !DB_checkTableExists('menu')) {
+        return;
+    }
     $menu = MENU_getMenu('navigation',"gl_menu","gl_menu",'',"parent");
     $template->set_var('header_navigation',$menu);
     $menu_footer = MENU_getMenu('footer',"st-fmenu","st-fmenu",'',"parent");

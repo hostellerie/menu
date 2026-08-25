@@ -216,6 +216,3 @@ function MENU_adminEnforceCsrf()
     }
 }
 
-if (MENU_adminIsControllerRequest()) {
-    MENU_adminEnforceCsrf();
-}
