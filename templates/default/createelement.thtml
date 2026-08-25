@@ -6,7 +6,7 @@
 </style>
 
 <div class="glfform">
-  <form method="post" action="{form_action}" id="newitem">
+  <form method="post" action="{site_admin_url}/plugins/menu/create_element.php" id="newitem">
     {security_token_input}
     <div>
     <input type="hidden" id="menunid" name="menuid" value="{menuid}"{xhtml}>
