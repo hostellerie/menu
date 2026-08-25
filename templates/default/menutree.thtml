@@ -7,6 +7,7 @@
 </div><div style="clear:both;"></div>
 
 <form method="post" id="menusel" action="{site_admin_url}/plugins/menu/index.php">
+    {security_token_input}
 <div>
   <table style="width:100%;" class="tbl_repeat" id="menu_table" name="menu_table">
     <tr>

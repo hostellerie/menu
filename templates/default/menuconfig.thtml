@@ -6,6 +6,7 @@
     <div class="glfform">
 
     <form method="post" action="{form_action}" id="mbconfig" enctype="multipart/form-data" >
+    {security_token_input}
     <input type="hidden" name="menu_id" id="menu_id" value="{menu_id}"{xhtml}>
     <input type="hidden" name="menutype" id="menutype" value="{menutype}"{xhtml}>
 

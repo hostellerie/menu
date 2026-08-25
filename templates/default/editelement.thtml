@@ -4,6 +4,7 @@
 
 <div class="glfform">
   <form method="post" action="{form_action}" id="edititem">
+    {security_token_input}
     <input type="hidden" id="menu" name="menu" value="{menu}"{xhtml}>
     <input type="hidden" id="id" name="id" value="{mid}"{xhtml}>
 

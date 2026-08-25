@@ -14,6 +14,7 @@
 </div>
   <div class="glfform">
     <form method="post" action="{form_action}" id="newmenu">
+    {security_token_input}
     <input type="hidden" name="menu_id" id="menu_id" value="{menu_id}"{xhtml}>
     <div>
       <div class="required">

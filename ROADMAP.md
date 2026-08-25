@@ -37,7 +37,7 @@ The checklist below remains the release checklist. This section records the actu
 
 ### Partially implemented / still blocking stabilization
 
-- Phase 2 CSRF: mutation inventory, token helpers, request enforcement and transitional token bridge exist, but destructive GET operations still need conversion to POST and explicit template/action tokens should replace the bridge progressively.
+- Phase 2 CSRF: mutation inventory, explicit tokens and server-side enforcement are implemented; all state-changing controller modes are POST-only and destructive move/delete actions now use native POST forms. The transitional JavaScript token/GET bridge has been removed.
 - Phase 2 SQL safety: numeric casting is partial; create/edit SQL and `DB_save()` string escaping still need a complete audit. Legacy element ID generation also remains to be reviewed.
 - Phase 2 output/upload safety: not yet fully audited.
 - Phase 5 database modernization: not started beyond preserving the existing schema during current work.
@@ -48,9 +48,9 @@ The checklist below remains the release checklist. This section records the actu
 
 ### Immediate implementation order
 
-1. Finish Phase 2 mutation security: convert move/delete and other destructive GET actions to POST with explicit security tokens.
-2. Finish Phase 2 element create/edit validation and SQL escaping, including safe empty-URL handling and validation that menu/parent/order IDs belong to the expected menu.
-3. Audit the remaining menu/config mutations and remove the transitional CSRF bridge where explicit tokens exist.
+1. Finish Phase 2 element create/edit validation and SQL escaping, including safe empty-URL handling and validation that menu/parent/order IDs belong to the expected menu.
+2. Audit remaining menu/config mutation validation now that all state-changing controller modes are POST-only with explicit CSRF tokens.
+3. Continue output/upload security hardening and remove remaining legacy mutation assumptions.
 4. Continue Phase 4 warning cleanup and Phase 3 runtime regression testing on Geeklog 2.1.1 and 2.2.2.
 5. Validate the Phase 7.5 global settings on real Geeklog 2.1.1 and 2.2.2 installations, including save/reload and upgrade preservation.
 6. Then continue Phase 5/6 database and cache audits before adding further Phase 9 functionality.

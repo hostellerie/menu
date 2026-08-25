@@ -34,7 +34,7 @@ function MENU_adminMutationModes()
 
 function MENU_adminPostOnlyModes()
 {
-    return array('move', 'delete', 'deletemenu');
+    return MENU_adminMutationModes();
 }
 
 function MENU_adminModeMutates($mode)
@@ -216,112 +216,6 @@ function MENU_adminEnforceCsrf()
     }
 }
 
-function MENU_adminRegisterTokenBridge()
-{
-    global $_SCRIPTS, $LANG_MENU01;
-
-    if (!MENU_adminIsControllerRequest() || !isset($_SCRIPTS) || !is_object($_SCRIPTS)) {
-        return;
-    }
-
-    $token = MENU_adminCreateToken();
-    if ($token === '') {
-        return;
-    }
-
-    $tokenName = MENU_adminTokenName();
-    $nameJson = json_encode($tokenName);
-    $tokenJson = json_encode($token);
-    $confirmMessage = isset($LANG_MENU01['confirm_delete'])
-        ? (string) $LANG_MENU01['confirm_delete']
-        : 'Are you sure you want to delete this item?';
-    $confirmJson = json_encode($confirmMessage);
-
-    if ($nameJson === false || $tokenJson === false || $confirmJson === false) {
-        return;
-    }
-
-    if (method_exists($_SCRIPTS, 'setJavaScriptLibrary')) {
-        $_SCRIPTS->setJavaScriptLibrary('jquery');
-    }
-
-    $js = "jQuery(function($) {\n"
-        . "    var tokenName = " . $nameJson . ";\n"
-        . "    var tokenValue = " . $tokenJson . ";\n"
-        . "    var confirmDelete = " . $confirmJson . ";\n"
-        . "    var menuAdmin = '/plugins/menu/index.php';\n"
-        . "    function decodePart(value) {\n"
-        . "        value = String(value || '').replace(/\\+/g, ' ');\n"
-        . "        try { return decodeURIComponent(value); } catch (e) { return value; }\n"
-        . "    }\n"
-        . "    function queryData(href) {\n"
-        . "        var data = {};\n"
-        . "        var query = String(href || '').split('?')[1] || '';\n"
-        . "        query = query.split('#')[0];\n"
-        . "        if (!query) { return data; }\n"
-        . "        $.each(query.split('&'), function(index, pair) {\n"
-        . "            if (!pair) { return; }\n"
-        . "            var bits = pair.split('=');\n"
-        . "            var key = decodePart(bits.shift());\n"
-        . "            var value = decodePart(bits.join('='));\n"
-        . "            if (key) { data[key] = value; }\n"
-        . "        });\n"
-        . "        return data;\n"
-        . "    }\n"
-        . "    function submitMutation(href, data) {\n"
-        . "        var action = String(href || '') || window.location.pathname;\n"
-        . "        var form = $('<form>', {method: 'post', action: action, style: 'display:none'});\n"
-        . "        $.each(data, function(key, value) {\n"
-        . "            $('<input>', {type: 'hidden', name: key, value: value}).appendTo(form);\n"
-        . "        });\n"
-        . "        $('<input>', {type: 'hidden', name: tokenName, value: tokenValue}).appendTo(form);\n"
-        . "        form.appendTo('body');\n"
-        . "        form.get(0).submit();\n"
-        . "    }\n"
-        . "    $('form').each(function() {\n"
-        . "        var form = $(this);\n"
-        . "        var action = form.attr('action') || window.location.pathname;\n"
-        . "        if (action.indexOf(menuAdmin) === -1) { return; }\n"
-        . "        if (form.find('input[name=\"' + tokenName + '\"]').length === 0) {\n"
-        . "            $('<input>', {type: 'hidden', name: tokenName, value: tokenValue}).appendTo(form);\n"
-        . "        }\n"
-        . "    });\n"
-        . "    $('a[href*=\"/plugins/menu/index.php\"]').each(function() {\n"
-        . "        var link = $(this);\n"
-        . "        var href = link.attr('href') || '';\n"
-        . "        var data = queryData(href);\n"
-        . "        if (!data.mode || !/^(?:move|delete|deletemenu)$/.test(data.mode)) { return; }\n"
-        . "        link.removeAttr('onclick');\n"
-        . "        link.off('click.menuMutationPost').on('click.menuMutationPost', function(event) {\n"
-        . "            event.preventDefault();\n"
-        . "            if ((data.mode === 'delete' || data.mode === 'deletemenu') && !window.confirm(confirmDelete)) { return; }\n"
-        . "            submitMutation(href, data);\n"
-        . "        });\n"
-        . "    });\n"
-        . "    if ($.ajaxPrefilter) {\n"
-        . "        $.ajaxPrefilter(function(options, originalOptions) {\n"
-        . "            var url = options.url || '';\n"
-        . "            var method = (options.type || options.method || 'GET').toUpperCase();\n"
-        . "            if (method !== 'POST' || url.indexOf(menuAdmin) === -1) { return; }\n"
-        . "            if (typeof options.data === 'string') {\n"
-        . "                if (options.data.indexOf(encodeURIComponent(tokenName) + '=') === -1) {\n"
-        . "                    options.data += (options.data ? '&' : '') + encodeURIComponent(tokenName) + '=' + encodeURIComponent(tokenValue);\n"
-        . "                }\n"
-        . "            } else {\n"
-        . "                if (!originalOptions.data || typeof originalOptions.data !== 'object') { originalOptions.data = {}; }\n"
-        . "                originalOptions.data[tokenName] = tokenValue;\n"
-        . "                options.data = $.param(originalOptions.data);\n"
-        . "            }\n"
-        . "        });\n"
-        . "    }\n"
-        . "});";
-
-    if (method_exists($_SCRIPTS, 'setJavaScript')) {
-        $_SCRIPTS->setJavaScript($js, true);
-    }
-}
-
 if (MENU_adminIsControllerRequest()) {
     MENU_adminEnforceCsrf();
-    MENU_adminRegisterTokenBridge();
 }

@@ -79,6 +79,7 @@ function MENU_displayMenuList( ) {
                                 $_CONF['site_admin_url'] . '/plugins/menu/images/menu.png');
     
     $T = COM_newTemplate(CTL_plugin_templatePath('menu'));
+    $T->set_var('security_token_input', MENU_adminTokenInput());
     $T->set_file (array ('admin' => 'menulist.thtml'));
     $T->set_block('admin', 'menurow', 'mrow');
     $rowCounter = 0;
@@ -89,7 +90,7 @@ function MENU_displayMenuList( ) {
             $T->set_var('menu_name',$menu['menu_name']);
             $T->set_var('menuactive','<input type="checkbox" name="enabledmenu[' . $menu['menu_id'] . ']" onclick="submit()" value="1"' . ($menu['active'] == 1 ? ' checked="checked"' : '') . XHTML . '>');
             if ( $menu['menu_name'] != 'block' && $menu['menu_name'] != 'footer' && $menu['menu_name'] != 'navigation' ) {
-                $T->set_var('delete_menu','<a href="' . $_CONF['site_admin_url'] . '/plugins/menu/index.php?mode=deletemenu&amp;id=' . $menu['menu_id'] . '" onclick="return confirm(\'' . $LANG_MENU01['confirm_delete'] . '\');"><img src="' . $_CONF['site_admin_url'] . '/plugins/menu/images/delete.png" alt="' . $LANG_MENU01['delete'] . '"' . XHTML . '></a>');
+                $T->set_var('delete_menu', '<form method="post" action="' . $_CONF['site_admin_url'] . '/plugins/menu/index.php" style="display:inline" onsubmit="return confirm(\'' . $LANG_MENU01['confirm_delete'] . '\');">' . MENU_adminTokenInput() . '<input type="hidden" name="mode" value="deletemenu"' . XHTML . '><input type="hidden" name="id" value="' . (int) $menu['menu_id'] . '"' . XHTML . '><button type="submit" style="border:0;background:none;padding:0;cursor:pointer"><img src="' . $_CONF['site_admin_url'] . '/plugins/menu/images/delete.png" alt="' . $LANG_MENU01['delete'] . '"' . XHTML . '></button></form>');
             } else {
                 $T->set_var('delete_menu','');
             }
@@ -145,6 +146,7 @@ function MENU_cloneMenu( $menu_id ) {
                                 $_CONF['site_admin_url'] . '/plugins/menu/images/menu.png');
 
     $T = COM_newTemplate(CTL_plugin_templatePath('menu'));
+    $T->set_var('security_token_input', MENU_adminTokenInput());
     $T->set_file(array('admin' => 'clonemenu.thtml'));
 
     $T->set_var(array(
@@ -237,6 +239,7 @@ function MENU_createMenu( ) {
                                 $_CONF['site_admin_url'] . '/plugins/menu/images/menu.png');
 
     $T = COM_newTemplate(CTL_plugin_templatePath('menu'));
+    $T->set_var('security_token_input', MENU_adminTokenInput());
     $T->set_file(array('admin' => 'createmenu.thtml'));
 
     // build menu type select
@@ -402,6 +405,7 @@ function MENU_displayTree( $menu_id ) {
                                 $_CONF['site_admin_url'] . '/plugins/menu/images/menu.png');
     
     $T = COM_newTemplate(CTL_plugin_templatePath('menu'));
+    $T->set_var('security_token_input', MENU_adminTokenInput());
     $T->set_file(array('admin' => 'menutree.thtml'));
 
     $menu_select = '<form name="jumpbox" id="jumpbox" action="' . $_CONF['site_admin_url'] . '/plugins/menu/index.php" method="get" style="margin:0;padding:0"><div>';
@@ -730,6 +734,7 @@ function MENU_createElement ( $menu_id ) {
     $group_select .= '</select>' . LB;
     
     $T = COM_newTemplate(CTL_plugin_templatePath('menu'));
+    $T->set_var('security_token_input', MENU_adminTokenInput());
     $T->set_file(array('admin' => 'createelement.thtml'));
 
     $T->set_var(array(
@@ -1149,6 +1154,7 @@ function MENU_editElement( $menu_id, $mid ) {
     $order_select .= '</select>' . LB;
     
     $T = COM_newTemplate(CTL_plugin_templatePath('menu'));
+    $T->set_var('security_token_input', MENU_adminTokenInput());
     $T->set_file(array('admin' => 'editelement.thtml'));
 
     $T->set_var(array(
@@ -1543,6 +1549,7 @@ function MENU_menuConfig( $mid ) {
     $group_select .= '</select>' . LB;
     
     $T = COM_newTemplate(CTL_plugin_templatePath('menu'));
+    $T->set_var('security_token_input', MENU_adminTokenInput());
     $T->set_file(array('admin' => 'menuconfig.thtml'));
 
     $T->set_var(array(
@@ -1844,9 +1851,9 @@ if ( (isset($_POST['execute']) || $mode != '') && !isset($_POST['cancel']) && !i
             break;
         case 'move' :
             // do something with the direction
-            $direction = Geeklog\Input::fGet('where');
-            $mid       = (int) Geeklog\Input::fGet('mid');
-            $menu_id   = (int) Geeklog\Input::fGet('menu');
+            $direction = Geeklog\Input::fPost('where');
+            $mid       = (int) Geeklog\Input::fPost('mid');
+            $menu_id   = (int) Geeklog\Input::fPost('menu');
             MENU_moveElement( $menu_id, $mid, $direction );
             COM_redirect($_CONF['site_admin_url'] . '/plugins/menu/index.php?mode=menu&amp;menu=' . $menu_id);
             break;
@@ -1899,8 +1906,8 @@ if ( (isset($_POST['execute']) || $mode != '') && !isset($_POST['cancel']) && !i
             break;
         case 'delete' :
             // delete the element
-            $id      = (int) Geeklog\Input::fGet('mid');
-            $menu_id = (int) Geeklog\Input::fGet('menuid');
+            $id      = (int) Geeklog\Input::fPost('mid');
+            $menu_id = (int) Geeklog\Input::fPost('menuid');
             MENU_deleteChildElements( $id, $menu_id );
             $Menus[$menu_id]['elements'][0]->reorderMenu();
             echo COM_refresh($_CONF['site_admin_url'] . '/plugins/menu/index.php?mode=menu&amp;menu=' . $menu_id);
@@ -1908,7 +1915,7 @@ if ( (isset($_POST['execute']) || $mode != '') && !isset($_POST['cancel']) && !i
             break;
         case 'deletemenu' :
             // delete the element
-            $menu_id = (int) Geeklog\Input::fGet('id');
+            $menu_id = (int) Geeklog\Input::fPost('id');
             MENU_deleteMenu($menu_id);
             COM_redirect($_CONF['site_admin_url'] . '/plugins/menu/index.php');
             break;

@@ -7,6 +7,7 @@
 
 <div class="glfform">
   <form method="post" action="{form_action}" id="newitem">
+    {security_token_input}
     <div>
     <input type="hidden" id="menunid" name="menuid" value="{menuid}"{xhtml}>
       <div id="parentdiv" class="required">
