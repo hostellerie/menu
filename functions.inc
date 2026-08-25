@@ -426,19 +426,12 @@ function MENU_getMenu($name='navigation',$wrapper='',$ulclass='',$liclass='',$pa
         return '';
     }
 
-    $optionHash = md5($wrapper.$ulclass.$liclass.$parentclass.$lastclass.$selected);
-
+    $retval = '';
     $menuID = '';
     $lang = COM_getLanguageId();
 
     if (!empty($lang)) {
         $mlname = $name . '_'.$lang;
-        $cacheInstance = 'menu_' . $mlname . '_' . MENU_CACHE_security_hash() . '_' . $optionHash . '__' . $_CONF['theme'];
-        $retval = MENU_CACHE_check_instance($cacheInstance, 0);
-        if ($retval && $noid == 0) {
-            return $retval;
-        }
-        $retval = '';
         if (is_array($Menus)) {
             foreach ($Menus AS $id) {
                 if ($id['menu_name'] == $mlname) {
@@ -449,10 +442,6 @@ function MENU_getMenu($name='navigation',$wrapper='',$ulclass='',$liclass='',$pa
         }
     }
     if ($menuID == '') {
-        if (!empty($retval) && $noid == 0) {
-            return $retval;
-        }
-        $retval = '';
         $menuID = '';
         if (is_array($Menus)) {
             foreach ($Menus AS $id) {
@@ -688,22 +677,6 @@ function MENU_CACHE_instance_filename($iid,$bypass_lang = false)
     $filename = $path_cache.'instance__'.$iid.'.php';
 
     return $filename;
-}
-
-function MENU_CACHE_security_hash()
-{
-    global $_GROUPS, $_USER;
-
-    static $hash = null;
-
-    if (empty($hash)) {
-        $groups = implode(',',$_GROUPS);
-        $hash = strtolower(md5($groups));
-        if (!empty($_USER['tzid'])) {
-            $hash .= 'tz'.md5($_USER['tzid']);
-        }
-    }
-    return $hash;
 }
 
 function MENU_compress($buffer) {
