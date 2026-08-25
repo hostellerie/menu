@@ -51,4 +51,14 @@ menu_db_assert($menuDbAlterCount === 1, 'database upgrade must be idempotent');
 $_TABLES['menu_elements'] = '';
 menu_db_assert(menu_update_Database_1_3_0() === false, 'missing menu_elements table must fail safely');
 
+$installSql = file_get_contents(dirname(__DIR__) . '/sql/mysql_install.php');
+menu_db_assert(
+    strpos($installSql, "KEY `menu_parent_order` (`menu_id`, `pid`, `element_order`)") !== false,
+    'fresh schema must include composite menu tree index'
+);
+menu_db_assert(
+    strpos($installSql, '`id` int(11) NOT NULL auto_increment') !== false,
+    'fresh schema must retain AUTO_INCREMENT primary keys'
+);
+
 echo "Database upgrade tests passed" . PHP_EOL;
