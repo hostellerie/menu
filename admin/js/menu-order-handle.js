@@ -20,6 +20,7 @@
         var tokenName = token.getAttribute('name');
         var tokenValue = token.value;
         var draggedRow = null;
+        var dragMoved = false;
 
         function rows() {
             return tbody.querySelectorAll('tr[id^="mid_"]');
@@ -87,20 +88,96 @@
             return cells[cells.length - 2];
         }
 
-        function clearDragState() {
-            var list = rows();
-            var i;
-            var handle;
-
-            for (i = 0; i < list.length; i += 1) {
-                list[i].removeAttribute('data-menu-dragging');
-                handle = findHandle(list[i]);
-                if (handle) {
-                    handle.removeAttribute('data-menu-dragging');
+        function rowFromPoint(x, y) {
+            var node = document.elementFromPoint(x, y);
+            while (node && node !== tbody) {
+                if (node.tagName && node.tagName.toLowerCase() === 'tr'
+                    && node.parentNode === tbody
+                    && rowId(node) > 0) {
+                    return node;
                 }
+                node = node.parentNode;
             }
-            draggedRow = null;
+            return null;
         }
+
+        function moveDraggedRow(x, y) {
+            var target;
+            var rect;
+            var before;
+
+            if (!draggedRow) {
+                return;
+            }
+
+            target = rowFromPoint(x, y);
+            if (!target || target === draggedRow) {
+                return;
+            }
+
+            rect = target.getBoundingClientRect();
+            before = y < rect.top + (rect.height / 2);
+            tbody.insertBefore(draggedRow, before ? target : target.nextSibling);
+            dragMoved = true;
+        }
+
+        function startDrag(row) {
+            if (!row) {
+                return;
+            }
+            draggedRow = row;
+            dragMoved = false;
+            row.setAttribute('data-menu-dragging', '1');
+            document.documentElement.setAttribute('data-menu-ordering', '1');
+        }
+
+        function finishDrag() {
+            if (!draggedRow) {
+                return;
+            }
+
+            draggedRow.removeAttribute('data-menu-dragging');
+            document.documentElement.removeAttribute('data-menu-ordering');
+
+            if (dragMoved) {
+                saveOrder();
+            }
+
+            draggedRow = null;
+            dragMoved = false;
+        }
+
+        function mouseMove(event) {
+            if (!draggedRow) {
+                return;
+            }
+            event.preventDefault();
+            moveDraggedRow(event.clientX, event.clientY);
+        }
+
+        function mouseUp() {
+            finishDrag();
+        }
+
+        function touchMove(event) {
+            var touch;
+            if (!draggedRow || !event.touches || !event.touches.length) {
+                return;
+            }
+            event.preventDefault();
+            touch = event.touches[0];
+            moveDraggedRow(touch.clientX, touch.clientY);
+        }
+
+        function touchEnd() {
+            finishDrag();
+        }
+
+        document.addEventListener('mousemove', mouseMove, false);
+        document.addEventListener('mouseup', mouseUp, false);
+        document.addEventListener('touchmove', touchMove, {passive: false});
+        document.addEventListener('touchend', touchEnd, false);
+        document.addEventListener('touchcancel', touchEnd, false);
 
         function installRow(row) {
             var mid = rowId(row);
@@ -116,51 +193,22 @@
             handle.setAttribute('aria-label', 'Order');
             handle.setAttribute('title', 'Order (↑/↓)');
             handle.setAttribute('data-mid', mid);
-            handle.setAttribute('draggable', 'true');
 
-            handle.addEventListener('dragstart', function (event) {
-                draggedRow = row;
-                row.setAttribute('data-menu-dragging', '1');
-                handle.setAttribute('data-menu-dragging', '1');
-
-                if (event.dataTransfer) {
-                    event.dataTransfer.effectAllowed = 'move';
-                    event.dataTransfer.setData('text/plain', String(mid));
-                }
-            });
-
-            row.addEventListener('dragover', function (event) {
-                var rect;
-                var before;
-
-                if (!draggedRow || draggedRow === row) {
-                    return;
-                }
-
-                event.preventDefault();
-                if (event.dataTransfer) {
-                    event.dataTransfer.dropEffect = 'move';
-                }
-                rect = row.getBoundingClientRect();
-                before = event.clientY < rect.top + (rect.height / 2);
-                tbody.insertBefore(draggedRow, before ? row : row.nextSibling);
-            });
-
-            row.addEventListener('drop', function (event) {
-                if (!draggedRow) {
+            handle.addEventListener('mousedown', function (event) {
+                if (event.button !== 0) {
                     return;
                 }
                 event.preventDefault();
-                saveOrder();
-                clearDragState();
-            });
+                startDrag(row);
+            }, false);
 
-            handle.addEventListener('dragend', function () {
-                if (draggedRow) {
-                    saveOrder();
+            handle.addEventListener('touchstart', function (event) {
+                if (!event.touches || !event.touches.length) {
+                    return;
                 }
-                clearDragState();
-            });
+                event.preventDefault();
+                startDrag(row);
+            }, {passive: false});
 
             handle.addEventListener('keydown', function (event) {
                 var direction = null;
@@ -184,7 +232,7 @@
                     mid: mid,
                     menu: menuId
                 }, true);
-            });
+            }, false);
         }
 
         var list = rows();
