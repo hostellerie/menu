@@ -14,6 +14,39 @@ if (stripos($_SERVER['PHP_SELF'], basename(__FILE__)) !== false) {
 }
 
 /**
+ * Add the 1.3.0 database indexes without changing existing data or engines.
+ *
+ * The legacy schema already uses AUTO_INCREMENT primary keys. 1.3.0 keeps the
+ * schema compatible and adds only the composite index used by tree traversal
+ * and sibling reordering. The operation is intentionally idempotent.
+ *
+ * @return bool
+ */
+function menu_update_Database_1_3_0()
+{
+    global $_TABLES;
+
+    if (!isset($_TABLES['menu_elements']) || $_TABLES['menu_elements'] === '') {
+        return false;
+    }
+
+    $indexName = 'menu_parent_order';
+    $result = DB_query(
+        'SHOW INDEX FROM ' . $_TABLES['menu_elements']
+        . " WHERE Key_name = '" . $indexName . "'"
+    );
+
+    if (DB_numRows($result) === 0) {
+        DB_query(
+            'ALTER TABLE ' . $_TABLES['menu_elements']
+            . ' ADD INDEX ' . $indexName . ' (menu_id, pid, element_order)'
+        );
+    }
+
+    return true;
+}
+
+/**
  * Update Geeklog configuration values for Menu 1.3.0.
  *
  * Existing values are preserved. The operation is idempotent and can safely
@@ -30,6 +63,11 @@ function menu_update_ConfValues_1_3_0()
 
     if (!MENU_ensureConfig130()) {
         COM_errorLog('Menu upgrade: unable to initialize 1.3.0 configuration');
+        return false;
+    }
+
+    if (!menu_update_Database_1_3_0()) {
+        COM_errorLog('Menu upgrade: unable to initialize 1.3.0 database indexes');
         return false;
     }
 
