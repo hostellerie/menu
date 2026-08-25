@@ -62,7 +62,7 @@ if old_create_parent not in s:
 s = s.replace(old_create_parent, new_create_parent, 1)
 
 edit_start = s.index('function MENU_editElement')
-type_start = s.index("    $type_select = '<select id=\"menutype\"", edit_start)
+type_start = s.index("    if ( $Menus[$menu_id]['elements'][$mid]->type == 1 ) {", edit_start)
 type_end = s.index("    $glfunction_select = '<select id=\"glfunction\"", type_start)
 new_edit_types = '''    $type_select = '<select id="menutype" name="menutype" onChange="toggleFields();">' . LB;
     $allowedTypes = MENU_getAllowedElementTypes(
