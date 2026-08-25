@@ -86,14 +86,11 @@ jobs:
               s = p.read_text()
               if '<form' not in s:
                   continue
-              # One token per form; templates here contain one state-changing form.
               pos = s.find('>', s.find('<form')) + 1
               if '{security_token_input}' not in s:
                   s = s[:pos] + '\n    {security_token_input}' + s[pos:]
               p.write_text(s)
 
-          # Roadmap reflects native POST/token completion while retaining broader
-          # mutation validation work as a separate security task.
           p = Path('ROADMAP.md')
           s = p.read_text()
           s = s.replace('- Phase 2 CSRF: mutation inventory, token helpers, request enforcement and transitional token bridge exist, but destructive GET operations still need conversion to POST and explicit template/action tokens should replace the bridge progressively.',
@@ -127,3 +124,4 @@ jobs:
           git add admin_security.php admin/index.php classes/classMenuElement2.php templates/default ROADMAP.md
           git commit -m "Finish Menu CSRF POST token protection"
           git push origin HEAD:modernize-1.3.0
+
