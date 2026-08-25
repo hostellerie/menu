@@ -1,13 +1,17 @@
 <?php
 $view = file_get_contents(dirname(__DIR__) . '/admin_element_views.php');
 
-if (substr_count($view, '$safeMenuName = MENU_escapeStoredText(') < 3) {
+if (substr_count($view, '$safeMenuName = MENU_escapeStoredText(') < 4) {
     fwrite(STDERR, "Stored menu names are not normalized in all admin element views\n");
     exit(1);
 }
 $selfGuard = 'if ((int) $row[\'id\'] === (int) $mid || isset($blockedParentIds[(int) $row[\'id\']]))';
 if (substr_count($view, $selfGuard) !== 1) {
     fwrite(STDERR, "Parent selector hierarchy guard is missing or duplicated\n");
+    exit(1);
+}
+if (strpos($view, "'birdseed'          => '<a href=\"'.\$_CONF['site_admin_url'].'/plugins/menu/index.php\">Menu List</a> :: '.\$Menus[\$mid]['menu_name']") !== false) {
+    fwrite(STDERR, "Raw stored menu name remains in configuration breadcrumb\n");
     exit(1);
 }
 if (strpos($view, "'menuname'          => \$Menus[\$menu_id]['menu_name']") !== false) {

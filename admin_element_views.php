@@ -577,11 +577,12 @@ function MENU_menuConfig( $mid ) {
 
     $retval = '';
     $menu_id = $mid;
+    $safeMenuName = MENU_escapeStoredText($Menus[$menu_id]['menu_name']);
     $menu_arr = array(
             array('url'  => $_CONF['site_admin_url'] .'/plugins/menu/index.php',
                   'text' => $LANG_MENU01['menu_list']),
     );
-    $retval  .= COM_startBlock($LANG_MENU01['menu_builder'].' :: '.$LANG_MENU01['menu_colors'] .' for ' . $Menus[$menu_id]['menu_name'],'', COM_getBlockTemplate('_admin_block', 'header'));
+    $retval  .= COM_startBlock($LANG_MENU01['menu_builder'].' :: '.$LANG_MENU01['menu_colors'] .' for ' . $safeMenuName,'', COM_getBlockTemplate('_admin_block', 'header'));
     $retval  .= ADMIN_createMenu($menu_arr, $LANG_MENU_ADMIN[6],
                                 $_CONF['site_admin_url'] . '/plugins/menu/images/menu.png');
 
@@ -703,9 +704,9 @@ function MENU_menuConfig( $mid ) {
         'site_admin_url'    => $_CONF['site_admin_url'],
         'site_url'          => $_CONF['site_url'],
         'form_action'       => $_CONF['site_admin_url'] . '/plugins/menu/index.php',
-        'birdseed'          => '<a href="'.$_CONF['site_admin_url'].'/plugins/menu/index.php">Menu List</a> :: '.$Menus[$mid]['menu_name'].' :: Configuration',
-        'menu_id'           => $mid,
-        'menu_name'         => MENU_escapeHTML($Menus[$mid]['menu_name']),
+        'birdseed'          => '<a href="' . MENU_escapeHTML($_CONF['site_admin_url']) . '/plugins/menu/index.php">Menu List</a> :: ' . $safeMenuName . ' :: Configuration',
+        'menu_id'           => (int) $mid,
+        'menu_name'         => $safeMenuName,
         'tmbgcolor'         => $menuConfig['main_menu_bg_color'],
         'tmbgcolorrgb'      => $main_menu_bg_colorRGB,
         'tmhcolor'          => $menuConfig['main_menu_hover_bg_color'],
