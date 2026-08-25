@@ -19,6 +19,8 @@ function MENU_displayTree( $menu_id ) {
     global $_CONF, $LANG_MENU00, $LANG_MENU01, $LANG_MENU_ADMIN, $LANG_ADMIN,
            $_MENU_CONF, $Menus, $_SCRIPTS;
 
+    $_SCRIPTS->setJavaScriptLibrary('jquery');
+
     $retval = '';
 
 
