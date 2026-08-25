@@ -97,4 +97,24 @@ namespace {
             return version_compare($version1, $version2, $operator);
         }
     }
+
+    /*
+     * Geeklog 2.1.1 does not provide COM_redirect(). Newer releases do.
+     * Keep controller code version-neutral by falling back to the established
+     * COM_refresh() redirect helper on older Geeklog versions.
+     */
+    if (!function_exists('COM_redirect')) {
+        function COM_redirect($url)
+        {
+            if (function_exists('COM_refresh')) {
+                echo COM_refresh($url);
+                exit;
+            }
+
+            if (!headers_sent()) {
+                header('Location: ' . $url);
+            }
+            exit;
+        }
+    }
 }
