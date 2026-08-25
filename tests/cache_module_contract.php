@@ -25,7 +25,7 @@ foreach ($required as $needle) {
     }
 }
 
-if (strpos($functions, "require_once $plugin_path . 'cache.php';") === false) {
+if (strpos($functions, "require_once \$plugin_path . 'cache.php';") === false) {
     fwrite(STDERR, "functions.inc does not load cache.php\n");
     exit(1);
 }
