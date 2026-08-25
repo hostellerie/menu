@@ -228,11 +228,12 @@ function MENU_adminEnforceCsrf()
         MENU_adminRejectInvalidToken();
     }
 
-    // Menu cloning was moved to admin/clone.php in 1.3.0 so the large legacy
-    // controller can no longer run its MAX(id)+1 based clone implementation.
-    if ($mode === 'saveclonemenu') {
+    // New element creation and cloning use dedicated 1.3.0 endpoints that
+    // rely on database AUTO_INCREMENT IDs. Keep the legacy controller modes
+    // blocked so MAX(id)+1 persistence cannot be reached by a crafted POST.
+    if ($mode === 'save' || $mode === 'saveclonemenu') {
         MENU_adminRejectInvalidRequest(
-            'The legacy clone endpoint is no longer available. Reload the Menu administration page and try again.'
+            'This legacy Menu persistence endpoint is no longer available. Reload the Menu administration page and try again.'
         );
     }
 
