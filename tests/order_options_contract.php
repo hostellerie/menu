@@ -28,7 +28,7 @@ menu_order_test_assert(
     'Parent selection must refresh Display After options'
 );
 menu_order_test_assert(
-    strpos($endpoint, "AND pid=' . $parentId") !== false,
+    strpos($endpoint, 'AND pid=\' . $parentId') !== false,
     'Order endpoint must scope siblings to the selected parent'
 );
 menu_order_test_assert(
