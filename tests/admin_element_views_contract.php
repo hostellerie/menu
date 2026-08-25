@@ -3,6 +3,7 @@
 $root = dirname(__DIR__);
 $index = file_get_contents($root . '/admin/index.php');
 $module = file_get_contents($root . '/admin_element_views.php');
+$template = file_get_contents($root . '/templates/default/menutree.thtml');
 
 $functions = array(
     'MENU_displayTree',
@@ -33,8 +34,9 @@ if (strpos($module, 'MENU_adminTokenInput()') === false) {
     exit(1);
 }
 
-if (strpos($module, 'menu-order-handle.js') === false) {
-    fwrite(STDERR, "Admin tree view does not load native ordering script\n");
+if (strpos($template, 'tablednd_0_6.js') === false
+    || strpos($template, 'menu-order-handle.js') === false) {
+    fwrite(STDERR, "Admin tree template does not load ordering assets\n");
     exit(1);
 }
 
