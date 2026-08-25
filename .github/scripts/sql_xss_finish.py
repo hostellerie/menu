@@ -61,14 +61,18 @@ s = s.replace(
     "$group_select .= '>' . key($usergroups) . '</option>' . LB;",
     "$group_select .= '>' . MENU_escapeHTML(key($usergroups)) . '</option>' . LB;"
 )
-
 p.write_text(s)
 
 # Extend the regression contract with final-pass assertions.
 p = Path('tests/sql_xss_contract.php')
 s = p.read_text()
 needle = "assertTrue(strpos($functions, '$menuIDSql = MENU_dbEscape($menuID);') !== false, 'autotag menu name escaped');\n"
-extra = needle + "assertTrue(strpos($class, \"'<li><a href=\\\"' . $url . '\\\">' . $label\") === false, 'dynamic legacy links are escaped');\nassertTrue(strpos($class, 'MENU_safeHref($url)') !== false, 'dynamic legacy URLs use safe href helper');\nassertTrue(strpos($class, 'preg_split(\'/\\\\s+/\', trim((string) $tids))') !== false, 'legacy topic IDs normalized');\nassertTrue(strpos($admin, \"'id=' . $aid . ' AND menu_id=' . $menu_id\") !== false, 'display-after lookup scoped to menu');\n"
+extra = needle + r'''assertTrue(strpos($class, "MENU_safeHref($url)") !== false, 'dynamic legacy URLs use safe href helper');
+assertTrue(strpos($class, "MENU_escapeStoredText($label)") !== false, 'dynamic legacy labels are escaped');
+assertTrue(strpos($class, "str_replace( ' ', \"','\", $tids )") === false, 'raw legacy topic ID interpolation removed');
+assertTrue(strpos($class, "preg_split('/\\s+/', trim((string) $tids))") !== false, 'legacy topic IDs normalized');
+assertTrue(strpos($admin, "'id=' . $aid . ' AND menu_id=' . $menu_id") !== false, 'display-after lookup scoped to menu');
+'''
 if needle not in s:
     raise SystemExit('contract insertion marker not found')
 s = s.replace(needle, extra, 1)
