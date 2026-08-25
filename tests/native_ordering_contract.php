@@ -10,22 +10,28 @@ $forbidden = array(
     'tablednd.js',
     'tablednd_0_5.js',
     'tablednd_0_6.js',
+    "addEventListener('dragstart'",
+    "addEventListener('dragover'",
+    "addEventListener('drop'",
 );
 
 foreach ($forbidden as $needle) {
     if (stripos($script, $needle) !== false
         || stripos($views, $needle) !== false
         || stripos($template, $needle) !== false) {
-        fwrite(STDERR, "Legacy ordering dependency remains: {$needle}\n");
+        fwrite(STDERR, "Legacy or unreliable ordering dependency remains: {$needle}\n");
         exit(1);
     }
 }
 
 $requiredScript = array(
-    "handle.setAttribute('draggable', 'true')",
-    "handle.addEventListener('dragstart'",
-    "row.addEventListener('dragover'",
-    "row.addEventListener('drop'",
+    "handle.addEventListener('mousedown'",
+    "document.addEventListener('mousemove'",
+    "document.addEventListener('mouseup'",
+    "handle.addEventListener('touchstart'",
+    "document.addEventListener('touchmove'",
+    'document.elementFromPoint',
+    'tbody.insertBefore',
     "handle.addEventListener('keydown'",
     'XMLHttpRequest',
     "orders: order",
