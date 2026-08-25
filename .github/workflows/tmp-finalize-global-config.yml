@@ -1,0 +1,87 @@
+name: Temporary finalize Menu global configuration
+
+on:
+  push:
+    branches:
+      - modernize-1.3.0
+
+permissions:
+  contents: write
+
+jobs:
+  finalize:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: modernize-1.3.0
+
+      - name: Finalize runtime behavior and roadmap
+        shell: python
+        run: |
+          from pathlib import Path
+
+          path = Path('functions.inc')
+          text = path.read_text(encoding='utf-8')
+          old = "if ($menu['menu_type'] == 1) {\n                        $slicknave_css = \" .slicknav_menu { display:none; } @media screen and (max-width: 750px) { #gl_menu\" . $menu['menu_id'] . \" { display:none; } .slicknav_menu { display:block; } }\";"
+          new = "if ($menu['menu_type'] == 1 && $loadLegacyJs) {\n                        $slicknave_css = \" .slicknav_menu { display:none; } @media screen and (max-width: 750px) { #gl_menu\" . $menu['menu_id'] . \" { display:none; } .slicknav_menu { display:block; } }\";"
+          if old not in text:
+              raise SystemExit('SlickNav responsive CSS pattern not found')
+          text = text.replace(old, new, 1)
+          path.write_text(text, encoding='utf-8')
+
+          path = Path('ROADMAP.md')
+          text = path.read_text(encoding='utf-8')
+          text = text.replace(
+              '## Current implementation status — 2026-08-24',
+              '## Current implementation status — 2026-08-25',
+              1
+          )
+          text = text.replace(
+              '- Phase 7.5: global Geeklog configuration foundation now exists for fresh installs and 1.3.0 upgrades, with idempotent migration from the old Plugin Toolkit sample settings.',
+              '- Phase 7.5: global Geeklog configuration exists for fresh installs and 1.3.0 upgrades; all eight 1.3.0 settings are now connected to runtime behavior through centralized compatibility-safe helpers.',
+              1
+          )
+          text = text.replace(
+              '- Phase 7.5 behavior wiring: global settings are now stored and migrated, but each exposed option must be fully wired to runtime behavior before 1.3.0 is declared stable.',
+              '- Phase 7.5 validation: runtime wiring is implemented; manual regression testing of each setting, configuration save/reload and upgrade preservation on Geeklog 2.1.1 and 2.2.2 is still required before 1.3.0 stable.',
+              1
+          )
+          text = text.replace(
+              '5. Wire and validate the Phase 7.5 global settings against real runtime behavior.',
+              '5. Validate the Phase 7.5 global settings on real Geeklog 2.1.1 and 2.2.2 installations, including save/reload and upgrade preservation.',
+              1
+          )
+          text = text.replace(
+              '- [ ] Every exposed option must control actual runtime behavior before 1.3.0 stable; no decorative or dead settings.',
+              '- [x] Every exposed option controls actual runtime behavior; no decorative or dead settings.',
+              1
+          )
+          marker = "The configuration layer is considered complete only when these settings are wired into their corresponding runtime paths and covered by tests."
+          replacement = "The eight settings are wired into runtime paths. Automated helper/syntax tests cover the configuration plumbing; real Geeklog 2.1.1/2.2.2 behavior and upgrade regression tests remain required before this phase is release-complete."
+          if marker not in text:
+              raise SystemExit('Phase 7.5 completion marker not found')
+          text = text.replace(marker, replacement, 1)
+          path.write_text(text, encoding='utf-8')
+
+      - name: PHP syntax and runtime configuration tests
+        run: |
+          php -l runtime_config.php
+          php -l storage.php
+          php -l functions.inc
+          php -l element_types.php
+          php -l resolved_tree.php
+          php -l classes/classMenuElement2.php
+          php tests/runtime_config.php
+
+      - name: Commit finalization
+        run: |
+          if git diff --quiet; then
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add functions.inc ROADMAP.md
+          git commit -m "Finalize Menu global configuration runtime wiring"
+          git push origin HEAD:modernize-1.3.0
