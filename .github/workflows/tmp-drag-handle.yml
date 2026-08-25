@@ -1,0 +1,78 @@
+name: Temporary Menu drag handle UX
+
+on:
+  push:
+    branches:
+      - modernize-1.3.0
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: modernize-1.3.0
+
+      - name: Add dedicated drag handle and keyboard fallback
+        shell: python
+        run: |
+          from pathlib import Path
+
+          p = Path('classes/classMenuElement2.php')
+          s = p.read_text()
+
+          old = '''            $moveup = '<form method="post" action="' . $actionUrl . '" style="display:inline">' . $tokenInput . '<input type="hidden" name="mode" value="move"' . XHTML . '><input type="hidden" name="where" value="up"' . XHTML . '><input type="hidden" name="mid" value="' . (int) $this->id . '"' . XHTML . '><input type="hidden" name="menu" value="' . (int) $this->menu_id . '"' . XHTML . '><button type="submit" style="border:0;background:none;padding:0;cursor:pointer">';
+            $movedown = '<form method="post" action="' . $actionUrl . '" style="display:inline">' . $tokenInput . '<input type="hidden" name="mode" value="move"' . XHTML . '><input type="hidden" name="where" value="down"' . XHTML . '><input type="hidden" name="mid" value="' . (int) $this->id . '"' . XHTML . '><input type="hidden" name="menu" value="' . (int) $this->menu_id . '"' . XHTML . '><button type="submit" style="border:0;background:none;padding:0;cursor:pointer">';
+'''
+          if old not in s:
+              raise SystemExit('legacy move forms not found')
+          s = s.replace(old, '', 1)
+
+          old = '''            $retval .= '<td class="aligncenter">' . $moveup . '<img src="' . $_CONF['site_admin_url'] . '/plugins/menu/images/up.png" alt="' . $LANG_MENU01['move_up'] . '"' . XHTML . '></button></form></td><td class="aligncenter">' . $movedown . '<img src="' . $_CONF['site_admin_url'] . '/plugins/menu/images/down.png" alt="' . $LANG_MENU01['move_down'] . '"' . XHTML . '></button></form></td>';
+'''
+          new = '''            $moveLabel = isset($LANG_MENU01['order']) ? $LANG_MENU01['order'] : 'Move';
+            $retval .= '<td class="aligncenter menu-drag-handle" tabindex="0" role="button"'
+                . ' aria-label="' . htmlspecialchars($moveLabel, ENT_QUOTES, 'UTF-8') . '"'
+                . ' title="' . htmlspecialchars($moveLabel, ENT_QUOTES, 'UTF-8') . '"'
+                . ' data-menu="' . (int) $this->menu_id . '" data-mid="' . (int) $this->id . '"'
+                . ' style="cursor:grab;touch-action:none;font-size:18px;line-height:1;user-select:none;white-space:nowrap;">'
+                . '<span aria-hidden="true">&#8942;&#8942;</span></td>';
+'''
+          if old not in s:
+              raise SystemExit('legacy move cells not found')
+          s = s.replace(old, new, 1)
+          p.write_text(s)
+
+          p = Path('admin/index.php')
+          s = p.read_text()
+
+          old = '''    $js = 'jQuery(function() {\n\n    jQuery(".tbl_repeat tbody").tableDnD({\n        onDrop: function(table, row) {\n            var orders = jQuery.tableDnD.serialize();\n            var data = {\n                orders: orders,\n                menu_id: ' . (int) $menu_id . '\n            };\n            data[' . json_encode($dragTokenName) . '] = ' . json_encode($dragToken) . ';\n\n            jQuery.ajax({\n                type: "POST",\n                url: ' . json_encode($dragPostUrl) . ',\n                data: data\n            }).fail(function() {\n                window.location.reload();\n            });\n        }\n    });\n\n});';'''
+
+          new = '''    $js = 'jQuery(function() {\n\n    function menuPostMove(mid, direction) {\n        var data = {\n            mode: "move",\n            where: direction,\n            mid: mid,\n            menu: ' . (int) $menu_id . '\n        };\n        data[' . json_encode($dragTokenName) . '] = ' . json_encode($dragToken) . ';\n\n        jQuery.ajax({\n            type: "POST",\n            url: ' . json_encode($dragPostUrl) . ',\n            data: data\n        }).done(function() {\n            window.location.reload();\n        }).fail(function() {\n            window.location.reload();\n        });\n    }\n\n    jQuery(".tbl_repeat tbody").tableDnD({\n        dragHandle: "menu-drag-handle",\n        onDrop: function(table, row) {\n            var orders = jQuery.tableDnD.serialize();\n            var data = {\n                orders: orders,\n                menu_id: ' . (int) $menu_id . '\n            };\n            data[' . json_encode($dragTokenName) . '] = ' . json_encode($dragToken) . ';\n\n            jQuery.ajax({\n                type: "POST",\n                url: ' . json_encode($dragPostUrl) . ',\n                data: data\n            }).fail(function() {\n                window.location.reload();\n            });\n        }\n    });\n\n    jQuery("td.menu-drag-handle").on("keydown", function(event) {\n        var direction = null;\n        if (event.key === "ArrowUp" || event.keyCode === 38) {\n            direction = "up";\n        } else if (event.key === "ArrowDown" || event.keyCode === 40) {\n            direction = "down";\n        }\n        if (direction !== null) {\n            event.preventDefault();\n            menuPostMove(parseInt(jQuery(this).attr("data-mid"), 10), direction);\n        }\n    });\n\n});';'''
+
+          if old not in s:
+              raise SystemExit('drag-drop JS block not found')
+          s = s.replace(old, new, 1)
+          p.write_text(s)
+
+      - name: Validate
+        run: |
+          php -l classes/classMenuElement2.php
+          php -l admin/index.php
+          grep -q 'dragHandle: "menu-drag-handle"' admin/index.php
+          grep -q 'td.menu-drag-handle' admin/index.php
+          grep -q 'class="aligncenter menu-drag-handle"' classes/classMenuElement2.php
+          ! grep -q 'images/up.png' classes/classMenuElement2.php
+          ! grep -q 'images/down.png' classes/classMenuElement2.php
+
+      - name: Commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add admin/index.php classes/classMenuElement2.php
+          git commit -m "Use accessible drag handle for Menu ordering"
+          git push origin HEAD:modernize-1.3.0
