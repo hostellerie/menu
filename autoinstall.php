@@ -70,7 +70,8 @@ function plugin_load_configuration_menu($pi_name)
  * existing installation is moving to 1.3.0.
  *
  * The complete upgrade sequence remains owned by plugin_upgrade_menu() in
- * functions.inc. Configuration mutations themselves live in install_updates.php.
+ * functions.inc. Configuration and database mutations live in
+ * install_updates.php.
  *
  * @param string $pi_name
  * @return bool
@@ -114,7 +115,7 @@ function plugin_compatible_with_this_version_menu($pi_name)
 }
 
 /**
- * Complete filesystem setup after installation.
+ * Complete filesystem and database setup after installation.
  *
  * @param string $pi_name
  * @return bool
@@ -124,6 +125,7 @@ function plugin_postinstall_menu($pi_name)
     global $_CONF;
 
     require_once $_CONF['path'] . 'plugins/menu/storage.php';
+    require_once __DIR__ . '/install_updates.php';
 
     if (!MENU_ensureImageDir()) {
         COM_errorLog('Menu postinstall: unable to create public image directory: ' . MENU_imageDir());
@@ -132,6 +134,11 @@ function plugin_postinstall_menu($pi_name)
 
     if (!MENU_ensureDataDirs()) {
         COM_errorLog('Menu postinstall: unable to create storage directory: ' . MENU_dataDir());
+        return false;
+    }
+
+    if (!menu_update_Database_1_3_0()) {
+        COM_errorLog('Menu postinstall: unable to initialize database indexes');
         return false;
     }
 
