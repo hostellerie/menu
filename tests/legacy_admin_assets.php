@@ -52,9 +52,24 @@ foreach ($iterator as $file) {
     }
 }
 
+$views = file_get_contents($root . '/admin_element_views.php');
 $template = file_get_contents($root . '/templates/default/menutree.thtml');
-if (substr_count($template, '{site_admin_url}/plugins/menu/js/tablednd_0_6.js') !== 1) {
-    fwrite(STDERR, "TableDnD 0.6 must be loaded exactly once by the tree template\n");
+$treeStart = strpos($views, 'function MENU_displayTree');
+$treeEnd = strpos($views, 'function MENU_createElement', $treeStart);
+$treeBody = substr($views, $treeStart, $treeEnd - $treeStart);
+
+$jqueryPos = strpos($treeBody, "setJavaScriptLibrary('jquery')");
+$tableDnDPos = strpos($treeBody, "setJavaScriptFile('menu_tablednd', '/admin/plugins/menu/js/tablednd_0_6.js')");
+$adapterPos = strpos($treeBody, "setJavaScriptFile('menu_order_handle', '/admin/plugins/menu/js/menu-order-handle.js')");
+if ($jqueryPos === false || $tableDnDPos === false || $adapterPos === false
+    || !($jqueryPos < $tableDnDPos && $tableDnDPos < $adapterPos)) {
+    fwrite(STDERR, "Ordering assets must be registered after jQuery and in dependency order\n");
+    exit(1);
+}
+
+if (strpos($template, 'tablednd_0_6.js') !== false
+    || strpos($template, 'menu-order-handle.js') !== false) {
+    fwrite(STDERR, "Ordering assets must not be injected directly by the tree template\n");
     exit(1);
 }
 
