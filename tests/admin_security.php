@@ -6,6 +6,7 @@ define('CSRF_TOKEN', 'glsectoken');
 
 $menuSecurityToken = 'token-value';
 $menuSecurityCheck = true;
+$menuSecurityRights = true;
 
 function SEC_createToken()
 {
@@ -17,6 +18,12 @@ function SEC_checkToken()
 {
     global $menuSecurityCheck;
     return $menuSecurityCheck;
+}
+
+function SEC_hasRights($right)
+{
+    global $menuSecurityRights;
+    return $right === 'menu.admin' && $menuSecurityRights;
 }
 
 function DB_escapeString($value)
@@ -58,6 +65,7 @@ menu_security_assert(MENU_adminPostMutates(array('orders' => 'item[]=1')) === tr
 menu_security_assert(MENU_adminPostMutates(array('cancel' => '1')) === false, 'cancel must not be treated as mutation');
 menu_security_assert(MENU_adminRequestMutates('save', array()) === true, 'routed mutation detection failed');
 menu_security_assert(MENU_adminRequestMutates('', array('orders' => 'x')) === true, 'unrouted mutation detection failed');
+menu_security_assert(MENU_adminHasRights() === true, 'menu.admin permission check was not delegated');
 menu_security_assert(MENU_adminCheckToken() === true, 'native token check was not delegated');
 menu_security_assert(MENU_adminCreateToken() === 'token-value', 'native token creation was not delegated');
 menu_security_assert(MENU_adminTokenName() === 'glsectoken', 'Geeklog CSRF token field name was not preserved');
@@ -67,6 +75,10 @@ menu_security_assert(MENU_adminId('12') === 12, 'positive id normalization faile
 menu_security_assert(MENU_adminId('-4') === 0, 'negative id must be rejected');
 menu_security_assert(MENU_adminId('abc') === 0, 'non numeric id must be rejected');
 menu_security_assert(MENU_adminDbEscape("O'Reilly") === "O''Reilly", 'database escaping was not delegated');
+
+$menuSecurityRights = false;
+menu_security_assert(MENU_adminHasRights() === false, 'denied menu.admin permission must remain denied');
+$menuSecurityRights = true;
 
 $_SERVER['PHP_SELF'] = '/admin/plugins/menu/index.php';
 $_SERVER['REQUEST_METHOD'] = 'POST';
