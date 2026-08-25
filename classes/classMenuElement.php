@@ -1,7 +1,7 @@
 <?php
 /* Reminder: always indent with 4 spaces (no tabs). */
 // +---------------------------------------------------------------------------+
-// | Menu Plugin 1.0                                                           |
+// | Menu Plugin 1.1                                                           |
 // +---------------------------------------------------------------------------+
 // | classMenuElement.php                                                      |
 // +---------------------------------------------------------------------------+
@@ -51,7 +51,7 @@ class mbElement {
     var $children;          // this elements child elements
     var $hidden;            // I have no idea -- Joe
 
-    function mbElement () {
+    public function __construct() {
         $this->children         = array();
         $this->id               = 0;
         $this->menu_id          = 0;
@@ -188,7 +188,7 @@ class mbElement {
 
             $retval .= '<td>';
 
-            $elementDetails .= '<b>' . $LANG_MENU01['type'] . ':</b> ' . $LANG_MENU_TYPES[$this->type] . '<br' . XHTML . '>';
+            $elementDetails = '<b>' . $LANG_MENU01['type'] . ':</b> ' . $LANG_MENU_TYPES[$this->type] . '<br' . XHTML . '>';
             /*switch ($this->type) {
                 case 1 :
                     break;
@@ -214,24 +214,26 @@ class mbElement {
                     $elementDetails .= '<b>' . $LANG_MENU_TYPES[$this->type] . ':</b> ' . $this->subtype . '<br />'   ;
             }*/
 
-            $moveup     = '<a href="' . $_CONF['site_admin_url'] . '/plugins/menu/index.php?mode=move&amp;where=up&amp;mid=' . $this->id . '&amp;menu=' . $this->menu_id . '">';
-            $movedown   = '<a href="' . $_CONF['site_admin_url'] . '/plugins/menu/index.php?mode=move&amp;where=down&amp;mid=' . $this->id . '&amp;menu=' . $this->menu_id . '">';
-            $edit       = '<a href="' . $_CONF['site_admin_url'] . '/plugins/menu/index.php?mode=edit&amp;mid=' . $this->id . '&amp;menu=' . $this->menu_id . '">';
-            $delete     = '<a href="' . $_CONF['site_admin_url'] . '/plugins/menu/index.php?mode=delete&amp;mid=' . $this->id . '&amp;menuid='.$this->menu_id.'" onclick="return confirm(\'' . $LANG_MENU01['confirm_delete'] . '\');">';
+            $actionUrl = $_CONF['site_admin_url'] . '/plugins/menu/index.php';
+            $tokenInput = MENU_adminTokenInput();
+            $moveup = '<form method="post" action="' . $actionUrl . '" style="display:inline">' . $tokenInput . '<input type="hidden" name="mode" value="move"' . XHTML . '><input type="hidden" name="where" value="up"' . XHTML . '><input type="hidden" name="mid" value="' . (int) $this->id . '"' . XHTML . '><input type="hidden" name="menu" value="' . (int) $this->menu_id . '"' . XHTML . '><button type="submit" style="border:0;background:none;padding:0;cursor:pointer">';
+            $movedown = '<form method="post" action="' . $actionUrl . '" style="display:inline">' . $tokenInput . '<input type="hidden" name="mode" value="move"' . XHTML . '><input type="hidden" name="where" value="down"' . XHTML . '><input type="hidden" name="mid" value="' . (int) $this->id . '"' . XHTML . '><input type="hidden" name="menu" value="' . (int) $this->menu_id . '"' . XHTML . '><button type="submit" style="border:0;background:none;padding:0;cursor:pointer">';
+            $edit = '<a href="' . $_CONF['site_admin_url'] . '/plugins/menu/index.php?mode=edit&amp;mid=' . $this->id . '&amp;menu=' . $this->menu_id . '">';
+            $delete = '<form method="post" action="' . $actionUrl . '" style="display:inline" onsubmit="return confirm(\'' . $LANG_MENU01['confirm_delete'] . '\');">' . $tokenInput . '<input type="hidden" name="mode" value="delete"' . XHTML . '><input type="hidden" name="mid" value="' . (int) $this->id . '"' . XHTML . '><input type="hidden" name="menuid" value="' . (int) $this->menu_id . '"' . XHTML . '><button type="submit" style="border:0;background:none;padding:0;cursor:pointer">';
             $info       = COM_getTooltip('<img src="' . $_CONF['site_admin_url'] . '/plugins/menu/images/info.png" alt=""' . XHTML . '>', $elementDetails, '', $this->label, $template = 'help');
 
             $retval .= "<div style=\"padding:0 5px;margin-left:" . $px . "px;\">" . ($this->type == 1 ? '<b>' : '') . strip_tags($this->label) . ($this->type == 1 ? '</b>' : '') . '</div>' . LB;
 
             $retval .= '</td>';
             $retval .= '<td class="aligncenter">';
-            $retval .=  '<input type="checkbox" name="enableditem[' . $this->id . ']" onclick="submit()" value="1"' . ($this->active == 1 ? ' checked="checked"' : '') . XHTML . '>';
+            $retval .= '<form method="post" action="' . $actionUrl . '" style="display:inline">' . $tokenInput . '<input type="hidden" name="mode" value="activate"' . XHTML . '><input type="hidden" name="menu" value="' . (int) $this->menu_id . '"' . XHTML . '><input type="hidden" name="mid" value="' . (int) $this->id . '"' . XHTML . '><input type="hidden" name="active" value="' . ($this->active == 1 ? '0' : '1') . '"' . XHTML . '><input type="checkbox" onclick="this.form.submit()"' . ($this->active == 1 ? ' checked="checked"' : '') . XHTML . '></form>';
             $retval .= '</td>';
             $retval .= '<td class="aligncenter">';
             $retval .= $info;
             $retval .= '</td>';
             $retval .= '<td class="aligncenter">' . $edit . '<img src="' . $_CONF['site_admin_url'] . '/plugins/menu/images/edit.png" alt="' . $LANG_MENU01['edit'] . '"' . XHTML . '></a></td>';
-            $retval .= '<td class="aligncenter">' . $delete . '<img src="' . $_CONF['site_admin_url'] . '/plugins/menu/images/delete.png" alt="' . $LANG_MENU01['delete'] . '"' . XHTML . '></a></td>';
-            $retval .= '<td class="aligncenter">' . $moveup . '<img src="' . $_CONF['site_admin_url'] . '/plugins/menu/images/up.png" alt="' . $LANG_MENU01['move_up'] . '"' . XHTML . '></a></td><td class="aligncenter">' . $movedown . '<img src="' . $_CONF['site_admin_url'] . '/plugins/menu/images/down.png" alt="' . $LANG_MENU01['move_down'] . '"' . XHTML . '></a></td>';
+            $retval .= '<td class="aligncenter">' . $delete . '<img src="' . $_CONF['site_admin_url'] . '/plugins/menu/images/delete.png" alt="' . $LANG_MENU01['delete'] . '"' . XHTML . '></button></form></td>';
+            $retval .= '<td class="aligncenter">' . $moveup . '<img src="' . $_CONF['site_admin_url'] . '/plugins/menu/images/up.png" alt="' . $LANG_MENU01['move_up'] . '"' . XHTML . '></button></form></td><td class="aligncenter">' . $movedown . '<img src="' . $_CONF['site_admin_url'] . '/plugins/menu/images/down.png" alt="' . $LANG_MENU01['move_down'] . '"' . XHTML . '></button></form></td>';
             $retval .= '</tr>';
             $count++;
 
@@ -272,7 +274,7 @@ class mbElement {
 
     function showTree( $depth,$ulclass='',$liclass='',$parentaclass='',$lastclass,$selected='' ) {
         global $_SP_CONF,$_USER, $_TABLES, $LANG01, $LANG29, $_CONF,$meLevel,
-               $_DB_dbms,$_GROUPS, $config,$Menus, $_TOPICS,$_PLUGINS;
+               $_DB_dbms,$_GROUPS, $config,$Menus, $_TOPICS, $_PLUGINS;
 
         $oulclass       = $ulclass;
         $oliclass       = $liclass;
@@ -483,9 +485,9 @@ class mbElement {
                                             $tids[] = $T['tid'];
                                         }
                                         if( sizeof( $tids ) > 0 ) {
-                                            $topicsql = " (tid IN ('" . implode( "','", $tids ) . "'))";
+                                            //$topicsql = " (ta.tid IN ('" . implode( "','", $tids ) . "'))";
                                             // Geeklog 2.0
-											//$topicsql = " AND (ta.tid IN ('" . implode( "','", $tids ) . "'))";
+											$topicsql = " AND (ta.tid IN ('" . implode( "','", $tids ) . "'))";
                                         }
                                     }
                                 }
@@ -499,17 +501,17 @@ class mbElement {
                                         if( empty( $topicsql )) {
                                             $modnum += DB_count( $_TABLES['storysubmission'] );
                                         } else {
-                                            $sresult = DB_query( "SELECT COUNT(*) AS count FROM {$_TABLES['storysubmission']} WHERE" . $topicsql );
+                                            //$sresult = DB_query( "SELECT COUNT(*) AS count FROM {$_TABLES['storysubmission']} WHERE" . $topicsql );
                                             //Geeklog 2.0
-											//$sresult = DB_query( "SELECT COUNT(DISTINCT sid) AS count FROM {$_TABLES['storysubmission']}, {$_TABLES['topic_assignments']} ta WHERE ta.type = 'article' AND ta.id = sid " . $topicsql );
+											$sresult = DB_query( "SELECT COUNT(DISTINCT sid) AS count FROM {$_TABLES['storysubmission']}, {$_TABLES['topic_assignments']} ta WHERE ta.type = 'article' AND ta.id = sid " . $topicsql );
                                             $S = DB_fetchArray( $sresult );
                                             $modnum += $S['count'];
                                         }
                                     }
                                     if(( in_array('staticpages', $_PLUGINS) && $_CONF['listdraftstories'] == 1 ) && SEC_hasRights( 'story.edit' )) {
-                                        $sql = "SELECT COUNT(*) AS count FROM {$_TABLES['stories']} WHERE (draft_flag = 1)";
+                                        $sql = "SELECT COUNT(*) AS count FROM {$_TABLES['stories']}, {$_TABLES['topic_assignments']} ta WHERE (draft_flag = 1)";
                                         if( !empty( $topicsql )) {
-                                            $sql .= ' AND' . $topicsql;
+                                            $sql .= $topicsql;
                                         }
                                         $result = DB_query( $sql . COM_getPermSQL( 'AND', 0, 3 ));
                                         $A = DB_fetchArray( $result );
@@ -535,9 +537,9 @@ class mbElement {
                                     if( empty( $topicsql )) {
                                         $numstories = DB_count( $_TABLES['stories'] );
                                     } else {
-                                        $nresult = DB_query( "SELECT COUNT(*) AS count from {$_TABLES['stories']} WHERE" . $topicsql . COM_getPermSql( 'AND' ));
+                                        //$nresult = DB_query( "SELECT COUNT(*) AS count from {$_TABLES['stories']} WHERE" . $topicsql . COM_getPermSql( 'AND' ));
                                         // Geeklog 2.0
-										//$nresult = DB_query( "SELECT COUNT(DISTINCT sid) AS count FROM {$_TABLES['stories']}, {$_TABLES['topic_assignments']} ta WHERE ta.type = 'article' AND ta.id = sid " . $topicsql . COM_getPermSql( 'AND' ));
+										$nresult = DB_query( "SELECT COUNT(DISTINCT sid) AS count FROM {$_TABLES['stories']}, {$_TABLES['topic_assignments']} ta WHERE ta.type = 'article' AND ta.id = sid " . $topicsql . COM_getPermSql( 'AND' ));
                                         $N = DB_fetchArray( $nresult );
                                         $numstories = $N['count'];
                                     }
@@ -631,7 +633,7 @@ class mbElement {
                                     next( $plugin_options );
                                 }
 
-                                if(( $_CONF['allow_mysqldump'] == 1 ) AND ( $_DB_dbms == 'mysql' ) AND SEC_inGroup( 'Root' )) {
+                                if(isset($_CONF['allow_mysqldump']) && ( $_CONF['allow_mysqldump'] == 1 ) AND ( $_DB_dbms == 'mysql' ) AND SEC_inGroup( 'Root' )) {
                                     $url = $_CONF['site_admin_url'] . '/database.php';
                                     $label = $LANG01[103] . ' (N/A)';
                                     $link_array[$LANG01[103]] = '<li><a href="' . $url . '">' . $label . '</a></li>' . LB;
@@ -692,7 +694,7 @@ class mbElement {
                         }
                         $langsql = COM_getLangSQL( 'tid', 'AND' );
 
-                        $sql = "SELECT tid,topic,imageurl FROM {$_TABLES['topics']} WHERE 1=1" . $langsql;
+                        $sql = "SELECT tid,topic,imageurl FROM {$_TABLES['topics']} WHERE hidden=0" . $langsql;
                         if( !empty( $_USER['uid'] ) && ( $_USER['uid'] > 1 )) {
                             if (COM_versionCompare(VERSION, '2.2.2', '>=')) {
                                 $tids = [];
@@ -708,7 +710,7 @@ class mbElement {
                         } else {
                             $sql .= COM_getPermSQL( 'AND' );
                         }
-
+ 
                         if( $_CONF['sortmethod'] == 'alpha' ) {
                             $sql .= ' ORDER BY topic ASC';
                         } else {
@@ -835,6 +837,10 @@ class mbElement {
                 $this->replace_macros();
                 break;
             case '7' : // php function
+                if (!MENU_runtimeConfigEnabled('allow_php_elements', false)) {
+                    MENU_debugLog('PHP menu element ' . (int) $this->id . ' skipped by configuration.');
+                    break;
+                }
                 $functionName = $this->subtype;
                 if (function_exists($functionName)) {
                     /* Pass the type of menu to custom php function */
@@ -867,12 +873,12 @@ class mbElement {
                 }
 
                 if ( $this->type == 1 && $parentaclass != '' ) {
-                    $retval .= "<li".$lastClass.">" . '<a class="' . $parentaclass . '" name="'.$parentaclass.'" href="' . ($this->url == '' ? '#' : $this->url) . '">' . strip_tags($this->label) . '</a>' . LB;
+                    $retval .= "<li".$lastClass.">" . '<a class="' . $parentaclass . '" name="'.$parentaclass.'" href="' . ($this->url == '' ? '#' : $this->url) . '"' . MENU_legacyParentAttributes() . '>' . strip_tags($this->label) . '</a>' . LB;
                 } else {
                     if ($this->type == 8 ) {
                         $retval .= "<li".$lastClass.'><a><strong>' . strip_tags($this->label) . '</strong></a></li>' . LB;
                     } else {
-                        $retval .= "<li".$lastClass.">" . '<a href="' . $this->url . '"' . ($this->target != '' ? ' target="' . $this->target . '"' : '') . '>' . strip_tags($this->label) . '</a></li>' . LB;
+                        $retval .= "<li".$lastClass.">" . '<a href="' . $this->url . '"' . MENU_legacyLinkAttributes($this->url, $this->target) . '>' . strip_tags($this->label) . '</a></li>' . LB;
                     }
                 }
             }

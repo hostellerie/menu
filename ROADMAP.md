@@ -214,8 +214,8 @@ $_CONF['path_images'] . 'menu/'
 - [ ] Remove obsolete IE6 support and unused assets.
 - [ ] Review the bundled SlickNav version and dependency strategy.
 - [ ] Prefer dependency-free/vanilla JavaScript for new code where practical.
-- [ ] Review the duplicated `classMenuElement.php` / `classMenuElement2.php` implementation.
-- [ ] Remove the legacy class only after supported Geeklog versions no longer need it.
+- [x] Consolidate the duplicated Menu element class implementation into `classMenuElement.php`.
+- [x] Remove the legacy pre-Geeklog-2 class split now that 1.3.0 supports Geeklog 2.1.1 through 2.2.2.
 - [ ] Gradually split the ~95 KB `admin/index.php` into focused components without breaking old Geeklog versions.
 - [ ] Centralize path handling, input handling and security checks.
 - [ ] Keep the plugin installable using standard Geeklog plugin installation mechanisms.

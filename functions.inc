@@ -81,11 +81,7 @@ $_TABLES['menu_config'] = $_DB_table_prefix . 'menu_config';
 $_TABLES['menu_elements']= $_DB_table_prefix . 'menu_elements';
 
 
-if (VERSION >= '2.0.0') {
-    require_once $_CONF['path'].'plugins/menu/classes/classMenuElement2.php';
-} else {
-    require_once $_CONF['path'].'plugins/menu/classes/classMenuElement.php';
-}
+require_once $_CONF['path'] . 'plugins/menu/classes/classMenuElement.php';
 
 // +---------------------------------------------------------------------------+
 // | Geeklog Plugin API Implementation                                         |
