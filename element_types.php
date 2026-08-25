@@ -12,6 +12,8 @@ if (!defined('VERSION')) {
     die('This file can not be used on its own.');
 }
 
+require_once __DIR__ . '/runtime_config.php';
+
 /**
  * Return element types in an administrator-oriented order.
  *
