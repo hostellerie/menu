@@ -14,6 +14,7 @@ if (!defined('VERSION')) {
 
 require_once __DIR__ . '/admin_element_validation.php';
 require_once __DIR__ . '/database.php';
+require_once __DIR__ . '/cache_runtime.php';
 
 function MENU_adminMutationModes()
 {
@@ -206,7 +207,7 @@ function MENU_adminRejectInvalidRequest($message)
 
 function MENU_adminEnforceCsrf()
 {
-    global $_CONF, $_TABLES;
+    global $_CONF;
 
     if (!MENU_adminIsControllerRequest()) {
         return;
@@ -260,12 +261,7 @@ function MENU_adminEnforceCsrf()
             MENU_adminRejectInvalidRequest('Unable to delete the selected menu.');
         }
 
-        MENU_CACHE_remove_instance('menu');
-        MENU_CACHE_remove_instance('css');
-        if (isset($_TABLES['vars'])) {
-            DB_save($_TABLES['vars'], 'name,value', "'cacheid'," . rand());
-        }
-        MENU_initMENU(true);
+        MENU_invalidateRuntimeCache(true);
         COM_redirect($_CONF['site_admin_url'] . '/plugins/menu/index.php');
     }
 }
