@@ -19,7 +19,7 @@ if (strpos($create, 'SELECT MAX(id)') !== false || strpos($create, 'createElemen
     $failures[] = 'New element endpoint must not generate IDs with MAX(id)+1.';
 }
 
-if (strpos($create, "MENU_adminElementMutationError('save', $_POST)") === false) {
+if (strpos($create, 'MENU_adminElementMutationError(\'save\', $_POST)') === false) {
     $failures[] = 'New element endpoint must reuse server-side element validation.';
 }
 
