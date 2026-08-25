@@ -20,6 +20,8 @@ function MENU_displayTree( $menu_id ) {
            $_MENU_CONF, $Menus, $_SCRIPTS;
 
     $_SCRIPTS->setJavaScriptLibrary('jquery');
+    $_SCRIPTS->setJavaScriptFile('menu_tablednd', '/admin/plugins/menu/js/tablednd_0_6.js');
+    $_SCRIPTS->setJavaScriptFile('menu_order_handle', '/admin/plugins/menu/js/menu-order-handle.js');
 
     $retval = '';
 
