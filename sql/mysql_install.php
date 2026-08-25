@@ -2,7 +2,7 @@
 
 /* Reminder: always indent with 4 spaces (no tabs). */
 // +---------------------------------------------------------------------------+
-// | Menu Plugin 1.2.8                                                         |
+// | Menu Plugin 1.3.0                                                         |
 // +---------------------------------------------------------------------------+
 // | mysql_install.php                                                         |
 // |                                                                           |
@@ -69,7 +69,8 @@ $_SQL[] = "CREATE TABLE {$_TABLES['menu_elements']} (
     `element_target` varchar(255) NOT NULL,
     `group_id` mediumint(9) NOT NULL,
     PRIMARY KEY( `id` ),
-    INDEX ( `pid` )
+    INDEX ( `pid` ),
+    KEY `menu_parent_order` (`menu_id`, `pid`, `element_order`)
 ) ENGINE=MyISAM;";
 
 
