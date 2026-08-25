@@ -43,24 +43,21 @@
         $table.find('tbody tr').each(function () {
             var $row = $(this);
             var $cells = $row.children('td');
-            var $upCell;
-            var $downCell;
+            var $handle;
             var mid;
 
             if ($cells.length < 7) {
                 return;
             }
 
-            $upCell = $cells.eq(5);
-            $downCell = $cells.eq(6);
+            $handle = $cells.eq($cells.length - 2);
             mid = parseInt(String($row.attr('id') || '').replace(/^mid_/, ''), 10) || 0;
 
             if (!mid) {
                 return;
             }
 
-            $upCell
-                .empty()
+            $handle
                 .addClass('menu-drag-handle')
                 .attr({
                     tabindex: '0',
@@ -68,21 +65,8 @@
                     'aria-label': 'Order',
                     title: 'Order (↑/↓)',
                     'data-mid': mid
-                })
-                .css({
-                    cursor: 'grab',
-                    'touch-action': 'none',
-                    'font-size': '18px',
-                    'line-height': '1',
-                    'user-select': 'none',
-                    'white-space': 'nowrap'
-                })
-                .html('<span aria-hidden="true">&#8942;&#8942;</span>');
-
-            $downCell.remove();
+                });
         });
-
-        $table.find('tr').first().find('th').last().attr('colspan', '1');
 
         // Remove whole-row handlers installed by the legacy initialization,
         // then bind TableDnD again using only the dedicated handle cells.
