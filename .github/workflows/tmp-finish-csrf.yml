@@ -1,0 +1,129 @@
+name: Temporary finish Menu CSRF
+
+on:
+  push:
+    branches:
+      - modernize-1.3.0
+
+permissions:
+  contents: write
+
+jobs:
+  finish:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: modernize-1.3.0
+
+      - name: Finish POST and explicit CSRF tokens
+        shell: python
+        run: |
+          from pathlib import Path
+
+          def replace(path, old, new, count=-1):
+              p = Path(path)
+              s = p.read_text()
+              if old not in s:
+                  raise SystemExit('pattern not found in ' + path + ': ' + old[:120])
+              s = s.replace(old, new, count)
+              p.write_text(s)
+
+          # Every mutation is POST-only now, not only move/delete.
+          replace('admin_security.php',
+              "function MENU_adminPostOnlyModes()\n{\n    return array('move', 'delete', 'deletemenu');\n}",
+              "function MENU_adminPostOnlyModes()\n{\n    return MENU_adminMutationModes();\n}")
+
+          # The transitional JavaScript bridge is no longer needed once all
+          # native forms carry explicit tokens and destructive actions are POST.
+          p = Path('admin_security.php')
+          s = p.read_text()
+          start = s.index('function MENU_adminRegisterTokenBridge()')
+          end_marker = "if (MENU_adminIsControllerRequest()) {\n    MENU_adminEnforceCsrf();\n    MENU_adminRegisterTokenBridge();\n}\n"
+          end = s.index(end_marker, start)
+          s = s[:start] + "if (MENU_adminIsControllerRequest()) {\n    MENU_adminEnforceCsrf();\n}\n" + s[end + len(end_marker):]
+          p.write_text(s)
+
+          # All admin templates receive the native token input variable.
+          p = Path('admin/index.php')
+          s = p.read_text()
+          s = s.replace("$T->set_file", "$T->set_var('security_token_input', MENU_adminTokenInput());\n    $T->set_file")
+
+          # Native delete-menu form instead of a GET link.
+          old = "$T->set_var('delete_menu','<a href=\"' . $_CONF['site_admin_url'] . '/plugins/menu/index.php?mode=deletemenu&amp;id=' . $menu['menu_id'] . '\" onclick=\"return confirm(\\\'' . $LANG_MENU01['confirm_delete'] . '\\\');\"><img src=\"' . $_CONF['site_admin_url'] . '/plugins/menu/images/delete.png\" alt=\"' . $LANG_MENU01['delete'] . '\"' . XHTML . '></a>');"
+          new = "$T->set_var('delete_menu', '<form method=\"post\" action=\"' . $_CONF['site_admin_url'] . '/plugins/menu/index.php\" style=\"display:inline\" onsubmit=\"return confirm(\\\'' . $LANG_MENU01['confirm_delete'] . '\\\');\">' . MENU_adminTokenInput() . '<input type=\"hidden\" name=\"mode\" value=\"deletemenu\"' . XHTML . '><input type=\"hidden\" name=\"id\" value=\"' . (int) $menu['menu_id'] . '\"' . XHTML . '><button type=\"submit\" style=\"border:0;background:none;padding:0;cursor:pointer\"><img src=\"' . $_CONF['site_admin_url'] . '/plugins/menu/images/delete.png\" alt=\"' . $LANG_MENU01['delete'] . '\"' . XHTML . '></button></form>');"
+          if old not in s:
+              raise SystemExit('delete_menu pattern not found')
+          s = s.replace(old, new)
+
+          # Controller mutation branches now consume POST only.
+          s = s.replace("$direction = Geeklog\\Input::fGet('where');\n            $mid       = (int) Geeklog\\Input::fGet('mid');\n            $menu_id   = (int) Geeklog\\Input::fGet('menu');",
+                        "$direction = Geeklog\\Input::fPost('where');\n            $mid       = (int) Geeklog\\Input::fPost('mid');\n            $menu_id   = (int) Geeklog\\Input::fPost('menu');")
+          s = s.replace("$id      = (int) Geeklog\\Input::fGet('mid');\n            $menu_id = (int) Geeklog\\Input::fGet('menuid');",
+                        "$id      = (int) Geeklog\\Input::fPost('mid');\n            $menu_id = (int) Geeklog\\Input::fPost('menuid');")
+          s = s.replace("$menu_id = (int) Geeklog\\Input::fGet('id');\n            MENU_deleteMenu($menu_id);",
+                        "$menu_id = (int) Geeklog\\Input::fPost('id');\n            MENU_deleteMenu($menu_id);")
+          p.write_text(s)
+
+          # Convert element delete/move links to native POST forms.
+          p = Path('classes/classMenuElement2.php')
+          s = p.read_text()
+          old = "            $moveup     = '<a href=\"' . $_CONF['site_admin_url'] . '/plugins/menu/index.php?mode=move&amp;where=up&amp;mid=' . $this->id . '&amp;menu=' . $this->menu_id . '\">';\n            $movedown   = '<a href=\"' . $_CONF['site_admin_url'] . '/plugins/menu/index.php?mode=move&amp;where=down&amp;mid=' . $this->id . '&amp;menu=' . $this->menu_id . '\">';\n            $edit       = '<a href=\"' . $_CONF['site_admin_url'] . '/plugins/menu/index.php?mode=edit&amp;mid=' . $this->id . '&amp;menu=' . $this->menu_id . '\">';\n            $delete     = '<a href=\"' . $_CONF['site_admin_url'] . '/plugins/menu/index.php?mode=delete&amp;mid=' . $this->id . '&amp;menuid='.$this->menu_id.'\" onclick=\"return confirm(\\\'' . $LANG_MENU01['confirm_delete'] . '\\\');\">';"
+          new = "            $actionUrl = $_CONF['site_admin_url'] . '/plugins/menu/index.php';\n            $tokenInput = MENU_adminTokenInput();\n            $moveup = '<form method=\"post\" action=\"' . $actionUrl . '\" style=\"display:inline\">' . $tokenInput . '<input type=\"hidden\" name=\"mode\" value=\"move\"' . XHTML . '><input type=\"hidden\" name=\"where\" value=\"up\"' . XHTML . '><input type=\"hidden\" name=\"mid\" value=\"' . (int) $this->id . '\"' . XHTML . '><input type=\"hidden\" name=\"menu\" value=\"' . (int) $this->menu_id . '\"' . XHTML . '><button type=\"submit\" style=\"border:0;background:none;padding:0;cursor:pointer\">';\n            $movedown = '<form method=\"post\" action=\"' . $actionUrl . '\" style=\"display:inline\">' . $tokenInput . '<input type=\"hidden\" name=\"mode\" value=\"move\"' . XHTML . '><input type=\"hidden\" name=\"where\" value=\"down\"' . XHTML . '><input type=\"hidden\" name=\"mid\" value=\"' . (int) $this->id . '\"' . XHTML . '><input type=\"hidden\" name=\"menu\" value=\"' . (int) $this->menu_id . '\"' . XHTML . '><button type=\"submit\" style=\"border:0;background:none;padding:0;cursor:pointer\">';\n            $edit = '<a href=\"' . $_CONF['site_admin_url'] . '/plugins/menu/index.php?mode=edit&amp;mid=' . $this->id . '&amp;menu=' . $this->menu_id . '\">';\n            $delete = '<form method=\"post\" action=\"' . $actionUrl . '\" style=\"display:inline\" onsubmit=\"return confirm(\\\'' . $LANG_MENU01['confirm_delete'] . '\\\');\">' . $tokenInput . '<input type=\"hidden\" name=\"mode\" value=\"delete\"' . XHTML . '><input type=\"hidden\" name=\"mid\" value=\"' . (int) $this->id . '\"' . XHTML . '><input type=\"hidden\" name=\"menuid\" value=\"' . (int) $this->menu_id . '\"' . XHTML . '><button type=\"submit\" style=\"border:0;background:none;padding:0;cursor:pointer\">';"
+          if old not in s:
+              raise SystemExit('class action-link pattern not found')
+          s = s.replace(old, new)
+          s = s.replace("$delete . '<img src=\"' . $_CONF['site_admin_url'] . '/plugins/menu/images/delete.png\" alt=\"' . $LANG_MENU01['delete'] . '\"' . XHTML . '></a></td>'",
+                        "$delete . '<img src=\"' . $_CONF['site_admin_url'] . '/plugins/menu/images/delete.png\" alt=\"' . $LANG_MENU01['delete'] . '\"' . XHTML . '></button></form></td>'")
+          s = s.replace("$moveup . '<img src=\"' . $_CONF['site_admin_url'] . '/plugins/menu/images/up.png\" alt=\"' . $LANG_MENU01['move_up'] . '\"' . XHTML . '></a></td><td class=\"aligncenter\">' . $movedown . '<img src=\"' . $_CONF['site_admin_url'] . '/plugins/menu/images/down.png\" alt=\"' . $LANG_MENU01['move_down'] . '\"' . XHTML . '></a></td>'",
+                        "$moveup . '<img src=\"' . $_CONF['site_admin_url'] . '/plugins/menu/images/up.png\" alt=\"' . $LANG_MENU01['move_up'] . '\"' . XHTML . '></button></form></td><td class=\"aligncenter\">' . $movedown . '<img src=\"' . $_CONF['site_admin_url'] . '/plugins/menu/images/down.png\" alt=\"' . $LANG_MENU01['move_down'] . '\"' . XHTML . '></button></form></td>'")
+          p.write_text(s)
+
+          # Put explicit token input in every mutation form template.
+          for filename in ['menulist.thtml','menutree.thtml','createelement.thtml','editelement.thtml','createmenu.thtml','clonemenu.thtml','editmenu.thtml','menuconfig.thtml']:
+              p = Path('templates/default') / filename
+              s = p.read_text()
+              if '<form' not in s:
+                  continue
+              # One token per form; templates here contain one state-changing form.
+              pos = s.find('>', s.find('<form')) + 1
+              if '{security_token_input}' not in s:
+                  s = s[:pos] + '\n    {security_token_input}' + s[pos:]
+              p.write_text(s)
+
+          # Roadmap reflects native POST/token completion while retaining broader
+          # mutation validation work as a separate security task.
+          p = Path('ROADMAP.md')
+          s = p.read_text()
+          s = s.replace('- Phase 2 CSRF: mutation inventory, token helpers, request enforcement and transitional token bridge exist, but destructive GET operations still need conversion to POST and explicit template/action tokens should replace the bridge progressively.',
+                        '- Phase 2 CSRF: mutation inventory, explicit tokens and server-side enforcement are implemented; all state-changing controller modes are POST-only and destructive move/delete actions now use native POST forms. The transitional JavaScript token/GET bridge has been removed.')
+          s = s.replace('1. Finish Phase 2 mutation security: convert move/delete and other destructive GET actions to POST with explicit security tokens.\n2. Finish Phase 2 element create/edit validation and SQL escaping, including safe empty-URL handling and validation that menu/parent/order IDs belong to the expected menu.\n3. Audit the remaining menu/config mutations and remove the transitional CSRF bridge where explicit tokens exist.',
+                        '1. Finish Phase 2 element create/edit validation and SQL escaping, including safe empty-URL handling and validation that menu/parent/order IDs belong to the expected menu.\n2. Audit remaining menu/config mutation validation now that all state-changing controller modes are POST-only with explicit CSRF tokens.\n3. Continue output/upload security hardening and remove remaining legacy mutation assumptions.')
+          p.write_text(s)
+
+      - name: Validate PHP and CSRF implementation
+        run: |
+          php -l admin_security.php
+          php -l admin/index.php
+          php -l classes/classMenuElement2.php
+          php -l admin_element_validation.php
+          grep -q "return MENU_adminMutationModes();" admin_security.php
+          ! grep -q "MENU_adminRegisterTokenBridge" admin_security.php
+          grep -q "fPost('where')" admin/index.php
+          grep -q "fPost('mid')" admin/index.php
+          grep -q 'name="mode" value="deletemenu"' admin/index.php
+          grep -q 'name="mode" value="move"' classes/classMenuElement2.php
+          grep -q '{security_token_input}' templates/default/menulist.thtml
+          grep -q '{security_token_input}' templates/default/menutree.thtml
+          grep -q '{security_token_input}' templates/default/createelement.thtml
+          grep -q '{security_token_input}' templates/default/editelement.thtml
+          if [ -f tests/admin_security.php ]; then php tests/admin_security.php; fi
+
+      - name: Commit CSRF finalization
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add admin_security.php admin/index.php classes/classMenuElement2.php templates/default ROADMAP.md
+          git commit -m "Finish Menu CSRF POST token protection"
+          git push origin HEAD:modernize-1.3.0
