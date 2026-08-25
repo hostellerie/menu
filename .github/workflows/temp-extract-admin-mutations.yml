@@ -1,0 +1,28 @@
+name: Temporary admin mutation extraction
+
+on:
+  push:
+    branches: [modernize-1.3.0]
+    paths:
+      - .github/workflows/temp-extract-admin-mutations.yml
+      - tools/temp_extract_admin_mutations.py
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: modernize-1.3.0
+      - run: python3 tools/temp_extract_admin_mutations.py
+      - run: php -l admin/index.php && php -l admin_menu_mutations.php && php -l tests/admin_mutations_contract.php
+      - run: php tests/admin_mutations_contract.php
+      - run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add admin/index.php admin_menu_mutations.php tests/admin_mutations_contract.php
+          git commit -m "Extract remaining admin mutations" || exit 0
+          git push origin HEAD:modernize-1.3.0
