@@ -88,7 +88,7 @@ function MENU_displayMenuList( ) {
             $id = $menu['menu_id'];
             $T->set_var('menu_id',$menu['menu_id']);
             $T->set_var('menu_name',$menu['menu_name']);
-            $T->set_var('menuactive','<input type="checkbox" name="enabledmenu[' . $menu['menu_id'] . ']" onclick="submit()" value="1"' . ($menu['active'] == 1 ? ' checked="checked"' : '') . XHTML . '>');
+            $T->set_var('menuactive', '<form method="post" action="' . $_CONF['site_admin_url'] . '/plugins/menu/index.php" style="display:inline">' . MENU_adminTokenInput() . '<input type="hidden" name="mode" value="menuactivate"' . XHTML . '><input type="hidden" name="id" value="' . (int) $menu['menu_id'] . '"' . XHTML . '><input type="hidden" name="active" value="' . ($menu['active'] == 1 ? '0' : '1') . '"' . XHTML . '><input type="checkbox" onclick="this.form.submit()"' . ($menu['active'] == 1 ? ' checked="checked"' : '') . XHTML . '></form>');
             if ( $menu['menu_name'] != 'block' && $menu['menu_name'] != 'footer' && $menu['menu_name'] != 'navigation' ) {
                 $T->set_var('delete_menu', '<form method="post" action="' . $_CONF['site_admin_url'] . '/plugins/menu/index.php" style="display:inline" onsubmit="return confirm(\'' . $LANG_MENU01['confirm_delete'] . '\');">' . MENU_adminTokenInput() . '<input type="hidden" name="mode" value="deletemenu"' . XHTML . '><input type="hidden" name="id" value="' . (int) $menu['menu_id'] . '"' . XHTML . '><button type="submit" style="border:0;background:none;padding:0;cursor:pointer"><img src="' . $_CONF['site_admin_url'] . '/plugins/menu/images/delete.png" alt="' . $LANG_MENU01['delete'] . '"' . XHTML . '></button></form>');
             } else {
@@ -1277,51 +1277,42 @@ function MENU_saveEditMenuElement ( ) {
 /**
 * Enable and Disable block
 */
-function MENU_changeActiveStatusElement ($bid_arr)
+function MENU_changeActiveStatusElement($bid_arr = null)
 {
-    global $_CONF, $_TABLES;
+    global $_TABLES;
 
-    $menu_id = (int) Geeklog\Input::fPost('menu');
+    $menuId = (int) Geeklog\Input::fPost('menu');
+    $mid = (int) Geeklog\Input::fPost('mid');
+    $active = (int) Geeklog\Input::fPost('active');
+    $active = $active === 1 ? 1 : 0;
 
-    // first, disable all on the requested side
-    $sql = "UPDATE {$_TABLES['menu_elements']} SET element_active = '0' WHERE menu_id=".$menu_id;
-    DB_query($sql);
-    if (isset($bid_arr)) {
-        foreach ($bid_arr as $bid => $side) {
-            $bid = COM_applyFilter($bid, true);
-            // the enable those in the array
-            $sql = "UPDATE {$_TABLES['menu_elements']} SET element_active = '1' WHERE id='$bid'";
-            DB_query($sql);
-        }
+    if ($menuId > 0 && $mid > 0) {
+        DB_query("UPDATE {$_TABLES['menu_elements']} SET element_active=" . $active
+            . " WHERE id=" . $mid . " AND menu_id=" . $menuId);
     }
+
     MENU_CACHE_remove_instance('menu');
     MENU_CACHE_remove_instance('css');
     MENU_CACHE_remove_instance('js');
-
-    return;
 }
+
 
 /**
 * Enable and Disable block
 */
-function MENU_changeActiveStatusMenu ($bid_arr)
+function MENU_changeActiveStatusMenu($bid_arr = null)
 {
-    global $_CONF, $_TABLES;
+    global $_TABLES;
 
-    // first, disable all on the requested side
-    $sql = "UPDATE {$_TABLES['menu']} SET menu_active = '0'";
-    DB_query($sql);
-    if (isset($bid_arr)) {
-        foreach ($bid_arr as $bid => $side) {
-            $bid = COM_applyFilter($bid, true);
-            // the enable those in the array
-            $sql = "UPDATE {$_TABLES['menu']} SET menu_active = '1' WHERE id='$bid'";
-            DB_query($sql);
-        }
+    $menuId = (int) Geeklog\Input::fPost('id');
+    $active = (int) Geeklog\Input::fPost('active');
+    $active = $active === 1 ? 1 : 0;
+
+    if ($menuId > 0) {
+        DB_query("UPDATE {$_TABLES['menu']} SET menu_active=" . $active . " WHERE id=" . $menuId);
     }
-    MENU_CACHE_remove_instance('menu');
 
-    return;
+    MENU_CACHE_remove_instance('menu');
 }
 
 function MENU_deleteMenu($menu_id) {
@@ -1893,13 +1884,13 @@ if ( (isset($_POST['execute']) || $mode != '') && !isset($_POST['cancel']) && !i
             $content = MENU_editMenu( $menu_id );
             break;
         case 'activate' :
-            MENU_changeActiveStatusElement(Geeklog\Input::post('enableditem'));
+            MENU_changeActiveStatusElement();
             MENU_initMENU();
             $content = MENU_displayTree( $menu_id );
             $currentSelect = $LANG_MENU01['menu_builder'];
             break;
         case 'menuactivate' :
-            MENU_changeActiveStatusMenu(Geeklog\Input::post('enabledmenu'));
+            MENU_changeActiveStatusMenu();
             MENU_initMENU();
             $content = MENU_displayMenuList( );
             $currentSelect = $LANG_MENU01['menu_builder'];

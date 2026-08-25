@@ -26,14 +26,15 @@ function MENU_adminMutationReferenceError($mode, $post)
 {
     global $_TABLES;
 
-    if ($mode !== 'move' && $mode !== 'delete' && $mode !== 'deletemenu') {
+    if ($mode !== 'move' && $mode !== 'delete' && $mode !== 'deletemenu'
+        && $mode !== 'activate' && $mode !== 'menuactivate') {
         return '';
     }
     if (!is_array($post)) {
         return 'Invalid Menu administration request.';
     }
 
-    if ($mode === 'deletemenu') {
+    if ($mode === 'deletemenu' || $mode === 'menuactivate') {
         $menuId = isset($post['id']) ? (int) $post['id'] : 0;
         if ($menuId <= 0 || !isset($_TABLES['menu'])) {
             return 'Invalid menu.';
@@ -43,14 +44,21 @@ function MENU_adminMutationReferenceError($mode, $post)
         if ($menuName === '' || $menuName === null || $menuName === false) {
             return 'The selected menu does not exist.';
         }
-        if (in_array((string) $menuName, array('navigation', 'footer', 'block'), true)) {
+        if ($mode === 'deletemenu'
+            && in_array((string) $menuName, array('navigation', 'footer', 'block'), true)) {
             return 'This built-in menu cannot be deleted.';
+        }
+        if ($mode === 'menuactivate') {
+            $active = isset($post['active']) ? (int) $post['active'] : -1;
+            if ($active !== 0 && $active !== 1) {
+                return 'Invalid menu activation state.';
+            }
         }
 
         return '';
     }
 
-    $menuId = $mode === 'move'
+    $menuId = ($mode === 'move' || $mode === 'activate')
         ? (isset($post['menu']) ? (int) $post['menu'] : 0)
         : (isset($post['menuid']) ? (int) $post['menuid'] : 0);
     $mid = isset($post['mid']) ? (int) $post['mid'] : 0;
@@ -66,6 +74,13 @@ function MENU_adminMutationReferenceError($mode, $post)
     );
     if ($elementId === '' || $elementId === null || $elementId === false) {
         return 'The menu element does not belong to the selected menu.';
+    }
+
+    if ($mode === 'activate') {
+        $active = isset($post['active']) ? (int) $post['active'] : -1;
+        if ($active !== 0 && $active !== 1) {
+            return 'Invalid menu element activation state.';
+        }
     }
 
     if ($mode === 'move') {

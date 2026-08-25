@@ -7,7 +7,6 @@
 </div><div style="clear:both;"></div>
 
 <form method="post" id="menusel" action="{site_admin_url}/plugins/menu/index.php">
-    {security_token_input}
 <div>
   <table style="width:100%;" class="tbl_repeat" id="menu_table" name="menu_table">
     <tr>
@@ -22,10 +21,6 @@
     {menu_tree}
 	</tbody>
   </table>
-  <input type="hidden" id="menu" name="menu" value="{menuid}"{xhtml}>
-  <input type="hidden" name="mode" value="activate"{xhtml}>
-</div>
-</form>
 
 <div class="menu-preview" style="margin:25px 0 5px 0;clear:both;">
   <div style="font-weight:bold;margin-bottom:8px;">Preview</div>

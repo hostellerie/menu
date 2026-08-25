@@ -226,7 +226,7 @@ class mbElement {
 
             $retval .= '</td>';
             $retval .= '<td class="aligncenter">';
-            $retval .=  '<input type="checkbox" name="enableditem[' . $this->id . ']" onclick="submit()" value="1"' . ($this->active == 1 ? ' checked="checked"' : '') . XHTML . '>';
+            $retval .= '<form method="post" action="' . $actionUrl . '" style="display:inline">' . $tokenInput . '<input type="hidden" name="mode" value="activate"' . XHTML . '><input type="hidden" name="menu" value="' . (int) $this->menu_id . '"' . XHTML . '><input type="hidden" name="mid" value="' . (int) $this->id . '"' . XHTML . '><input type="hidden" name="active" value="' . ($this->active == 1 ? '0' : '1') . '"' . XHTML . '><input type="checkbox" onclick="this.form.submit()"' . ($this->active == 1 ? ' checked="checked"' : '') . XHTML . '></form>';
             $retval .= '</td>';
             $retval .= '<td class="aligncenter">';
             $retval .= $info;

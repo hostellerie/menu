@@ -4,8 +4,6 @@
 </script>
 
 
-  <form method="post" id="menusel" action="{site_admin_url}/plugins/menu/index.php">
-    {security_token_input}
     <table style="width:100%;" class="tbl_repeat">
       <tr>
           <th style="width:60%;">Menu Name</th>
@@ -40,7 +38,4 @@
       <!-- END menurow -->
 	  </tbody>
     </table>
-    <input type="hidden" id="menu" name="menu" value="{menuid}"{xhtml}>
-    <input type="hidden" name="mode" value="menuactivate"{xhtml}>
-  </form>
 
