@@ -15,6 +15,52 @@ if (!defined('VERSION')) {
 require_once __DIR__ . '/element_types.php';
 
 /**
+ * Return whether an administrator-supplied URL is safe to persist.
+ * Relative URLs and normal schemes remain compatible with legacy Menu data;
+ * executable/data schemes and control characters are rejected.
+ *
+ * @param string $url
+ * @param bool   $allowEmpty
+ * @return bool
+ */
+function MENU_adminUrlIsSafe($url, $allowEmpty)
+{
+    $url = trim((string) $url);
+    if ($url === '') {
+        return (bool) $allowEmpty;
+    }
+
+    $decoded = html_entity_decode($url, ENT_QUOTES, 'UTF-8');
+    if (preg_match('/[\x00-\x1F\x7F]/', $decoded)) {
+        return false;
+    }
+    if (preg_match('/^\s*(?:javascript|vbscript|data):/i', $decoded)) {
+        return false;
+    }
+
+    return true;
+}
+
+/**
+ * Return true when the selected menu exists.
+ *
+ * @param int $menuId
+ * @return bool
+ */
+function MENU_adminMenuExists($menuId)
+{
+    global $_TABLES;
+
+    $menuId = (int) $menuId;
+    if ($menuId <= 0 || !isset($_TABLES['menu'])) {
+        return false;
+    }
+
+    $menuName = DB_getItem($_TABLES['menu'], 'menu_name', 'id=' . $menuId);
+    return !($menuName === '' || $menuName === null || $menuName === false);
+}
+
+/**
  * Validate move/delete/deletemenu request references before the legacy
  * controller performs any mutation.
  *
@@ -27,11 +73,29 @@ function MENU_adminMutationReferenceError($mode, $post)
     global $_TABLES;
 
     if ($mode !== 'move' && $mode !== 'delete' && $mode !== 'deletemenu'
-        && $mode !== 'activate' && $mode !== 'menuactivate') {
+        && $mode !== 'activate' && $mode !== 'menuactivate'
+        && $mode !== 'savecfg' && $mode !== 'disablemenu') {
         return '';
     }
     if (!is_array($post)) {
         return 'Invalid Menu administration request.';
+    }
+
+    if ($mode === 'savecfg') {
+        $menuId = isset($post['menu_id']) ? (int) $post['menu_id'] : 0;
+        return MENU_adminMenuExists($menuId) ? '' : 'The selected menu does not exist.';
+    }
+
+    if ($mode === 'disablemenu') {
+        $menuId = isset($post['menutodisable']) ? (int) $post['menutodisable'] : 0;
+        $active = isset($post['menuactive']) ? (int) $post['menuactive'] : -1;
+        if (!MENU_adminMenuExists($menuId)) {
+            return 'The selected menu does not exist.';
+        }
+        if ($active !== 0 && $active !== 1) {
+            return 'Invalid menu activation state.';
+        }
+        return '';
     }
 
     if ($mode === 'deletemenu' || $mode === 'menuactivate') {
@@ -87,6 +151,71 @@ function MENU_adminMutationReferenceError($mode, $post)
         $where = isset($post['where']) ? strtolower(trim((string) $post['where'])) : '';
         if ($where !== 'up' && $where !== 'down') {
             return 'Invalid menu movement direction.';
+        }
+    }
+
+    return '';
+}
+
+/**
+ * Validate special POST mutations that do not carry a normal controller mode.
+ *
+ * @param string $mode
+ * @param array  $post
+ * @return string
+ */
+function MENU_adminPostMutationError($mode, $post)
+{
+    global $_TABLES;
+
+    if (!is_array($post)) {
+        return 'Invalid Menu administration request.';
+    }
+
+    if (isset($post['defaults'])) {
+        $menuId = isset($post['menu_id']) ? (int) $post['menu_id'] : 0;
+        if (!MENU_adminMenuExists($menuId)) {
+            return 'The selected menu does not exist.';
+        }
+    }
+
+    if (isset($post['orders'])) {
+        $menuId = isset($post['menu_id']) ? (int) $post['menu_id'] : 0;
+        if (!MENU_adminMenuExists($menuId) || !isset($_TABLES['menu_elements'])) {
+            return 'The selected menu does not exist.';
+        }
+
+        $orders = explode('&', (string) $post['orders']);
+        $seen = array();
+        $validCount = 0;
+        foreach ($orders as $item) {
+            $parts = explode('=', $item, 2);
+            if (count($parts) !== 2) {
+                return 'Invalid menu order data.';
+            }
+            $rowId = rawurldecode($parts[1]);
+            if (!preg_match('/^mid_([1-9][0-9]*)$/', $rowId, $matches)) {
+                return 'Invalid menu order element.';
+            }
+            $mid = (int) $matches[1];
+            if (isset($seen[$mid])) {
+                return 'Duplicate menu order element.';
+            }
+            $seen[$mid] = true;
+
+            $elementId = DB_getItem(
+                $_TABLES['menu_elements'],
+                'id',
+                'id=' . $mid . ' AND menu_id=' . $menuId
+            );
+            if ($elementId === '' || $elementId === null || $elementId === false) {
+                return 'A reordered element does not belong to the selected menu.';
+            }
+            $validCount++;
+        }
+
+        if ($validCount === 0) {
+            return 'No valid menu order was supplied.';
         }
     }
 
@@ -198,7 +327,12 @@ function MENU_adminElementMutationError($mode, $post)
         return 'Invalid URL target.';
     }
 
-    if ($elementType === 2) {
+    if ($elementType === 1) {
+        $url = isset($post['menuurl']) ? (string) $post['menuurl'] : '';
+        if (!MENU_adminUrlIsSafe($url, true)) {
+            return 'Invalid submenu URL.';
+        }
+    } elseif ($elementType === 2) {
         $action = isset($post['glfunction']) ? (int) $post['glfunction'] : -1;
         if ($action < 0 || $action > 5) {
             return 'Invalid Geeklog Action.';
@@ -238,6 +372,9 @@ function MENU_adminElementMutationError($mode, $post)
         $url = isset($post['menuurl']) ? trim((string) $post['menuurl']) : '';
         if ($url === '') {
             return 'An External URL is required.';
+        }
+        if (!MENU_adminUrlIsSafe($url, false)) {
+            return 'The External URL is not safe.';
         }
     } elseif ($elementType === 9) {
         $topicId = isset($post['topicname']) ? (string) $post['topicname'] : '';
