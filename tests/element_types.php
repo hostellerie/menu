@@ -28,14 +28,16 @@ menu_type_test_assert(isset($createCascading[1]), 'type 1 missing from cascading
 menu_type_test_assert(isset($createCascading[2]), 'type 2 Geeklog Action missing from create');
 menu_type_test_assert(isset($createCascading[3]), 'type 3 Geeklog Core missing from create');
 menu_type_test_assert(isset($createCascading[9]), 'Topic must be available when topics exist');
-menu_type_test_assert(array_keys($createCascading) === array(2, 3, 4, 5, 9, 6, 1, 8, 7), 'cascading admin type order is inconsistent');
+menu_type_test_assert(!isset($createCascading[7]), 'PHP Function must be disabled by default');
+menu_type_test_assert(array_keys($createCascading) === array(2, 3, 4, 5, 9, 6, 1, 8), 'cascading admin type order is inconsistent');
 menu_type_test_assert(MENU_defaultElementType($createCascading) === 2, 'Geeklog Action must be the create default');
 
 $createSimple = MENU_getAllowedElementTypes($labels, 2, true, null, true);
 menu_type_test_assert(!isset($createSimple[1]), 'type 1 should be unavailable in simple menu create');
 menu_type_test_assert(isset($createSimple[2]), 'type 2 must remain available in simple menu create');
 menu_type_test_assert(!isset($createSimple[3]), 'type 3 should be unavailable in simple menu create');
-menu_type_test_assert(array_keys($createSimple) === array(2, 4, 5, 9, 6, 8, 7), 'simple admin type order is inconsistent');
+menu_type_test_assert(!isset($createSimple[7]), 'PHP Function must remain disabled by default');
+menu_type_test_assert(array_keys($createSimple) === array(2, 4, 5, 9, 6, 8), 'simple admin type order is inconsistent');
 menu_type_test_assert(MENU_defaultElementType($createSimple) === 2, 'Geeklog Action must remain the simple-menu default');
 
 $editType2 = MENU_getAllowedElementTypes($labels, 1, true, 2, true);
@@ -43,6 +45,15 @@ menu_type_test_assert(isset($editType2[2]), 'stored type 2 must remain represent
 
 $editLegacyType3 = MENU_getAllowedElementTypes($labels, 2, true, 3, true);
 menu_type_test_assert(isset($editLegacyType3[3]), 'stored legacy type 3 must remain representable while editing');
+
+$editLegacyPhp = MENU_getAllowedElementTypes($labels, 1, true, 7, true);
+menu_type_test_assert(isset($editLegacyPhp[7]), 'stored PHP Function must remain representable while disabled globally');
+
+$_MENU_CONF = array('allow_php_elements' => true);
+$withPhpEnabled = MENU_getAllowedElementTypes($labels, 1, true, null, true);
+menu_type_test_assert(isset($withPhpEnabled[7]), 'PHP Function must be offered when explicitly enabled');
+menu_type_test_assert(array_keys($withPhpEnabled) === array(2, 3, 4, 5, 9, 6, 1, 8, 7), 'enabled PHP Function order is inconsistent');
+unset($_MENU_CONF);
 
 $withoutStaticPages = MENU_getAllowedElementTypes($labels, 1, false, null, true);
 menu_type_test_assert(!isset($withoutStaticPages[5]), 'static page type should require Static Pages plugin');
