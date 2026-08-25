@@ -34,7 +34,7 @@ if (strpos($clone, 'SEC_hasRights(\'menu.admin\')') === false
     $failures[] = 'Clone endpoint must enforce authorization, POST and CSRF.';
 }
 
-if (strpos($security, 'if ($mode === \'saveclonemenu\')') === false) {
+if (strpos($security, '$mode === \'save\' || $mode === \'saveclonemenu\'') === false) {
     $failures[] = 'Legacy saveclonemenu controller path must be retired.';
 }
 
