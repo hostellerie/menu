@@ -48,6 +48,8 @@
   </table>
 </div>
 
+<script type="text/javascript" src="{site_admin_url}/plugins/menu/js/menu-order-handle.js"></script>
+
 <div class="menu-preview" style="margin:25px 0 5px 0;clear:both;">
   <div style="font-weight:bold;margin-bottom:8px;">Preview</div>
   <iframe
