@@ -189,13 +189,19 @@ function MENU_saveCloneMenu( ) {
         $group_id    = $M['group_id'];
 
         $sqlFieldList  = 'menu_name,menu_type,menu_active,group_id';
-        $sqlDataValues = "'$menu_name',$menu_type,$menu_active,$group_id";
+        $menuNameSql = MENU_dbEscape($menu_name);
+        $menu_type = (int) $menu_type;
+        $menu_active = (int) $menu_active;
+        $group_id = (int) $group_id;
+        $sqlDataValues = "'$menuNameSql',$menu_type,$menu_active,$group_id";
         DB_save($_TABLES['menu'], $sqlFieldList, $sqlDataValues);
         $menu_id = DB_insertId();
         $sql = "SELECT * FROM {$_TABLES['menu_config']} WHERE menu_id='".$menu."'";
         $result = DB_query($sql);
         while ($C = DB_fetchArray($result) ) {
-            DB_save($_TABLES['menu_config'],"menu_id,conf_name,conf_value","$menu_id,'".$C['conf_name']."','".$C['conf_value']."'");
+            $confNameSql = MENU_dbEscape($C['conf_name']);
+            $confValueSql = MENU_dbEscape($C['conf_value']);
+            DB_save($_TABLES['menu_config'], 'menu_id,conf_name,conf_value', "$menu_id,'$confNameSql','$confValueSql'");
         }
 
         $meadmin    = SEC_hasRights('menu.admin');
@@ -304,7 +310,8 @@ function MENU_saveNewMenu( ) {
     $menugroup  = (int) Geeklog\Input::fPost('group');
 
     $sqlFieldList  = 'menu_name,menu_type,menu_active,group_id';
-    $sqlDataValues = "'$menuname',$menutype,$menuactive,$menugroup";
+    $menunameSql = MENU_dbEscape($menuname);
+    $sqlDataValues = "'$menunameSql',$menutype,$menuactive,$menugroup";
     DB_save($_TABLES['menu'], $sqlFieldList, $sqlDataValues);
 
     $menu_id = DB_insertId();
@@ -429,7 +436,7 @@ function MENU_displayTree( $menu_id ) {
     $menu_select .= '<input type="hidden" name="mode" id="mode" value="menu"'.XHTML.'>' . LB;
     $menu_select .= '<strong>Menu</strong>' . ':&nbsp;<select name="menu" onchange="submit()">';
     foreach ($Menus AS $menu) {
-        $menu_select .= '<option value="' . $menu['menu_id'].'"' . ($menu['menu_id'] == $menu_id ? ' selected="selected"' : '') . '>' . $menu['menu_name'] .'</option>' . LB;
+        $menu_select .= '<option value="' . $menu['menu_id'].'"' . ($menu['menu_id'] == $menu_id ? ' selected="selected"' : '') . '>' . MENU_escapeHTML($menu['menu_name']) .'</option>' . LB;
     }
     $menu_select .= '</select>';
     $menu_select .= '&nbsp;<input type="submit" value="' . 'go' . '"' . XHTML . '>';
@@ -646,7 +653,7 @@ function MENU_createElement ( $menu_id ) {
             } else {
                 $label = $sp_title;
             }
-            $sp_select .= '<option value="' . $sp_id . '">' . $label . '</option>' . LB;
+            $sp_select .= '<option value="' . $sp_id . '">' . MENU_escapeHTML($label) . '</option>' . LB;
             $spCount++;
         }
         $sp_select .= '</select></div>' . LB;
@@ -662,7 +669,7 @@ function MENU_createElement ( $menu_id ) {
     $sql = "SELECT tid,topic FROM {$_TABLES['topics']} ORDER BY topic";
     $result = DB_query($sql);
     while (list ($tid, $topic) = DB_fetchArray($result)) {
-        $topic_select .= '<option value="' . $tid . '">' . $topic . '</option>' . LB;
+        $topic_select .= '<option value="' . $tid . '">' . MENU_escapeHTML($topic) . '</option>' . LB;
         $topicCount++;
     }
     $topic_select .= '</select></div>' . LB;
@@ -720,7 +727,7 @@ function MENU_createElement ( $menu_id ) {
         $parent_select .= '<option value="0">' . $LANG_MENU01['top_level'] . '</option>' . LB;
         $result = DB_query("SELECT id,element_label FROM {$_TABLES['menu_elements']} WHERE menu_id='" . $menu_id . "' AND element_type=1");
         while ($row = DB_fetchArray($result)) {
-            $parent_select .= '<option value="' . $row['id'] . '">' . $row['element_label'] . '</option>' . LB;
+            $parent_select .= '<option value="' . $row['id'] . '">' . MENU_escapeStoredText($row['element_label']) . '</option>' . LB;
         }
         $parent_select .= '</select>' . LB;
     }
@@ -730,7 +737,7 @@ function MENU_createElement ( $menu_id ) {
 
     $result = DB_query("SELECT id,element_label,element_order FROM {$_TABLES['menu_elements']} WHERE menu_id='" . $menu_id . "' AND pid=0 ORDER BY element_order ASC");
     while ($row = DB_fetchArray($result)) {
-        $order_select .= '<option value="' . $row['id'] . '">' . $row['element_label'] . '</option>' . LB;
+        $order_select .= '<option value="' . $row['id'] . '">' . MENU_escapeStoredText($row['element_label']) . '</option>' . LB;
     }
     $order_select .= '</select>' . LB;
 
@@ -807,7 +814,7 @@ function MENU_saveNewMenuElement ( ) {
     // build post vars
     $E['menu_id']        = (int) Geeklog\Input::fPost('menuid');
     $E['pid']            = (int) Geeklog\Input::fPost('pid');
-    $E['element_label']  = htmlspecialchars(strip_tags(COM_checkWords(Geeklog\Input::post('menulabel'))));
+    $E['element_label']  = trim(strip_tags(COM_checkWords(Geeklog\Input::post('menulabel'))));
     $E['element_type']   = (int) Geeklog\Input::fPost('menutype');
     $E['element_target'] = Geeklog\Input::fPost('urltarget');
     $afterElementID      = (int) Geeklog\Input::fPost('menuorder');
@@ -1085,7 +1092,7 @@ function MENU_editElement( $menu_id, $mid ) {
         next( $plugin_menus );
     }
     if ( $found == 0 ) {
-        $plugin_select .= '<option value="'.$Menus[$menu_id]['elements'][$mid]->subtype.'" selected="selected">'.$LANG_MENU01['disabled_plugin'].'</option>'.LB;
+        $plugin_select .= '<option value="'.MENU_escapeHTML($Menus[$menu_id]['elements'][$mid]->subtype).'" selected="selected">'.$LANG_MENU01['disabled_plugin'].'</option>'.LB;
     }
     $plugin_select .= '</select>' . LB;
 
@@ -1100,7 +1107,7 @@ function MENU_editElement( $menu_id, $mid ) {
             } else {
                 $label = $sp_label;
             }
-            $sp_select .= '<option value="' . $sp_id . '"' . ($Menus[$menu_id]['elements'][$mid]->subtype == $sp_id ? ' selected="selected"' : '') . '>' . $label . '</option>' . LB;
+            $sp_select .= '<option value="' . $sp_id . '"' . ($Menus[$menu_id]['elements'][$mid]->subtype == $sp_id ? ' selected="selected"' : '') . '>' . MENU_escapeHTML($label) . '</option>' . LB;
         }
         $sp_select .= '</select>' . LB;
     }
@@ -1110,7 +1117,7 @@ function MENU_editElement( $menu_id, $mid ) {
     $sql = "SELECT tid,topic FROM {$_TABLES['topics']} ORDER BY topic";
     $result = DB_query($sql);
     while (list ($tid, $topic) = DB_fetchArray($result)) {
-        $topic_select .= '<option value="' . $tid . '"' . ($Menus[$menu_id]['elements'][$mid]->subtype == $tid ? ' selected="selected"' : '') . '>' . $topic . '</option>' . LB;
+        $topic_select .= '<option value="' . $tid . '"' . ($Menus[$menu_id]['elements'][$mid]->subtype == $tid ? ' selected="selected"' : '') . '>' . MENU_escapeHTML($topic) . '</option>' . LB;
     }
     $topic_select .= '</select>' . LB;
 
@@ -1121,7 +1128,7 @@ function MENU_editElement( $menu_id, $mid ) {
         $parent_select .= '<option value="0">' . $LANG_MENU01['top_level'] . '</option>' . LB;
         $result = DB_query("SELECT id,element_label FROM {$_TABLES['menu_elements']} WHERE menu_id='" . $menu_id . "' AND element_type=1");
         while ($row = DB_fetchArray($result)) {
-            $parent_select .= '<option value="' . $row['id'] . '" ' . ($Menus[$menu_id]['elements'][$mid]->pid==$row['id'] ? 'selected="selected"' : '') . '>' . $row['element_label'] . '</option>' . LB;
+            $parent_select .= '<option value="' . $row['id'] . '" ' . ($Menus[$menu_id]['elements'][$mid]->pid==$row['id'] ? 'selected="selected"' : '') . '>' . MENU_escapeStoredText($row['element_label']) . '</option>' . LB;
         }
         $parent_select .= '</select>' . LB;
     }
@@ -1164,7 +1171,7 @@ function MENU_editElement( $menu_id, $mid ) {
     while ($row = DB_fetchArray($result)) {
         if ( $Menus[$menu_id]['elements'][$mid]->order != $order ) {
             $test_order = $order + 10;
-            $order_select .= '<option value="' . $row['id'] . '"' . ($Menus[$menu_id]['elements'][$mid]->order == $test_order ? ' selected="selected"' : '') . '>' . $row['element_label'] . '</option>' . LB;
+            $order_select .= '<option value="' . $row['id'] . '"' . ($Menus[$menu_id]['elements'][$mid]->order == $test_order ? ' selected="selected"' : '') . '>' . MENU_escapeStoredText($row['element_label']) . '</option>' . LB;
         }
         $order += 10;
     }
@@ -1230,9 +1237,9 @@ function MENU_saveEditMenuElement ( ) {
     global $_TABLES, $Menus;
     
     $id      = (int) Geeklog\Input::fPost('id');
-    $menu_id = Geeklog\Input::fPost('menu');
+    $menu_id = (int) Geeklog\Input::fPost('menu');
     $pid     = (int) Geeklog\Input::fPost('pid');
-    $label   = htmlspecialchars(strip_tags(COM_checkWords(Geeklog\Input::post('menulabel'))));
+    $label   = trim(strip_tags(COM_checkWords(Geeklog\Input::post('menulabel'))));
     $type    = (int) Geeklog\Input::fPost('menutype');
     $target  = Geeklog\Input::fPost('urltarget');
 
@@ -1288,7 +1295,11 @@ function MENU_saveEditMenuElement ( ) {
     $aorder   = DB_getItem($_TABLES['menu_elements'],'element_order','id=' . $aid);
     $neworder = $aorder + 1;
 
-    $sql        = "UPDATE {$_TABLES['menu_elements']} SET pid=$pid, element_order=$neworder, element_label='$label', element_type='$type', element_subtype='$subtype', element_active=$active, element_url='$url', element_target='$target', group_id=$group_id WHERE id=$id";
+    $labelSql = MENU_dbEscape($label);
+    $subtypeSql = MENU_dbEscape($subtype);
+    $urlSql = MENU_dbEscape($url);
+    $targetSql = MENU_dbEscape($target);
+    $sql = "UPDATE {$_TABLES['menu_elements']} SET pid=$pid, element_order=$neworder, element_label='$labelSql', element_type=$type, element_subtype='$subtypeSql', element_active=$active, element_url='$urlSql', element_target='$targetSql', group_id=$group_id WHERE id=$id AND menu_id=$menu_id";
 
     DB_query($sql);
     MENU_initMENU(true);
@@ -1576,7 +1587,7 @@ function MENU_menuConfig( $mid ) {
         'form_action'       => $_CONF['site_admin_url'] . '/plugins/menu/index.php',
         'birdseed'          => '<a href="'.$_CONF['site_admin_url'].'/plugins/menu/index.php">Menu List</a> :: '.$Menus[$mid]['menu_name'].' :: Configuration',
         'menu_id'           => $mid,
-        'menu_name'         => $Menus[$mid]['menu_name'],
+        'menu_name'         => MENU_escapeHTML($Menus[$mid]['menu_name']),
         'tmbgcolor'         => $menuConfig['main_menu_bg_color'],
         'tmbgcolorrgb'      => $main_menu_bg_colorRGB,
         'tmhcolor'          => $menuConfig['main_menu_hover_bg_color'],
@@ -1703,11 +1714,14 @@ function MENU_saveMenuConfig($menu_id=0) {
     $menuname   = $Menus[$menu_id]['menu_name'];
 
     $sqlFieldList  = 'id,menu_name,menu_type,menu_active,group_id';
-    $sqlDataValues = "$menu_id,'$menuname',$menutype,$menuactive,$menugroup";
+    $menunameSql = MENU_dbEscape($menuname);
+    $sqlDataValues = "$menu_id,'$menunameSql',$menutype,$menuactive,$menugroup";
     DB_save($_TABLES['menu'], $sqlFieldList, $sqlDataValues);
 
     foreach ($mc AS $name => $value) {
-        DB_save($_TABLES['menu_config'],"menu_id,conf_name,conf_value","$menu_id,'$name','$value'");
+        $nameSql = MENU_dbEscape($name);
+        $valueSql = MENU_dbEscape($value);
+        DB_save($_TABLES['menu_config'], 'menu_id,conf_name,conf_value', "$menu_id,'$nameSql','$valueSql'");
     }
 
     $file = array();
@@ -1739,7 +1753,8 @@ function MENU_saveMenuConfig($menu_id=0) {
                 $rc = move_uploaded_file($file['tmp_name'],$_CONF['path_html'] . 'images/menu/' . $newFilename);
                 if ( $rc ) {
                     @unlink($_CONF['path_html'] . '/menu/images/' . $Menus[$menu_id]['config']['bgimage']);
-                    DB_save($_TABLES['menu_config'],"menu_id,conf_name,conf_value","$menu_id,'menu_bg_filename','$newFilename'");
+                    $newFilenameSql = MENU_dbEscape($newFilename);
+                    DB_save($_TABLES['menu_config'], 'menu_id,conf_name,conf_value', "$menu_id,'menu_bg_filename','$newFilenameSql'");
                 }
             }
         }
@@ -1772,7 +1787,8 @@ function MENU_saveMenuConfig($menu_id=0) {
                 $rc = move_uploaded_file($file['tmp_name'],$_CONF['path_html'] . 'images/menu/' . $newFilename);
                 if ( $rc ) {
                     @unlink($_CONF['path_html'] . '/menu/images/' . $Menus[$menu_id]['config']['hoverimage']);
-                    DB_save($_TABLES['menu_config'],"menu_id,conf_name,conf_value","$menu_id,'menu_hover_filename','$newFilename'");
+                    $newFilenameSql = MENU_dbEscape($newFilename);
+                    DB_save($_TABLES['menu_config'], 'menu_id,conf_name,conf_value', "$menu_id,'menu_hover_filename','$newFilenameSql'");
                 }
             }
         }
@@ -1805,7 +1821,8 @@ function MENU_saveMenuConfig($menu_id=0) {
                 $rc = move_uploaded_file($file['tmp_name'],$_CONF['path_html'] . 'images/menu/' . $newFilename);
                 if ( $rc ) {
                     @unlink($_CONF['path_html'] . '/menu/images/' . $Menus[$menu_id]['config']['parentimage']);
-                    DB_save($_TABLES['menu_config'],"menu_id,conf_name,conf_value","$menu_id,'menu_parent_filename','$newFilename'");
+                    $newFilenameSql = MENU_dbEscape($newFilename);
+                    DB_save($_TABLES['menu_config'], 'menu_id,conf_name,conf_value', "$menu_id,'menu_parent_filename','$newFilenameSql'");
                 }
             }
         }
@@ -2017,20 +2034,30 @@ if ( (isset($_POST['execute']) || $mode != '') && !isset($_POST['cancel']) && !i
     $menu_id = (int) Geeklog\Input::fPost('menu');
     $content = MENU_displayTree( $menu_id );
 } else if ( isset($_POST['orders']) && isset($_POST['menu_id']) ) {
-    $menu_id   = (int) Geeklog\Input::fPost('menu_id');
-    $orders = explode('&', $_POST['orders']);
+    $menu_id = (int) Geeklog\Input::fPost('menu_id');
+    $orders = explode('&', (string) Geeklog\Input::post('orders', ''));
     $array = array();
-    
-    foreach($orders as $item) {
-        $item = explode('=', $item);
-        $item = explode('_', $item[1]);
-        $array[] = $item[1];
+
+    foreach ($orders as $item) {
+        $parts = explode('=', $item, 2);
+        if (count($parts) !== 2) {
+            continue;
+        }
+        $rowId = rawurldecode($parts[1]);
+        if (!preg_match('/^mid_([1-9][0-9]*)$/', $rowId, $matches)) {
+            continue;
+        }
+        $mid = (int) $matches[1];
+        if (isset($Menus[$menu_id]['elements'][$mid])) {
+            $array[] = $mid;
+        }
     }
-    foreach($array as $key => $mid) {
-            $key = ($key+1) * 10;
-            DB_query("UPDATE {$_TABLES['menu_elements']} SET element_order=" . $key . " WHERE menu_id=" . $menu_id . " AND id=" . $mid);        
+
+    foreach ($array as $key => $mid) {
+        $newOrder = ((int) $key + 1) * 10;
+        DB_query("UPDATE {$_TABLES['menu_elements']} SET element_order=" . $newOrder
+            . " WHERE menu_id=" . $menu_id . " AND id=" . (int) $mid);
     }
-    $pid = $Menus[$menu_id]['elements'][$mid]->pid;
 
     MENU_CACHE_remove_instance('menu');
     

@@ -78,13 +78,22 @@ class mbElement {
     }
 
     function saveElement( ) {
-        global $_TABLES, $Menus;
+        global $_TABLES;
 
-        $this->label            = $this->label;
-        $this->url              = $this->url;
+        $id       = (int) $this->id;
+        $pid      = (int) $this->pid;
+        $menuId   = (int) $this->menu_id;
+        $type     = (int) $this->type;
+        $order    = (int) $this->order;
+        $active   = (int) $this->active;
+        $groupId  = (int) $this->group_id;
+        $label    = MENU_dbEscape($this->label);
+        $subtype  = MENU_dbEscape($this->subtype);
+        $url      = MENU_dbEscape($this->url);
+        $target   = MENU_dbEscape($this->target);
 
         $sqlFieldList  = 'id,pid,menu_id,element_label,element_type,element_subtype,element_order,element_active,element_url,element_target,group_id';
-        $sqlDataValues = "$this->id,$this->pid,'".$this->menu_id."','$this->label',$this->type,'$this->subtype',$this->order,$this->active,'$this->url','$this->target',$this->group_id";
+        $sqlDataValues = $id . ',' . $pid . ',' . $menuId . ",'" . $label . "'," . $type . ",'" . $subtype . "'," . $order . ',' . $active . ",'" . $url . "','" . $target . "'," . $groupId;
         DB_save($_TABLES['menu_elements'], $sqlFieldList, $sqlDataValues);
     }
 
@@ -220,9 +229,9 @@ class mbElement {
             $movedown = '<form method="post" action="' . $actionUrl . '" style="display:inline">' . $tokenInput . '<input type="hidden" name="mode" value="move"' . XHTML . '><input type="hidden" name="where" value="down"' . XHTML . '><input type="hidden" name="mid" value="' . (int) $this->id . '"' . XHTML . '><input type="hidden" name="menu" value="' . (int) $this->menu_id . '"' . XHTML . '><button type="submit" style="border:0;background:none;padding:0;cursor:pointer">';
             $edit = '<a href="' . $_CONF['site_admin_url'] . '/plugins/menu/index.php?mode=edit&amp;mid=' . $this->id . '&amp;menu=' . $this->menu_id . '">';
             $delete = '<form method="post" action="' . $actionUrl . '" style="display:inline" onsubmit="return confirm(\'' . $LANG_MENU01['confirm_delete'] . '\');">' . $tokenInput . '<input type="hidden" name="mode" value="delete"' . XHTML . '><input type="hidden" name="mid" value="' . (int) $this->id . '"' . XHTML . '><input type="hidden" name="menuid" value="' . (int) $this->menu_id . '"' . XHTML . '><button type="submit" style="border:0;background:none;padding:0;cursor:pointer">';
-            $info       = COM_getTooltip('<img src="' . $_CONF['site_admin_url'] . '/plugins/menu/images/info.png" alt=""' . XHTML . '>', $elementDetails, '', $this->label, $template = 'help');
+            $info       = COM_getTooltip('<img src="' . $_CONF['site_admin_url'] . '/plugins/menu/images/info.png" alt=""' . XHTML . '>', $elementDetails, '', MENU_escapeStoredText($this->label), $template = 'help');
 
-            $retval .= "<div style=\"padding:0 5px;margin-left:" . $px . "px;\">" . ($this->type == 1 ? '<b>' : '') . strip_tags($this->label) . ($this->type == 1 ? '</b>' : '') . '</div>' . LB;
+            $retval .= "<div style=\"padding:0 5px;margin-left:" . $px . "px;\">" . ($this->type == 1 ? '<b>' : '') . MENU_escapeStoredText($this->label) . ($this->type == 1 ? '</b>' : '') . '</div>' . LB;
 
             $retval .= '</td>';
             $retval .= '<td class="aligncenter">';
@@ -381,9 +390,9 @@ class mbElement {
                 switch ($this->subtype) {
                     case 1 : // user menu
                         if ( $this->id != 0 && $this->access > 0 && $parentaclass != '' ) {
-                            $menu .= "<li>" . '<a class="' . $parentaclass . '" name="'.$parentaclass.'" href="#">' . strip_tags($this->label) . '</a>' . LB;
+                            $menu .= "<li>" . '<a class="' . $parentaclass . '" name="'.$parentaclass.'" href="#">' . MENU_escapeStoredText($this->label) . '</a>' . LB;
                         } else {
-                            $menu .= "<li>" . '<a href="#">' . strip_tags($this->label) . '</a></li>' . LB;
+                            $menu .= "<li>" . '<a href="#">' . MENU_escapeStoredText($this->label) . '</a></li>' . LB;
                         }
                         if ( $this->id == 0 && $ulclass != '' ) {
                             $menu .= '<ul class="' . $ulclass . '">' . LB;
@@ -442,9 +451,9 @@ class mbElement {
                              */
 
                             if ( $this->id != 0 && $this->access > 0 && $parentaclass != '' ) {
-                                $menu .= "<li>" . '<a class="' . $parentaclass . '" name="'.$parentaclass.'" href="#">' . strip_tags($this->label) . '</a>' . LB;
+                                $menu .= "<li>" . '<a class="' . $parentaclass . '" name="'.$parentaclass.'" href="#">' . MENU_escapeStoredText($this->label) . '</a>' . LB;
                             } else {
-                                $menu .= "<li>" . '<a href="#">' . strip_tags($this->label) . '</a></li>' . LB;
+                                $menu .= "<li>" . '<a href="#">' . MENU_escapeStoredText($this->label) . '</a></li>' . LB;
                             }
                             if ( $this->id == 0 && $ulclass != '' ) {
                                 $menu .= '<ul class="' . $ulclass . '">' . LB;
@@ -683,9 +692,9 @@ class mbElement {
 
                     case 3 : // topics menu
                         if ( $this->id != 0 && $this->access > 0 && $parentaclass != '' ) {
-                            $menu .= "<li>" . '<a class="' . $parentaclass . '" name="'.$parentaclass.'" href="#">' . strip_tags($this->label) . '</a>' . LB;
+                            $menu .= "<li>" . '<a class="' . $parentaclass . '" name="'.$parentaclass.'" href="#">' . MENU_escapeStoredText($this->label) . '</a>' . LB;
                         } else {
-                            $menu .= "<li>" . '<a href="#">' . strip_tags($this->label) . '</a></li>' . LB;
+                            $menu .= "<li>" . '<a href="#">' . MENU_escapeStoredText($this->label) . '</a></li>' . LB;
                         }
                         if ( $this->id == 0 && $ulclass != '' ) {
                             $menu .= '<ul class="' . $ulclass . '">' . LB;
@@ -756,9 +765,9 @@ class mbElement {
 
                     case 4 : // static pages menu
                         if ( $this->id != 0 && $this->access > 0 && $parentaclass != '' ) {
-                            $menu .= "<li>" . '<a class="' . $parentaclass . '" href="#">' . strip_tags($this->label) . '</a>' . LB;
+                            $menu .= "<li>" . '<a class="' . $parentaclass . '" href="#">' . MENU_escapeStoredText($this->label) . '</a>' . LB;
                         } else {
-                            $menu .= "<li>" . '<a href="#">' . strip_tags($this->label) . '</a></li>' . LB;
+                            $menu .= "<li>" . '<a href="#">' . MENU_escapeStoredText($this->label) . '</a></li>' . LB;
                         }
                         if ( $this->id == 0 && $ulclass != '' ) {
                             $menu .= '<ul class="' . $ulclass . '">' . LB;
@@ -791,9 +800,9 @@ class mbElement {
                         break;
                     case 5 : // plugin menu
                         if ( $this->id != 0 && $this->access > 0 && $parentaclass != '' ) {
-                            $menu .= "<li>" . '<a class="' . $parentaclass . '" href="#">' . strip_tags($this->label) . '</a>' . LB;
+                            $menu .= "<li>" . '<a class="' . $parentaclass . '" href="#">' . MENU_escapeStoredText($this->label) . '</a>' . LB;
                         } else {
-                            $menu .= "<li>" . '<a href="#">' . strip_tags($this->label) . '</a>' . LB;
+                            $menu .= "<li>" . '<a href="#">' . MENU_escapeStoredText($this->label) . '</a>' . LB;
                         }
                         if ( $this->id == 0 && $ulclass != '' ) {
                             $menu .= '<ul class="' . $ulclass . '">' . LB;
@@ -844,7 +853,7 @@ class mbElement {
                 $functionName = $this->subtype;
                 if (function_exists($functionName)) {
                     /* Pass the type of menu to custom php function */
-                    $menu = "<li>" . '<a class="' . $parentaclass . '" name="'.$parentaclass.'" href="#">' . strip_tags($this->label) . '</a>' . LB;
+                    $menu = "<li>" . '<a class="' . $parentaclass . '" name="'.$parentaclass.'" href="#">' . MENU_escapeStoredText($this->label) . '</a>' . LB;
                     $menu .= $functionName();
                     $menu .= '</li>';
                 }
@@ -873,12 +882,12 @@ class mbElement {
                 }
 
                 if ( $this->type == 1 && $parentaclass != '' ) {
-                    $retval .= "<li".$lastClass.">" . '<a class="' . $parentaclass . '" name="'.$parentaclass.'" href="' . ($this->url == '' ? '#' : $this->url) . '"' . MENU_legacyParentAttributes() . '>' . strip_tags($this->label) . '</a>' . LB;
+                    $retval .= "<li".$lastClass.">" . '<a class="' . $parentaclass . '" name="'.$parentaclass.'" href="' . MENU_safeHref($this->url) . '"' . MENU_legacyParentAttributes() . '>' . MENU_escapeStoredText($this->label) . '</a>' . LB;
                 } else {
                     if ($this->type == 8 ) {
-                        $retval .= "<li".$lastClass.'><a><strong>' . strip_tags($this->label) . '</strong></a></li>' . LB;
+                        $retval .= "<li".$lastClass.'><a><strong>' . MENU_escapeStoredText($this->label) . '</strong></a></li>' . LB;
                     } else {
-                        $retval .= "<li".$lastClass.">" . '<a href="' . $this->url . '"' . MENU_legacyLinkAttributes($this->url, $this->target) . '>' . strip_tags($this->label) . '</a></li>' . LB;
+                        $retval .= "<li".$lastClass.">" . '<a href="' . MENU_safeHref($this->url) . '"' . MENU_legacyLinkAttributes($this->url, $this->target) . '>' . MENU_escapeStoredText($this->label) . '</a></li>' . LB;
                     }
                 }
             }

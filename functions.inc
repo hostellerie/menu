@@ -114,7 +114,8 @@ function plugin_autotags_menu($op,$content='',$autotag='') {
             case 'menu' :
                 $menu = '';
                 $menuID = trim($autotag['parm1']);
-                $id = DB_getItem($_TABLES['menu'],'id','menu_name="'.$menuID.'"');
+                $menuIDSql = MENU_dbEscape($menuID);
+                $id = DB_getItem($_TABLES['menu'], 'id', 'menu_name="' . $menuIDSql . '"');
                 if ( $id > 0 ) {
                     if ( $Menus[$id]['menu_type'] == 1 ) {
                         $menu = MENU_getMenu($menuID,"gl_menu","gl_menu",'',"parent");

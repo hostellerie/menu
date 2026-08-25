@@ -103,6 +103,50 @@ namespace {
      * Keep controller code version-neutral by falling back to the established
      * COM_refresh() redirect helper on older Geeklog versions.
      */
+
+    if (!function_exists('MENU_dbEscape')) {
+        function MENU_dbEscape($value)
+        {
+            return DB_escapeString((string) $value);
+        }
+    }
+
+    if (!function_exists('MENU_escapeHTML')) {
+        function MENU_escapeHTML($value)
+        {
+            return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
+        }
+    }
+
+    /*
+     * Menu 1.2.x stored some element labels already HTML-encoded. Decode one
+     * legacy layer before escaping for output so upgrades remain visually
+     * compatible while raw database values can never become markup.
+     */
+    if (!function_exists('MENU_escapeStoredText')) {
+        function MENU_escapeStoredText($value)
+        {
+            return MENU_escapeHTML(htmlspecialchars_decode((string) $value, ENT_QUOTES));
+        }
+    }
+
+    if (!function_exists('MENU_safeHref')) {
+        function MENU_safeHref($url, $fallback = '#')
+        {
+            $url = trim((string) $url);
+            if ($url === '') {
+                return MENU_escapeHTML($fallback);
+            }
+
+            $decoded = html_entity_decode($url, ENT_QUOTES, 'UTF-8');
+            if (preg_match('/^[\\x00-\\x20]*(?:javascript|vbscript|data):/i', $decoded)) {
+                return MENU_escapeHTML($fallback);
+            }
+
+            return MENU_escapeHTML($url);
+        }
+    }
+
     if (!function_exists('COM_redirect')) {
         function COM_redirect($url)
         {
