@@ -44,3 +44,5 @@ foreach ($iterator as $file) {
 
 echo "Legacy ID generation cleanup tests passed\n";
 ''')
+
+# Trigger the temporary cleanup workflow on an existing workflow definition.
