@@ -61,6 +61,9 @@ jobs:
       - name: Test SQL and XSS hardening
         run: php tests/sql_xss_contract.php
 
+      - name: Test legacy image upload hardening
+        run: php tests/image_upload_contract.php
+
       - name: Test tabbed preview contract
         run: php tests/preview_contract.php
 
