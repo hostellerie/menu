@@ -248,7 +248,11 @@ function MENU_resolvedTopicAvailable($topicId)
     $escaped = function_exists('DB_escapeString')
         ? DB_escapeString((string) $topicId)
         : addslashes((string) $topicId);
-    $found = DB_getItem($_TABLES['topics'], 'tid', "tid='" . $escaped . "'");
+    $found = DB_getItem(
+        $_TABLES['topics'],
+        'tid',
+        "tid='" . $escaped . "'"
+    );
 
     return $found !== '' && $found !== null && $found !== false;
 }
@@ -257,10 +261,9 @@ function MENU_resolveMacros($url)
 {
     global $_CONF;
 
+    $url = str_replace('%version%', VERSION, (string) $url);
     $url = str_replace('%site_url%', $_CONF['site_url'], $url);
     $url = str_replace('%site_admin_url%', $_CONF['site_admin_url'], $url);
-    $url = str_replace('%version%', VERSION, $url);
-
     return $url;
 }
 
@@ -268,18 +271,162 @@ function MENU_resolveGeeklogAction($subtype)
 {
     global $_CONF;
 
+    $topic = isset($_REQUEST['topic']) ? COM_applyFilter($_REQUEST['topic']) : '';
+    $anon = COM_isAnonUser();
+    $allowed = true;
+
     switch ((int) $subtype) {
+        case 0:
+            $url = $_CONF['site_url'] . '/';
+            break;
         case 1:
-            return array($_CONF['site_url'] . '/users.php?mode=login', true);
+            $url = $_CONF['site_url'] . '/submit.php?type=story';
+            if ($topic !== '') {
+                $url .= '&amp;topic=' . rawurlencode($topic);
+            }
+            if ($anon && (!empty($_CONF['loginrequired']) || !empty($_CONF['submitloginrequired']))) {
+                $allowed = false;
+            }
+            break;
         case 2:
-            return array($_CONF['site_url'] . '/users.php?mode=logout', true);
+            $url = $_CONF['site_url'] . '/directory.php';
+            if ($topic !== '') {
+                $url = COM_buildUrl($url . '?topic=' . rawurlencode($topic));
+            }
+            if ($anon && (!empty($_CONF['loginrequired']) || !empty($_CONF['directoryloginrequired']))) {
+                $allowed = false;
+            }
+            break;
         case 3:
-            return array($_CONF['site_url'] . '/usersettings.php?mode=edit', true);
+            $url = $_CONF['site_url'] . '/usersettings.php?mode=edit';
+            if ($anon && (!empty($_CONF['loginrequired']) || !empty($_CONF['profileloginrequired']))) {
+                $allowed = false;
+            }
+            break;
         case 4:
-            return array($_CONF['site_admin_url'] . '/index.php', true);
+            $url = $_CONF['site_url'] . '/search.php';
+            if ($anon && (!empty($_CONF['loginrequired']) || !empty($_CONF['searchloginrequired']))) {
+                $allowed = false;
+            }
+            break;
+        case 5:
+            $url = $_CONF['site_url'] . '/stats.php';
+            if (!SEC_hasRights('stats.view')) {
+                $allowed = false;
+            }
+            break;
         default:
-            return array('', false);
+            $url = $_CONF['site_url'] . '/';
+            break;
     }
+
+    return array($url, $allowed);
+}
+
+function MENU_resolveGeeklogCoreChildren($subtype)
+{
+    global $_CONF, $_TABLES, $_USER, $_PLUGINS, $_SP_CONF;
+
+    $children = array();
+    $resolved = true;
+
+    switch ((int) $subtype) {
+        case 1: // user menu
+            if (!empty($_USER['uid']) && (int) $_USER['uid'] > 1) {
+                if (function_exists('PLG_getUserOptions')) {
+                    $options = PLG_getUserOptions();
+                    foreach ($options as $option) {
+                        if (is_object($option) && isset($option->adminurl, $option->adminlabel)) {
+                            $children[] = MENU_resolvedSyntheticNode($option->adminlabel, $option->adminurl);
+                        }
+                    }
+                }
+                $children[] = MENU_resolvedSyntheticNode('Preferences', $_CONF['site_url'] . '/usersettings.php?mode=edit');
+                $children[] = MENU_resolvedSyntheticNode('Logout', $_CONF['site_url'] . '/users.php?mode=logout');
+            } else {
+                $children[] = MENU_resolvedSyntheticNode('Login', $_CONF['site_url'] . '/users.php?mode=login');
+            }
+            break;
+
+        case 2: // admin menu
+            $children = MENU_resolveGeeklogAdminChildren();
+            break;
+
+        case 3: // topics
+            $langsql = COM_getLangSQL('tid', 'AND');
+            $sql = "SELECT tid,topic FROM {$_TABLES['topics']} WHERE hidden=0" . $langsql . COM_getPermSQL('AND');
+            $sql .= (!empty($_CONF['sortmethod']) && $_CONF['sortmethod'] === 'alpha') ? ' ORDER BY topic ASC' : ' ORDER BY sortnum';
+            $result = DB_query($sql);
+            while ($row = DB_fetchArray($result)) {
+                $children[] = MENU_resolvedSyntheticNode(
+                    stripslashes($row['topic']),
+                    $_CONF['site_url'] . '/index.php?topic=' . rawurlencode($row['tid']),
+                    9,
+                    $row['tid']
+                );
+            }
+            break;
+
+        case 4: // static pages menu
+            if (!in_array('staticpages', $_PLUGINS)) {
+                break;
+            }
+            $order = '';
+            if (!empty($_SP_CONF['sort_menu_by'])) {
+                if ($_SP_CONF['sort_menu_by'] === 'date') {
+                    $order = ' ORDER BY sp_date DESC';
+                } elseif ($_SP_CONF['sort_menu_by'] === 'label') {
+                    $order = ' ORDER BY sp_label';
+                } elseif ($_SP_CONF['sort_menu_by'] === 'title') {
+                    $order = ' ORDER BY sp_title';
+                } else {
+                    $order = ' ORDER BY sp_id';
+                }
+            }
+            $result = DB_query('SELECT sp_id, sp_label FROM ' . $_TABLES['staticpage']
+                . ' WHERE sp_onmenu = 1 AND draft_flag = 0' . COM_getPermSql('AND') . $order);
+            while ($row = DB_fetchArray($result)) {
+                $children[] = MENU_resolvedSyntheticNode(
+                    $row['sp_label'],
+                    COM_buildURL($_CONF['site_url'] . '/staticpages/index.php?page=' . rawurlencode($row['sp_id'])),
+                    5,
+                    $row['sp_id']
+                );
+            }
+            break;
+
+        case 5: // plugin menu
+            $pluginMenu = PLG_getMenuItems();
+            foreach ($pluginMenu as $label => $url) {
+                $children[] = MENU_resolvedSyntheticNode($label, $url, 4, $label);
+            }
+            break;
+
+        default:
+            break;
+    }
+
+    return array($children, $resolved);
+}
+
+function MENU_resolvedSyntheticNode($label, $url, $type = 0, $subtype = '')
+{
+    return array(
+        'id' => 0,
+        'parent_id' => 0,
+        'label' => strip_tags((string) $label),
+        'type' => (int) $type,
+        'subtype' => $subtype,
+        'url' => (string) $url,
+        'target' => '',
+        'rel' => '',
+        'aria_label' => MENU_runtimeConfigEnabled('accessibility_markup', true)
+            ? strip_tags((string) $label) : '',
+        'active' => true,
+        'selected' => MENU_resolvedNodeSelected($url),
+        'resolved' => true,
+        'children' => array(),
+    );
 }
 
 function MENU_resolvedNodeSelected($url)
@@ -287,12 +434,11 @@ function MENU_resolvedNodeSelected($url)
     if ($url === '' || $url === '#') {
         return false;
     }
-
     if (!function_exists('COM_getCurrentURL')) {
         return false;
     }
 
-    $current = COM_getCurrentURL();
-
-    return $current !== '' && strpos($current, html_entity_decode($url, ENT_QUOTES, 'UTF-8')) === 0;
+    $current = html_entity_decode(COM_getCurrentURL(), ENT_QUOTES, 'UTF-8');
+    $candidate = html_entity_decode((string) $url, ENT_QUOTES, 'UTF-8');
+    return rtrim($current, '/') === rtrim($candidate, '/');
 }

@@ -31,6 +31,11 @@ $_TABLES = array(
 $_USER = array('uid' => 2);
 $LANG01 = array(10 => 'Submissions', 11 => 'Stories', 12 => 'Blocks', 13 => 'Topics', 17 => 'Users');
 $LANG29 = array(34 => 'Command & Control');
+$_MENU_CONF = array(
+    'allow_php_elements' => true,
+    'accessibility_markup' => true,
+    'external_link_protection' => true,
+);
 $Menus = array();
 
 function COM_getLanguageId() { return ''; }
