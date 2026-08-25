@@ -1,0 +1,56 @@
+<?php
+
+$root = dirname(__DIR__);
+
+$removedImages = array(
+    'admin/images/blank.gif',
+    'admin/images/check.png',
+    'admin/images/copy.png',
+    'admin/images/rainbow.png',
+    'admin/images/transparent.png',
+);
+
+foreach ($removedImages as $relativePath) {
+    if (file_exists($root . '/' . $relativePath)) {
+        fwrite(STDERR, "Removed legacy admin asset returned: {$relativePath}\n");
+        exit(1);
+    }
+}
+
+$colorPicker = file_get_contents($root . '/admin/js/colorpicker.js');
+$required = array(
+    "(function ($) {",
+    "'use strict';",
+    'var selectorOwner = null;',
+    'function buildSelector()',
+    'function buildPicker(element)',
+    '$.fn.colorPicker = function ()',
+    '}(jQuery));',
+);
+
+foreach ($required as $needle) {
+    if (strpos($colorPicker, $needle) === false) {
+        fwrite(STDERR, "Color picker encapsulation contract missing: {$needle}\n");
+        exit(1);
+    }
+}
+
+$forbidden = array(
+    "\nbuildPicker = function",
+    "\nbuildSelector = function",
+    "\ncheckMouse = function",
+    "\nhideSelector = function",
+    "\nshowSelector = function",
+    "\ntoggleSelector = function",
+    "\nchangeColor = function",
+    "\ntoHex = function",
+);
+
+foreach ($forbidden as $needle) {
+    if (strpos($colorPicker, $needle) !== false) {
+        fwrite(STDERR, "Implicit color picker global returned: {$needle}\n");
+        exit(1);
+    }
+}
+
+echo "Admin asset cleanup contract tests passed\n";
