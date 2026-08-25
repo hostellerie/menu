@@ -63,15 +63,20 @@ s = s.replace(
 )
 p.write_text(s)
 
-# Extend the regression contract with final-pass assertions.
+# Extend and repair the regression contract. Dollar signs in double-quoted PHP
+# search strings are escaped so the contract searches source text literally.
 p = Path('tests/sql_xss_contract.php')
 s = p.read_text()
+s = s.replace(
+    'assertTrue(strpos($admin, "preg_match(\'/^mid_([1-9][0-9]*)$/\', $rowId") !== false, \'drag IDs validated\');',
+    'assertTrue(strpos($admin, "preg_match(\'/^mid_([1-9][0-9]*)$/\', \\$rowId") !== false, \'drag IDs validated\');'
+)
 needle = "assertTrue(strpos($functions, '$menuIDSql = MENU_dbEscape($menuID);') !== false, 'autotag menu name escaped');\n"
-extra = needle + r'''assertTrue(strpos($class, "MENU_safeHref($url)") !== false, 'dynamic legacy URLs use safe href helper');
-assertTrue(strpos($class, "MENU_escapeStoredText($label)") !== false, 'dynamic legacy labels are escaped');
-assertTrue(strpos($class, "str_replace( ' ', \"','\", $tids )") === false, 'raw legacy topic ID interpolation removed');
-assertTrue(strpos($class, "preg_split('/\\s+/', trim((string) $tids))") !== false, 'legacy topic IDs normalized');
-assertTrue(strpos($admin, "'id=' . $aid . ' AND menu_id=' . $menu_id") !== false, 'display-after lookup scoped to menu');
+extra = needle + r'''assertTrue(strpos($class, "MENU_safeHref(\$url)") !== false, 'dynamic legacy URLs use safe href helper');
+assertTrue(strpos($class, "MENU_escapeStoredText(\$label)") !== false, 'dynamic legacy labels are escaped');
+assertTrue(strpos($class, "str_replace( ' ', \"','\", \$tids )") === false, 'raw legacy topic ID interpolation removed');
+assertTrue(strpos($class, "preg_split('/\\s+/', trim((string) \$tids))") !== false, 'legacy topic IDs normalized');
+assertTrue(strpos($admin, "'id=' . \$aid . ' AND menu_id=' . \$menu_id") !== false, 'display-after lookup scoped to menu');
 '''
 if needle not in s:
     raise SystemExit('contract insertion marker not found')
