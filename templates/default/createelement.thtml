@@ -79,3 +79,12 @@
   </div>
   </form>
 </div>
+
+<script type="text/javascript">
+jQuery(function () {
+    var orderSelect = jQuery('#menuorder');
+    if (orderSelect.length && orderSelect[0].options.length > 1) {
+        orderSelect.prop('selectedIndex', orderSelect[0].options.length - 1);
+    }
+});
+</script>
