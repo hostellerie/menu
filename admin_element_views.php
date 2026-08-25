@@ -85,130 +85,8 @@ function MENU_createElement ( $menu_id ) {
            $_SCRIPTS, $_PLUGINS;
 
     $_SCRIPTS->setJavaScriptLibrary('jquery');
+    $_SCRIPTS->setJavaScriptFile('menu_element_editor', '/admin/plugins/menu/js/element-editor.js');
     
-    $js = "<script type=\"text/javascript\">
-        jQuery('#menu').show();
-    </script>
-    <script type=\"text/javascript\">
-    jQuery(document).ready(function () {
-        jQuery('#pid').change(function(){
-             var option_id = jQuery('#pid').val();
-             var menu_id = $menu_id;
-             var url = 'getorder.php?optionid='+option_id+'&menuid='+menu_id;
-             jQuery('#displayafter').load(url);
-        });
-        
-        jQuery('#urldiv').css('display','');
-        jQuery('#targetdiv').css('display','none');
-        jQuery('#glcorediv').css('display','none');
-        jQuery('#plugin').css('display','none');
-        jQuery('#staticpage').css('display','none');
-        jQuery('#glfunc').css('display','none');
-        jQuery('#phpdiv').css('display','none');
-        jQuery('#topic').css('display','none');
-
-        //var myValidator = new fValidator(\"newitem\");
-
-    });
-    function toggleFields() {
-        selected = jQuery('#menutype').val();
-
-        switch( selected ) {
-            case '1' : // sub
-                jQuery('#urldiv').css('display','');
-                jQuery('#targetdiv').css('display','none');
-                jQuery('#glcorediv').css('display','none');
-                jQuery('#plugin').css('display','none');
-                jQuery('#staticpage').css('display','none');
-                jQuery('#glfunc').css('display','none');
-                jQuery('#phpdiv').css('display','none');
-                jQuery('#topic').css('display','none');
-                break;
-            case '2' : // gl action
-                jQuery('#urldiv').css('display','none');
-                jQuery('#targetdiv').css('display','none');
-                jQuery('#glcorediv').css('display','none');
-                jQuery('#plugin').css('display','none');
-                jQuery('#staticpage').css('display','none');
-                jQuery('#glfunc').css('display','');
-                jQuery('#phpdiv').css('display','none');
-                jQuery('#topic').css('display','none');
-                break;
-            case '3' : // gl menus
-                jQuery('#urldiv').css('display','none');
-                jQuery('#targetdiv').css('display','none');
-                jQuery('#glcorediv').css('display','');
-                jQuery('#plugin').css('display','none');
-                jQuery('#staticpage').css('display','none');
-                jQuery('#glfunc').css('display','none');
-                jQuery('#phpdiv').css('display','none');
-                jQuery('#topic').css('display','none');
-                break;
-            case '4' : // plugins
-                jQuery('#urldiv').css('display','none');
-                jQuery('#targetdiv').css('display','none');
-                jQuery('#glcorediv').css('display','none');
-                jQuery('#plugin').css('display','');
-                jQuery('#staticpage').css('display','none');
-                jQuery('#glfunc').css('display','none');
-                jQuery('#phpdiv').css('display','none');
-                jQuery('#topic').css('display','none');
-                break;
-            case '5' :  // static pages
-                jQuery('#urldiv').css('display','none');
-                jQuery('#targetdiv').css('display','none');
-                jQuery('#glcorediv').css('display','none');
-                jQuery('#plugin').css('display','none');
-                jQuery('#staticpage').css('display','');
-                jQuery('#glfunc').css('display','none');
-                jQuery('#phpdiv').css('display','none');
-                jQuery('#topic').css('display','none');
-                break;
-            case '6' : // url
-                jQuery('#urldiv').css('display','');
-                jQuery('#targetdiv').css('display','');
-                jQuery('#glcorediv').css('display','none');
-                jQuery('#plugin').css('display','none');
-                jQuery('#staticpage').css('display','none');
-                jQuery('#glfunc').css('display','none');
-                jQuery('#phpdiv').css('display','none');
-                jQuery('#topic').css('display','none');
-                break;
-            case '7' :  // php function
-                jQuery('#urldiv').css('display','none');
-                jQuery('#targetdiv').css('display','none');
-                jQuery('#glcorediv').css('display','none');
-                jQuery('#plugin').css('display','none');
-                jQuery('#staticpage').css('display','none');
-                jQuery('#glfunc').css('display','none');
-                jQuery('#phpdiv').css('display','');
-                jQuery('#topic').css('display','none');
-                break;
-            case '8' :
-                jQuery('#urldiv').css('display','none');
-                jQuery('#targetdiv').css('display','none');
-                jQuery('#glcorediv').css('display','none');
-                jQuery('#plugin').css('display','none');
-                jQuery('#staticpage').css('display','none');
-                jQuery('#glfunc').css('display','none');
-                jQuery('#phpdiv').css('display','none');
-                jQuery('#topic').css('display','none');
-                break;
-            case '9' : // topic
-                jQuery('#urldiv').css('display','none');
-                jQuery('#targetdiv').css('display','none');
-                jQuery('#glcorediv').css('display','none');
-                jQuery('#plugin').css('display','none');
-                jQuery('#staticpage').css('display','none');
-                jQuery('#glfunc').css('display','none');
-                jQuery('#phpdiv').css('display','none');
-                jQuery('#topic').css('display','');
-                break;
-        }
-    }
-    </script>";
-    
-    $_SCRIPTS->setJavaScript($js);
     
     $retval = '';
     $safeMenuName = MENU_escapeStoredText($Menus[$menu_id]['menu_name']);
@@ -263,7 +141,7 @@ function MENU_createElement ( $menu_id ) {
         $topic_select = '';
     }
 
-    $type_select = '<select id="menutype" name="menutype" onChange="toggleFields();">' . LB;
+    $type_select = '<select id="menutype" name="menutype">' . LB;
     $allowedTypes = MENU_getAllowedElementTypes(
         $LANG_MENU_TYPES,
         $Menus[$menu_id]['menu_type'],
@@ -402,126 +280,8 @@ function MENU_editElement( $menu_id, $mid ) {
            $LANG_MENU_GLFUNCTION, $_SCRIPTS, $_PLUGINS;
 
     $_SCRIPTS->setJavaScriptLibrary('jquery');
+    $_SCRIPTS->setJavaScriptFile('menu_element_editor', '/admin/plugins/menu/js/element-editor.js');
     
-    $js = "<script type=\"text/javascript\">
-        jQuery('#menu').show();
-    </script>
-    <script type=\"text/javascript\">
-    jQuery(document).ready(function () {
-        jQuery('#pid').change(function(){
-             var option_id = jQuery('#pid').val();
-             var menu_id = $menu_id;
-             var url = 'getorder.php?optionid='+option_id+'&menuid='+menu_id;
-             jQuery('#displayafter').load(url);
-        });
-        jQuery('#menutype').change(function(){
-            toggleFields();
-        });
-        toggleFields();
-        
-
-        //var myValidator = new fValidator(\"newitem\");
-
-    });
-    function toggleFields() {
-        selected = jQuery('#menutype').val();
-
-        switch( selected ) {
-            case '1' : // sub
-                jQuery('#urldiv').css('display','');
-                jQuery('#targetdiv').css('display','none');
-                jQuery('#glcorediv').css('display','none');
-                jQuery('#plugin').css('display','none');
-                jQuery('#staticpage').css('display','none');
-                jQuery('#glfunc').css('display','none');
-                jQuery('#phpdiv').css('display','none');
-                jQuery('#topic').css('display','none');
-                break;
-            case '2' : // gl actioin
-                jQuery('#urldiv').css('display','none');
-                jQuery('#targetdiv').css('display','none');
-                jQuery('#glcorediv').css('display','none');
-                jQuery('#plugin').css('display','none');
-                jQuery('#staticpage').css('display','none');
-                jQuery('#glfunc').css('display','');
-                jQuery('#phpdiv').css('display','none');
-                jQuery('#topic').css('display','none');
-                break;
-            case '3' : // gl menus
-                jQuery('#urldiv').css('display','none');
-                jQuery('#targetdiv').css('display','none');
-                jQuery('#glcorediv').css('display','');
-                jQuery('#plugin').css('display','none');
-                jQuery('#staticpage').css('display','none');
-                jQuery('#glfunc').css('display','none');
-                jQuery('#phpdiv').css('display','none');
-                jQuery('#topic').css('display','none');
-                break;
-            case '4' : // plugins
-                jQuery('#urldiv').css('display','none');
-                jQuery('#targetdiv').css('display','none');
-                jQuery('#glcorediv').css('display','none');
-                jQuery('#plugin').css('display','');
-                jQuery('#staticpage').css('display','none');
-                jQuery('#glfunc').css('display','none');
-                jQuery('#phpdiv').css('display','none');
-                jQuery('#topic').css('display','none');
-                break;
-            case '5' :  // static pages
-                jQuery('#urldiv').css('display','none');
-                jQuery('#targetdiv').css('display','none');
-                jQuery('#glcorediv').css('display','none');
-                jQuery('#plugin').css('display','none');
-                jQuery('#staticpage').css('display','');
-                jQuery('#glfunc').css('display','none');
-                jQuery('#phpdiv').css('display','none');
-                jQuery('#topic').css('display','none');
-                break;
-            case '6' : // url
-                jQuery('#urldiv').css('display','');
-                jQuery('#targetdiv').css('display','');
-                jQuery('#glcorediv').css('display','none');
-                jQuery('#plugin').css('display','none');
-                jQuery('#staticpage').css('display','none');
-                jQuery('#glfunc').css('display','none');
-                jQuery('#phpdiv').css('display','none');
-                jQuery('#topic').css('display','none');
-                break;
-            case '7' :  // php function
-                jQuery('#urldiv').css('display','none');
-                jQuery('#targetdiv').css('display','none');
-                jQuery('#glcorediv').css('display','none');
-                jQuery('#plugin').css('display','none');
-                jQuery('#staticpage').css('display','none');
-                jQuery('#glfunc').css('display','none');
-                jQuery('#phpdiv').css('display','');
-                jQuery('#topic').css('display','none');
-                break;
-            case '8' :
-                jQuery('#urldiv').css('display','none');
-                jQuery('#targetdiv').css('display','none');
-                jQuery('#glcorediv').css('display','none');
-                jQuery('#plugin').css('display','none');
-                jQuery('#staticpage').css('display','none');
-                jQuery('#glfunc').css('display','none');
-                jQuery('#phpdiv').css('display','none');
-                jQuery('#topic').css('display','none');
-                break;
-            case '9' : // topic
-                jQuery('#urldiv').css('display','none');
-                jQuery('#targetdiv').css('display','none');
-                jQuery('#glcorediv').css('display','none');
-                jQuery('#plugin').css('display','none');
-                jQuery('#staticpage').css('display','none');
-                jQuery('#glfunc').css('display','none');
-                jQuery('#phpdiv').css('display','none');
-                jQuery('#topic').css('display','');
-                break;
-        }
-    }
-    </script>";
-    
-    $_SCRIPTS->setJavaScript($js);
     
     $retval = '';
     $safeMenuName = MENU_escapeStoredText($Menus[$menu_id]['menu_name']);
@@ -539,7 +299,7 @@ function MENU_editElement( $menu_id, $mid ) {
 
     // build types select
 
-    $type_select = '<select id="menutype" name="menutype" onChange="toggleFields();">' . LB;
+    $type_select = '<select id="menutype" name="menutype">' . LB;
     $allowedTypes = MENU_getAllowedElementTypes(
         $LANG_MENU_TYPES,
         $Menus[$menu_id]['menu_type'],
