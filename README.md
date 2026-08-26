@@ -17,7 +17,7 @@ Menu 1.3.0 is a compatibility and modernization release focused on preserving ex
 - PHP **5.6 through 8.1**
 - MySQL / MariaDB
 - single-site and multisite installations
-- upgrades from legacy Menu 1.2.x installations, with final upgrade validation in progress
+- upgrades from Menu **1.2.5 through 1.2.8.1**
 
 One shared codebase is used across the supported Geeklog versions.
 
@@ -75,7 +75,7 @@ The database migration is deliberately small and idempotent. It adds the composi
 
 Legacy plugin-owned files are copied to the preferred site-specific storage location without deleting or overwriting the originals.
 
-Final validation of upgrades from older 1.2.x releases is being completed before the stable 1.3.0 release.
+Upgrade validation now covers the supported legacy range from Menu 1.2.5 through 1.2.8.1 on the supported Geeklog generations.
 
 ## Installation
 
