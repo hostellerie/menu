@@ -51,6 +51,8 @@ function menu_update_Database_1_3_0()
  *
  * Existing values are preserved. The operation is idempotent and can safely
  * be re-run if an upgrade was interrupted before the plugin version changed.
+ * Database schema changes are deliberately handled later by the real upgrade
+ * or post-install path, once plugin tables are guaranteed to exist.
  *
  * @return bool
  */
@@ -63,11 +65,6 @@ function menu_update_ConfValues_1_3_0()
 
     if (!MENU_ensureConfig130()) {
         COM_errorLog('Menu upgrade: unable to initialize 1.3.0 configuration');
-        return false;
-    }
-
-    if (!menu_update_Database_1_3_0()) {
-        COM_errorLog('Menu upgrade: unable to initialize 1.3.0 database indexes');
         return false;
     }
 
