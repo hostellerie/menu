@@ -109,7 +109,7 @@ The 1.3.0 upgrade is designed to preserve:
 - uploaded images;
 - legacy rendering behavior.
 
-The upgrade path and installable ZIP have been exercised against the supported legacy range during final validation.
+The upgrade path and installable ZIP have been exercised against the supported legacy range during final validation. The final 1.3.0 upgrade path was also successfully validated on production Geeklog sites before release.
 
 For multisite installations sharing one plugin source tree, deploying the 1.3.0 code before upgrading every individual site is supported by design. Sites pending their database/plugin upgrade use conservative runtime defaults and the legacy storage fallback.
 
@@ -118,6 +118,8 @@ For multisite installations sharing one plugin source tree, deploying the 1.3.0 
 The development branch is continuously linted and tested under PHP 5.6 and PHP 8.1.
 
 CI also builds the installable `menu-1.3.0.zip` package used for final release validation.
+
+Final release validation includes fresh installs on Geeklog 2.1.1 and 2.2.2, supported legacy upgrades, configuration save/reload checks, runtime log auditing, and successful production upgrades.
 
 ## Project
 
