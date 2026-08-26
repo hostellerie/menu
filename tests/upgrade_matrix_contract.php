@@ -18,7 +18,7 @@ foreach ($fromVersions as $version) {
 }
 
 $requiredUpgradePath = array(
-    "version_compare($installedVersion, '1.3.0', '<')",
+    'version_compare($installedVersion, \'1.3.0\', \'<\')',
     "require_once __DIR__ . '/install_updates.php';",
     'menu_update_ConfValues_1_3_0()',
 );
@@ -32,7 +32,7 @@ foreach ($requiredUpgradePath as $snippet) {
 
 $requiredMigrationSafety = array(
     'function menu_update_Database_1_3_0()',
-    "SHOW INDEX FROM ",
+    'SHOW INDEX FROM ',
     'DB_numRows($result) === 0',
     'function menu_update_ConfValues_1_3_0()',
     'MENU_ensureConfig130()',
