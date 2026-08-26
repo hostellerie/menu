@@ -14,6 +14,27 @@ if (stripos($_SERVER['PHP_SELF'], basename(__FILE__)) !== false) {
 }
 
 /**
+ * Return whether a Menu table currently exists.
+ *
+ * Fresh installs call the compatibility hook before Geeklog creates plugin
+ * tables, so schema migration must be deferred until post-install in that case.
+ *
+ * @param string $tableName
+ * @return bool
+ */
+function MENU_tableExists130($tableName)
+{
+    if ($tableName === '') {
+        return false;
+    }
+
+    $safeTable = str_replace(array('\\', "'"), array('\\\\', "\\'"), $tableName);
+    $result = DB_query("SHOW TABLES LIKE '" . $safeTable . "'");
+
+    return DB_numRows($result) > 0;
+}
+
+/**
  * Add the 1.3.0 database indexes without changing existing data or engines.
  *
  * The legacy schema already uses AUTO_INCREMENT primary keys. 1.3.0 keeps the
@@ -51,8 +72,8 @@ function menu_update_Database_1_3_0()
  *
  * Existing values are preserved. The operation is idempotent and can safely
  * be re-run if an upgrade was interrupted before the plugin version changed.
- * Database schema changes are deliberately handled later by the real upgrade
- * or post-install path, once plugin tables are guaranteed to exist.
+ * On a fresh install the plugin tables do not exist yet; database migration is
+ * therefore deferred to plugin_postinstall_menu().
  *
  * @return bool
  */
@@ -65,6 +86,13 @@ function menu_update_ConfValues_1_3_0()
 
     if (!MENU_ensureConfig130()) {
         COM_errorLog('Menu upgrade: unable to initialize 1.3.0 configuration');
+        return false;
+    }
+
+    if (isset($_TABLES['menu_elements'])
+        && MENU_tableExists130($_TABLES['menu_elements'])
+        && !menu_update_Database_1_3_0()) {
+        COM_errorLog('Menu upgrade: unable to initialize 1.3.0 database indexes');
         return false;
     }
 
