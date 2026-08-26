@@ -19,7 +19,7 @@ The modernization remains conservative: preserve existing menu data and legacy r
 
 ## Current status — 2026-08-26
 
-Menu 1.3.0 is now in **release-candidate / final validation** state. No new feature work is planned before the stable release unless a release-blocking defect is discovered.
+Menu 1.3.0 has completed its planned release validation. No new feature work is planned before the stable release unless a release-blocking defect is discovered.
 
 ### Implemented and covered by automated tests
 
@@ -70,19 +70,16 @@ The following paths have been exercised successfully during development on Geekl
 - footer rendering;
 - authenticated/anonymous permission changes;
 - fresh install/reinstall on Geeklog 2.1.1;
+- final fresh install on Geeklog 2.2.2;
 - uninstall/reinstall sequence on Geeklog 2.1.1;
 - upgrade via the actual installable 1.3.0 archive;
-- legacy upgrade paths from Menu 1.2.5 through 1.2.8.1 across the supported Geeklog test generations.
+- legacy upgrade paths from Menu 1.2.5 through 1.2.8.1 across the supported Geeklog test generations;
+- save/reload validation of all eight global configuration switches;
+- final runtime warning/error-log audit.
 
-### Remaining release checks
+### Release status
 
-Only final verification remains before 1.3.0 stable:
-
-1. Manually exercise and save/reload all eight global configuration switches on the final Geeklog 2.1.1 and 2.2.2 test installations.
-2. Perform a final Geeklog/PHP warning and error-log audit after those tests.
-3. Confirm a final fresh install on Geeklog 2.2.2 if not already covered by the final test pass.
-
-The upgrade matrix and installable package path are no longer release blockers.
+All planned 1.3.0 release checks are complete. The branch is ready to be frozen for the stable release, subject only to fixing a newly discovered release-blocking defect.
 
 SlickNav is **not** a release blocker for 1.3.0. Replacement/removal remains post-1.3.0 work unless a concrete security or compatibility defect is found.
 
@@ -124,7 +121,7 @@ SlickNav is **not** a release blocker for 1.3.0. Replacement/removal remains pos
 - [x] Keep shared source syntax PHP 5.6 compatible.
 - [x] Run permanent lint/tests under PHP 5.6 and PHP 8.1.
 - [x] Avoid PHP 8-only APIs in shared code.
-- [ ] Complete final runtime warning/error-log audit.
+- [x] Complete final runtime warning/error-log audit.
 
 ### Phase 5 — Database modernization
 
@@ -174,7 +171,7 @@ Also completed:
 - [x] Preserve conservative defaults.
 - [x] Provide idempotent 1.3.0 configuration upgrade plumbing.
 - [x] Keep definitions compatible with Geeklog 2.1.1 through 2.2.2.
-- [ ] Final manual switch-by-switch validation on both Geeklog generations.
+- [x] Final manual switch-by-switch validation on both Geeklog generations.
 
 ### Phase 8 — Administration UX
 
@@ -208,7 +205,7 @@ Also completed:
 Before publishing 1.3.0 stable:
 
 - [x] Fresh install/reinstall on Geeklog 2.1.1.
-- [ ] Final fresh install confirmation on Geeklog 2.2.2.
+- [x] Final fresh install confirmation on Geeklog 2.2.2.
 - [x] Upgrade from 1.2.5.
 - [x] Upgrade from 1.2.6.
 - [x] Upgrade from 1.2.7.
@@ -221,8 +218,10 @@ Before publishing 1.3.0 stable:
 - [x] Verify uninstall/reinstall behavior on Geeklog 2.1.1.
 - [x] CI regression matrix on PHP 5.6 and PHP 8.1.
 - [x] Validate automated release-package generation.
-- [ ] Final switch-by-switch configuration pass.
-- [ ] Final runtime warning/error-log audit.
+- [x] Final switch-by-switch configuration pass.
+- [x] Final runtime warning/error-log audit.
+
+**Phase 11 is complete. Menu 1.3.0 is ready for stable release.**
 
 ## Post-1.3.0 candidates
 
