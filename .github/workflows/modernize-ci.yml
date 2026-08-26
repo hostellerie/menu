@@ -52,6 +52,7 @@ jobs:
             --exclude='.github' \
             --exclude='tests' \
             --exclude='ROADMAP.md' \
+            --exclude='package' \
             ./ package/menu/
           cd package
           zip -rq ../menu-1.3.0.zip menu
