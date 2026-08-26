@@ -1,0 +1,65 @@
+name: Menu CI
+
+on:
+  push:
+    branches: [modernize-1.3.0]
+
+jobs:
+  test:
+    name: PHP ${{ matrix.php }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['5.6', '8.1']
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          coverage: none
+
+      - name: Lint and test
+        shell: bash
+        run: |
+          set -e
+
+          while IFS= read -r -d '' file; do
+            php -l "$file" >/dev/null
+          done < <(find . -type f \( -name '*.php' -o -name '*.inc' \) -print0)
+
+          for test in tests/*.php; do
+            echo "==> $test"
+            php "$test"
+          done
+
+  package:
+    name: Build installable ZIP
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Geeklog plugin archive
+        shell: bash
+        run: |
+          set -e
+          mkdir -p package/menu
+          rsync -a \
+            --exclude='.git' \
+            --exclude='.github' \
+            --exclude='tests' \
+            --exclude='ROADMAP.md' \
+            --exclude='package' \
+            ./ package/menu/
+          cd package
+          zip -rq ../menu-1.3.0.zip menu
+
+      - name: Upload installable archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: menu-1.3.0
+          path: menu-1.3.0.zip
+          if-no-files-found: error

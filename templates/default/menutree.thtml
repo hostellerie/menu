@@ -6,23 +6,76 @@
   {menu_select}
 </div><div style="clear:both;"></div>
 
-<form method="post" id="menusel" action="{site_admin_url}/plugins/menu/index.php">
+<div id="menu-order-token" style="display:none;">{security_token_input}</div>
+
+<style type="text/css">
+#menu_table tbody tr > td:nth-last-child(2) {
+    position: relative;
+    cursor: grab;
+    text-align: center;
+    font-size: 18px;
+    line-height: 1;
+    user-select: none;
+    white-space: nowrap;
+}
+#menu_table tbody tr > td:nth-last-child(2) form {
+    display: none !important;
+}
+#menu_table tbody tr > td:nth-last-child(2)::after {
+    content: "\22EE\22EE";
+}
+#menu_table tbody tr > td:last-child {
+    display: none;
+}
+#menu_table .menu-info-tooltip {
+    position: relative;
+    display: inline-block;
+    line-height: 1;
+}
+#menu_table .menu-info-tooltip-text {
+    position: absolute;
+    z-index: 1000;
+    left: 100%;
+    top: 50%;
+    transform: translate(7px, -50%);
+    display: none;
+    padding: 5px 7px;
+    border: 1px solid #999;
+    background: #fff;
+    color: #222;
+    font-size: 12px;
+    line-height: 1.3;
+    white-space: nowrap;
+    box-shadow: 0 2px 5px rgba(0,0,0,.18);
+}
+#menu_table .menu-info-tooltip:hover .menu-info-tooltip-text,
+#menu_table .menu-info-tooltip:focus .menu-info-tooltip-text {
+    display: block;
+}
+</style>
+
 <div>
-  <table style="width:100%;" class="tbl_repeat" id="menu_table" name="menu_table">
+  <table style="width:100%;" class="tbl_repeat" id="menu_table" name="menu_table" data-menuid="{menuid}" data-post-url="{site_admin_url}/plugins/menu/index.php">
     <tr>
       <th>{$LANG_MENU01[menu_element]}</th>
       <th class="aligncenter" style="text-align:center;">{LANG_MENU01[enabled]}</th>
       <th class="aligncenter" style="text-align:center;">{LANG_MENU01[info]}</th>
       <th class="aligncenter" style="text-align:center;">{LANG_MENU01[edit]}</th>
       <th class="aligncenter" style="text-align:center;">{LANG_MENU01[delete]}</th>
-      <th colspan="2" style="text-align:center;">{LANG_MENU01[order]}</th>
+      <th class="aligncenter" style="text-align:center;">{LANG_MENU01[order]}</th>
     </tr>
 	<tbody>
     {menu_tree}
 	</tbody>
   </table>
-  <input type="hidden" id="menu" name="menu" value="{menuid}"{xhtml}>
-  <input type="hidden" name="mode" value="activate"{xhtml}>
 </div>
-</form>
 
+
+<div class="menu-preview" style="margin:25px 0 5px 0;clear:both;">
+  <div style="font-weight:bold;margin-bottom:8px;">Preview</div>
+  <iframe
+    src="{site_admin_url}/plugins/menu/preview.php?menu={menuid}&amp;mode=tabs"
+    title="Preview: {menuname}"
+    style="display:block;width:100%;height:560px;border:1px solid #ccc;background:#fff;box-sizing:border-box;"
+  ></iframe>
+</div>

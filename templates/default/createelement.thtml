@@ -1,5 +1,13 @@
-  <div class="glfform">
-    <form method="post" action="{form_action}" id="newitem">
+<style type="text/css">
+#staticpage,
+#topic {
+    display: none;
+}
+</style>
+
+<div class="glfform">
+  <form method="post" action="{site_admin_url}/plugins/menu/create_element.php" id="newitem">
+    {security_token_input}
     <div>
     <input type="hidden" id="menunid" name="menuid" value="{menuid}"{xhtml}>
       <div id="parentdiv" class="required">
@@ -18,12 +26,13 @@
         <p><label for="menutype">{LANG_MENU01[type]}:</label>
         {type_select}</p>
       </div>
-      <div id="urldiv" class="required">
+
+      <div id="urldiv" class="required" style="display:none;">
         <p><label for="menuurl">{LANG_MENU01[url]}:</label>
         <input type="text" id="menuurl" name="menuurl" size="48" value="{menuurl}"{xhtml}></p>
       </div>
 
-      <div id="targetdiv" class="required">
+      <div id="targetdiv" class="required" style="display:none;">
         <p><label for="urltarget">{LANG_MENU01[target]}:</label>
         <select id="urltarget" name="urltarget">
           <option value="">{LANG_MENU01[same_window]}</option>
@@ -31,16 +40,18 @@
         </select></p>
       </div>
 
-      <div id="phpdiv" class="required">
-        <p><label for="phpfunction">{LANG_MENU01[php]}:</label>
-        <input type="text" id="phpfunction" name="phpfunction" size="48" value="{phpfunction}"{xhtml}></p>
+      <div id="glfunc" class="optional" style="display:none;">
+        <p><label for="glfunction">{LANG_MENU01[geeklog_function]}:</label>
+        {glfunction_select}</p>
       </div>
-      <div id="glcorediv" class="optional">
+
+      <div id="glcorediv" class="optional" style="display:none;">
         <p><label for="gltype">{LANG_MENU01[coretype]}:</label>
         {gl_select}</p>
       </div>
-      <div id="plugin" class="optional">
-        <p><label for="gltype">{LANG_MENU01[plugins]}:</label>
+
+      <div id="plugin" class="optional" style="display:none;">
+        <p><label for="pluginname">{LANG_MENU01[plugins]}:</label>
         {plugin_select}</p>
       </div>
 
@@ -48,13 +59,14 @@
 
       {topic_select}
 
-      <div id="glfunc" class="optional">
-        <p><label for="glfunction">{LANG_MENU01[geeklog_function]}:</label>
-        {glfunction_select}</p>
+      <div id="phpdiv" class="required" style="display:none;">
+        <p><label for="phpfunction">{LANG_MENU01[php]}:</label>
+        <input type="text" id="phpfunction" name="phpfunction" size="48" value="{phpfunction}"{xhtml}></p>
       </div>
+
       <div class="required">
         <p><label for="menuactive">{LANG_MENU01[active]}:</label>
-        <input type="checkbox" id="menuactive" name="menuactive" value="1"{xhtml}></p>
+        <input type="checkbox" id="menuactive" name="menuactive" value="1" checked="checked"{xhtml}></p>
       </div>
       <div class="required">
         <p><label for="group">{LANG_MENU01[permission]}:</label>
@@ -66,4 +78,4 @@
     </div>
   </div>
   </form>
-  </div>
+</div>

@@ -3,7 +3,8 @@
     document.getElementById('menu').style.display='';
 </script>
   <div class="glfform">
-    <form method="post" action="{form_action}" id="clonemenu">
+    <form method="post" action="{site_admin_url}/plugins/menu/clone.php" id="clonemenu">
+    {security_token_input}
     <div>
       <div class="required">
         <label for="menuname">{LANG_MENU01[clone_menu_label]}:</label>
