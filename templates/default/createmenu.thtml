@@ -6,6 +6,7 @@ window.addEvent('load',function() {
 </script>
   <div class="glfform">
     <form method="post" action="{form_action}" id="newmenu">
+    {security_token_input}
     <div>
       <div class="required">
         <p><label for="menuname">{label}:</label>

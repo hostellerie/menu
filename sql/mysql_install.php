@@ -2,7 +2,7 @@
 
 /* Reminder: always indent with 4 spaces (no tabs). */
 // +---------------------------------------------------------------------------+
-// | Menu Plugin 1.2.8                                                         |
+// | Menu Plugin 1.3.0                                                         |
 // +---------------------------------------------------------------------------+
 // | mysql_install.php                                                         |
 // |                                                                           |
@@ -69,7 +69,8 @@ $_SQL[] = "CREATE TABLE {$_TABLES['menu_elements']} (
     `element_target` varchar(255) NOT NULL,
     `group_id` mediumint(9) NOT NULL,
     PRIMARY KEY( `id` ),
-    INDEX ( `pid` )
+    INDEX ( `pid` ),
+    KEY `menu_parent_order` (`menu_id`, `pid`, `element_order`)
 ) ENGINE=MyISAM;";
 
 
@@ -90,10 +91,10 @@ $_SQL[] = "INSERT INTO {$_TABLES['menu_config']} (`id`, `menu_id`, `conf_name`, 
 (8, 1, 'submenu_hover_bg_color', '#333333'),
 (9, 1, 'submenu_highlight_color', '#333333'),
 (10, 1, 'submenu_shadow_color', '#000000'),
-(11, 1, 'use_images', '1'),
-(12, 1, 'menu_bg_filename', 'menu_bg.gif'),
-(13, 1, 'menu_hover_filename', 'menu_hover_bg.gif'),
-(14, 1, 'menu_parent_filename', 'menu_parent.png'),
+(11, 1, 'use_images', '0'),
+(12, 1, 'menu_bg_filename', ''),
+(13, 1, 'menu_hover_filename', ''),
+(14, 1, 'menu_parent_filename', ''),
 (15, 1, 'menu_alignment', '1'),
 (16, 2, 'main_menu_bg_color', '#000000'),
 (17, 2, 'main_menu_hover_bg_color', '#000000'),
@@ -118,10 +119,10 @@ $_SQL[] = "INSERT INTO {$_TABLES['menu_config']} (`id`, `menu_id`, `conf_name`, 
 (36, 3, 'submenu_highlight_color', '#999999'),
 (37, 3, 'submenu_shadow_color', '#999999'),
 (38, 3, 'menu_alignment', '1'),
-(39, 3, 'use_images', '1'),
-(40, 3, 'menu_bg_filename', 'menu_bg.gif'),
-(41, 3, 'menu_hover_filename', 'menu_hover_bg.gif'),
-(42, 3, 'menu_parent_filename', 'vmenu_parent.gif');
+(39, 3, 'use_images', '0'),
+(40, 3, 'menu_bg_filename', ''),
+(41, 3, 'menu_hover_filename', ''),
+(42, 3, 'menu_parent_filename', '');
 ";
 
 $_SQL[] = "INSERT INTO {$_TABLES['menu_elements']} (`id`, `pid`, `menu_id`, `element_label`, `element_type`, `element_subtype`, `element_order`, `element_active`, `element_url`, `element_target`, `group_id`) VALUES

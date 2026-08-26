@@ -6,6 +6,7 @@
     <div class="glfform">
 
     <form method="post" action="{form_action}" id="mbconfig" enctype="multipart/form-data" >
+    {security_token_input}
     <input type="hidden" name="menu_id" id="menu_id" value="{menu_id}"{xhtml}>
     <input type="hidden" name="menutype" id="menutype" value="{menutype}"{xhtml}>
 
@@ -114,21 +115,21 @@
         <label>{LANG_MENU01[menu_bg_image]}</label>
         <input type="file" id="bgimg" name="bgimg" size="20" value=""{xhtml}>
         &nbsp;{LANG_MENU01[currently]}:
-		&nbsp;<img src="{site_url}/images/menu/{menu_bg_filename}" width="27" height="27" style="vertical-align:middle;border:none;" alt="" {xhtml}>
+        &nbsp;{menu_bg_preview}
       </div>
 
       <div style="display:{menu_hover_filename_show};">
         <label>{LANG_MENU01[menu_hover_image]}</label>
         <input type="file" id="hvimg" name="hvimg" size="20" value=""{xhtml}>
         &nbsp;{LANG_MENU01[currently]}:
-		&nbsp;<img src="{site_url}/images/menu/{menu_hover_filename}" width="27" height="27" style="vertical-align:middle;border:none;" alt="" {xhtml}>
+        &nbsp;{menu_hover_preview}
       </div>
 
       <div style="display:{menu_parent_filename_show};">
         <label>{LANG_MENU01[parent_item_image]}</label>
         <input type="file" id="piimg" name="piimg" size="20" value=""{xhtml}>
         &nbsp;{LANG_MENU01[currently]}:
-		&nbsp;<img id="cpiimage" src="{site_url}/images/menu/{menu_parent_filename}" style="vertical-align:middle;border:none;" alt="" {xhtml}>
+        &nbsp;{menu_parent_preview}
       </div>
 	  </fieldset>
 
@@ -140,4 +141,13 @@
       </div>
     </form>
   </div>
+
+<div class="menu-preview" style="margin:25px 0 5px 0;clear:both;">
+  <div style="font-weight:bold;margin-bottom:8px;">Preview</div>
+  <iframe
+    src="{site_admin_url}/plugins/menu/preview.php?menu={menu_id}"
+    title="Preview: {menu_name}"
+    style="display:block;width:100%;height:520px;border:1px solid #ccc;background:#fff;box-sizing:border-box;"
+  ></iframe>
+</div>
 

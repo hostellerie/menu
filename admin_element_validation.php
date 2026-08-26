@@ -1,0 +1,459 @@
+<?php
+
+// +---------------------------------------------------------------------------+
+// | Menu Plugin                                                               |
+// +---------------------------------------------------------------------------+
+// | admin_element_validation.php                                              |
+// |                                                                           |
+// | Server-side validation for Menu administration mutations.                 |
+// +---------------------------------------------------------------------------+
+
+if (!defined('VERSION')) {
+    die('This file can not be used on its own.');
+}
+
+require_once __DIR__ . '/element_types.php';
+
+/**
+ * Return whether an administrator-supplied URL is safe to persist.
+ * Relative URLs and normal schemes remain compatible with legacy Menu data;
+ * executable/data schemes and control characters are rejected.
+ *
+ * @param string $url
+ * @param bool   $allowEmpty
+ * @return bool
+ */
+function MENU_adminUrlIsSafe($url, $allowEmpty)
+{
+    $url = trim((string) $url);
+    if ($url === '') {
+        return (bool) $allowEmpty;
+    }
+
+    $decoded = html_entity_decode($url, ENT_QUOTES, 'UTF-8');
+    if (preg_match('/[\x00-\x1F\x7F]/', $decoded)) {
+        return false;
+    }
+    if (preg_match('/^\s*(?:javascript|vbscript|data):/i', $decoded)) {
+        return false;
+    }
+
+    return true;
+}
+
+/**
+ * Return true when the selected menu exists.
+ *
+ * @param int $menuId
+ * @return bool
+ */
+function MENU_adminMenuExists($menuId)
+{
+    global $_TABLES;
+
+    $menuId = (int) $menuId;
+    if ($menuId <= 0 || !isset($_TABLES['menu'])) {
+        return false;
+    }
+
+    $menuName = DB_getItem($_TABLES['menu'], 'menu_name', 'id=' . $menuId);
+    return !($menuName === '' || $menuName === null || $menuName === false);
+}
+
+/**
+ * Validate move/delete/deletemenu request references before the legacy
+ * controller performs any mutation.
+ *
+ * @param string $mode
+ * @param array  $post
+ * @return string
+ */
+/**
+ * Return all descendant element IDs for one element in a menu.
+ * The hierarchy is loaded in one query and walked in memory. A visited set
+ * prevents malformed pre-existing data from causing an infinite loop.
+ *
+ * @param int $menuId
+ * @param int $elementId
+ * @return array
+ */
+function MENU_adminDescendantIds($menuId, $elementId)
+{
+    global $_TABLES;
+
+    $menuId = (int) $menuId;
+    $elementId = (int) $elementId;
+    if ($menuId <= 0 || $elementId <= 0 || !isset($_TABLES['menu_elements'])) {
+        return array();
+    }
+
+    $childrenByParent = array();
+    $result = DB_query(
+        'SELECT id,pid FROM ' . $_TABLES['menu_elements']
+        . ' WHERE menu_id=' . $menuId
+    );
+    while ($row = DB_fetchArray($result)) {
+        $id = (int) $row['id'];
+        $pid = (int) $row['pid'];
+        if (!isset($childrenByParent[$pid])) {
+            $childrenByParent[$pid] = array();
+        }
+        $childrenByParent[$pid][] = $id;
+    }
+
+    $descendants = array();
+    $seen = array($elementId => true);
+    $queue = isset($childrenByParent[$elementId])
+        ? $childrenByParent[$elementId]
+        : array();
+
+    while (!empty($queue)) {
+        $id = (int) array_shift($queue);
+        if ($id <= 0 || isset($seen[$id])) {
+            continue;
+        }
+        $seen[$id] = true;
+        $descendants[] = $id;
+        if (isset($childrenByParent[$id])) {
+            foreach ($childrenByParent[$id] as $childId) {
+                if (!isset($seen[(int) $childId])) {
+                    $queue[] = (int) $childId;
+                }
+            }
+        }
+    }
+
+    return $descendants;
+}
+
+function MENU_adminMutationReferenceError($mode, $post)
+{
+    global $_TABLES;
+
+    if ($mode !== 'move' && $mode !== 'delete' && $mode !== 'deletemenu'
+        && $mode !== 'activate' && $mode !== 'menuactivate'
+        && $mode !== 'savecfg' && $mode !== 'disablemenu') {
+        return '';
+    }
+    if (!is_array($post)) {
+        return 'Invalid Menu administration request.';
+    }
+
+    if ($mode === 'savecfg') {
+        $menuId = isset($post['menu_id']) ? (int) $post['menu_id'] : 0;
+        return MENU_adminMenuExists($menuId) ? '' : 'The selected menu does not exist.';
+    }
+
+    if ($mode === 'disablemenu') {
+        $menuId = isset($post['menutodisable']) ? (int) $post['menutodisable'] : 0;
+        $active = isset($post['menuactive']) ? (int) $post['menuactive'] : -1;
+        if (!MENU_adminMenuExists($menuId)) {
+            return 'The selected menu does not exist.';
+        }
+        if ($active !== 0 && $active !== 1) {
+            return 'Invalid menu activation state.';
+        }
+        return '';
+    }
+
+    if ($mode === 'deletemenu' || $mode === 'menuactivate') {
+        $menuId = isset($post['id']) ? (int) $post['id'] : 0;
+        if ($menuId <= 0 || !isset($_TABLES['menu'])) {
+            return 'Invalid menu.';
+        }
+
+        $menuName = DB_getItem($_TABLES['menu'], 'menu_name', 'id=' . $menuId);
+        if ($menuName === '' || $menuName === null || $menuName === false) {
+            return 'The selected menu does not exist.';
+        }
+        if ($mode === 'deletemenu'
+            && in_array((string) $menuName, array('navigation', 'footer', 'block'), true)) {
+            return 'This built-in menu cannot be deleted.';
+        }
+        if ($mode === 'menuactivate') {
+            $active = isset($post['active']) ? (int) $post['active'] : -1;
+            if ($active !== 0 && $active !== 1) {
+                return 'Invalid menu activation state.';
+            }
+        }
+
+        return '';
+    }
+
+    $menuId = ($mode === 'move' || $mode === 'activate')
+        ? (isset($post['menu']) ? (int) $post['menu'] : 0)
+        : (isset($post['menuid']) ? (int) $post['menuid'] : 0);
+    $mid = isset($post['mid']) ? (int) $post['mid'] : 0;
+
+    if ($menuId <= 0 || $mid <= 0 || !isset($_TABLES['menu_elements'])) {
+        return 'Invalid menu element.';
+    }
+
+    $elementId = DB_getItem(
+        $_TABLES['menu_elements'],
+        'id',
+        'id=' . $mid . ' AND menu_id=' . $menuId
+    );
+    if ($elementId === '' || $elementId === null || $elementId === false) {
+        return 'The menu element does not belong to the selected menu.';
+    }
+
+    if ($mode === 'activate') {
+        $active = isset($post['active']) ? (int) $post['active'] : -1;
+        if ($active !== 0 && $active !== 1) {
+            return 'Invalid menu element activation state.';
+        }
+    }
+
+    if ($mode === 'move') {
+        $where = isset($post['where']) ? strtolower(trim((string) $post['where'])) : '';
+        if ($where !== 'up' && $where !== 'down') {
+            return 'Invalid menu movement direction.';
+        }
+    }
+
+    return '';
+}
+
+/**
+ * Validate special POST mutations that do not carry a normal controller mode.
+ *
+ * @param string $mode
+ * @param array  $post
+ * @return string
+ */
+function MENU_adminPostMutationError($mode, $post)
+{
+    global $_TABLES;
+
+    if (!is_array($post)) {
+        return 'Invalid Menu administration request.';
+    }
+
+    if (isset($post['defaults'])) {
+        $menuId = isset($post['menu_id']) ? (int) $post['menu_id'] : 0;
+        if (!MENU_adminMenuExists($menuId)) {
+            return 'The selected menu does not exist.';
+        }
+    }
+
+    if (isset($post['orders'])) {
+        $menuId = isset($post['menu_id']) ? (int) $post['menu_id'] : 0;
+        if (!MENU_adminMenuExists($menuId) || !isset($_TABLES['menu_elements'])) {
+            return 'The selected menu does not exist.';
+        }
+
+        $orders = explode('&', (string) $post['orders']);
+        $seen = array();
+        $validCount = 0;
+        foreach ($orders as $item) {
+            $parts = explode('=', $item, 2);
+            if (count($parts) !== 2) {
+                return 'Invalid menu order data.';
+            }
+            $rowId = rawurldecode($parts[1]);
+            if (!preg_match('/^mid_([1-9][0-9]*)$/', $rowId, $matches)) {
+                return 'Invalid menu order element.';
+            }
+            $mid = (int) $matches[1];
+            if (isset($seen[$mid])) {
+                return 'Duplicate menu order element.';
+            }
+            $seen[$mid] = true;
+
+            $elementId = DB_getItem(
+                $_TABLES['menu_elements'],
+                'id',
+                'id=' . $mid . ' AND menu_id=' . $menuId
+            );
+            if ($elementId === '' || $elementId === null || $elementId === false) {
+                return 'A reordered element does not belong to the selected menu.';
+            }
+            $validCount++;
+        }
+
+        if ($validCount === 0) {
+            return 'No valid menu order was supplied.';
+        }
+    }
+
+    return '';
+}
+
+/**
+ * Return an empty string when an element create/edit mutation is structurally
+ * valid, otherwise return a short administrator-facing error message.
+ *
+ * Existing unavailable plugin/static-page/topic destinations are allowed when
+ * an administrator edits an element without changing that stored destination.
+ * This preserves configuration non-destructively.
+ *
+ * @param string $mode
+ * @param array  $post
+ * @return string
+ */
+function MENU_adminElementMutationError($mode, $post)
+{
+    global $_TABLES, $_PLUGINS;
+
+    if ($mode !== 'save' && $mode !== 'saveedit') {
+        return '';
+    }
+    if (!is_array($post)) {
+        return 'Invalid Menu element request.';
+    }
+
+    $menuId = $mode === 'saveedit'
+        ? (isset($post['menu']) ? (int) $post['menu'] : 0)
+        : (isset($post['menuid']) ? (int) $post['menuid'] : 0);
+    if ($menuId <= 0 || !isset($_TABLES['menu'])) {
+        return 'Invalid menu.';
+    }
+
+    $menuTypeValue = DB_getItem($_TABLES['menu'], 'menu_type', 'id=' . $menuId);
+    if ($menuTypeValue === '' || $menuTypeValue === null || $menuTypeValue === false) {
+        return 'The selected menu does not exist.';
+    }
+    $menuType = (int) $menuTypeValue;
+
+    $currentType = null;
+    $currentSubtype = '';
+    $mid = 0;
+    if ($mode === 'saveedit') {
+        $mid = isset($post['id']) ? (int) $post['id'] : 0;
+        if ($mid <= 0 || !isset($_TABLES['menu_elements'])) {
+            return 'Invalid menu element.';
+        }
+
+        $result = DB_query(
+            'SELECT element_type, element_subtype FROM ' . $_TABLES['menu_elements']
+            . ' WHERE id=' . $mid . ' AND menu_id=' . $menuId
+        );
+        if (DB_numRows($result) === 0) {
+            return 'The menu element does not belong to the selected menu.';
+        }
+        $row = DB_fetchArray($result);
+        $currentType = (int) $row['element_type'];
+        $currentSubtype = (string) $row['element_subtype'];
+    }
+
+    $pid = isset($post['pid']) ? (int) $post['pid'] : 0;
+    if ($pid < 0 || ($mid > 0 && $pid === $mid)) {
+        return 'Invalid parent menu element.';
+    }
+    if ($mid > 0 && $pid > 0
+        && in_array($pid, MENU_adminDescendantIds($menuId, $mid), true)) {
+        return 'A menu element cannot use one of its descendants as parent.';
+    }
+    if ($pid > 0) {
+        $parentType = DB_getItem(
+            $_TABLES['menu_elements'],
+            'element_type',
+            'id=' . $pid . ' AND menu_id=' . $menuId
+        );
+        if ($parentType === '' || $parentType === null || $parentType === false || (int) $parentType !== 1) {
+            return 'The selected parent is not a submenu in this menu.';
+        }
+    }
+
+    $afterId = isset($post['menuorder']) ? (int) $post['menuorder'] : 0;
+    if ($afterId < 0 || ($mid > 0 && $afterId === $mid)) {
+        return 'Invalid Display After element.';
+    }
+    if ($afterId > 0) {
+        $afterPid = DB_getItem(
+            $_TABLES['menu_elements'],
+            'pid',
+            'id=' . $afterId . ' AND menu_id=' . $menuId
+        );
+        if ($afterPid === '' || $afterPid === null || $afterPid === false || (int) $afterPid !== $pid) {
+            return 'Display After must reference an element with the same parent.';
+        }
+    }
+
+    $elementType = isset($post['menutype']) ? (int) $post['menutype'] : 0;
+    if ($elementType < 1 || $elementType > 9) {
+        return 'Invalid menu element type.';
+    }
+
+    $hasStaticPages = isset($_PLUGINS) && is_array($_PLUGINS)
+        && in_array('staticpages', $_PLUGINS, true);
+    if ($currentType === null || $elementType !== $currentType) {
+        if (!MENU_elementTypeIsAllowed($menuType, $elementType, $hasStaticPages)) {
+            return 'The selected element type is not available for this menu.';
+        }
+    }
+
+    $target = isset($post['urltarget']) ? (string) $post['urltarget'] : '';
+    if ($target !== '' && $target !== '_blank') {
+        return 'Invalid URL target.';
+    }
+
+    if ($elementType === 1) {
+        $url = isset($post['menuurl']) ? (string) $post['menuurl'] : '';
+        if (!MENU_adminUrlIsSafe($url, true)) {
+            return 'Invalid submenu URL.';
+        }
+    } elseif ($elementType === 2) {
+        $action = isset($post['glfunction']) ? (int) $post['glfunction'] : -1;
+        if ($action < 0 || $action > 5) {
+            return 'Invalid Geeklog Action.';
+        }
+    } elseif ($elementType === 3) {
+        $coreType = isset($post['gltype']) ? (int) $post['gltype'] : 0;
+        if ($coreType < 1 || $coreType > 6) {
+            return 'Invalid Geeklog Menu type.';
+        }
+    } elseif ($elementType === 4) {
+        $plugin = isset($post['pluginname']) ? (string) $post['pluginname'] : '';
+        if ($plugin === '') {
+            return 'A plugin destination is required.';
+        }
+        if (!($currentType === 4 && $plugin === $currentSubtype)) {
+            $pluginMenus = MENU_PLG_getMenuItems();
+            if (!isset($pluginMenus[$plugin])) {
+                return 'The selected plugin destination is unavailable.';
+            }
+        }
+    } elseif ($elementType === 5) {
+        $pageId = isset($post['spname']) ? (string) $post['spname'] : '';
+        if ($pageId === '') {
+            return 'A Static Page destination is required.';
+        }
+        if (!($currentType === 5 && $pageId === $currentSubtype)) {
+            if (!$hasStaticPages || !isset($_TABLES['staticpage'])) {
+                return 'The Static Pages plugin is unavailable.';
+            }
+            $escaped = function_exists('DB_escapeString') ? DB_escapeString($pageId) : addslashes($pageId);
+            $found = DB_getItem($_TABLES['staticpage'], 'sp_id', "sp_id='" . $escaped . "'");
+            if ($found === '' || $found === null || $found === false) {
+                return 'The selected Static Page does not exist.';
+            }
+        }
+    } elseif ($elementType === 6) {
+        $url = isset($post['menuurl']) ? trim((string) $post['menuurl']) : '';
+        if ($url === '') {
+            return 'An External URL is required.';
+        }
+        if (!MENU_adminUrlIsSafe($url, false)) {
+            return 'The External URL is not safe.';
+        }
+    } elseif ($elementType === 9) {
+        $topicId = isset($post['topicname']) ? (string) $post['topicname'] : '';
+        if ($topicId === '') {
+            return 'A Topic destination is required.';
+        }
+        if (!($currentType === 9 && $topicId === $currentSubtype)) {
+            if (!isset($_TABLES['topics'])) {
+                return 'Topics are unavailable.';
+            }
+            $escaped = function_exists('DB_escapeString') ? DB_escapeString($topicId) : addslashes($topicId);
+            $found = DB_getItem($_TABLES['topics'], 'tid', "tid='" . $escaped . "'");
+            if ($found === '' || $found === null || $found === false) {
+                return 'The selected Topic does not exist.';
+            }
+        }
+    }
+
+    return '';
+}

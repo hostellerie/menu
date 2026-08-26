@@ -2,7 +2,7 @@
 
 /* Reminder: always indent with 4 spaces (no tabs). */
 // +---------------------------------------------------------------------------+
-// | Menu Plugin 1.0                                                           |
+// | Menu Plugin 1.3.0                                                         |
 // +---------------------------------------------------------------------------+
 // | english.php                                                               |
 // |                                                                           |
@@ -15,7 +15,7 @@
 // | Based on the original Sitetailor Plugin                                   |
 // | Copyright (C) 2008-2011 by the following authors:                         |
 // |                                                                           |
-// | Mark R. Evans - mark AT glfusion DOT org                                  | 
+// | Mark R. Evans - mark AT glfusion DOT org                                  |
 // +---------------------------------------------------------------------------+
 // | Created with the Geeklog Plugin Toolkit.                                  |
 // +---------------------------------------------------------------------------+
@@ -36,38 +36,22 @@
 // |                                                                           |
 // +---------------------------------------------------------------------------+
 
-/**
-* @package Menu
-*/
-
-/**
-* Import Geeklog plugin messages for reuse
-*
-* @global array $LANG32
-*/
 global $LANG32;
-
-// +---------------------------------------------------------------------------+
-// | Array Format:                                                             |
-// | $LANGXX[YY]:  $LANG - variable name                                       |
-// |               XX    - specific array name                                 |
-// |               YY    - phrase id or number                                 |
-// +---------------------------------------------------------------------------+
 
 $LANG_MENU_1 = array(
     'plugin_name' => 'Menu',
-    'hello' => 'Hello, world!' // this is an example only - feel free to remove
+    'hello' => 'Hello, world!'
 );
 
-$LANG_MENU00 = array (
+$LANG_MENU00 = array(
     'menulabel'         => 'Menu',
     'plugin'            => 'menu',
     'access_denied'     => 'Access Denied',
-    'access_denied_msg' => 'You do not have the proper security privilege to access to this page.  Your user name and IP have been recorded.',
+    'access_denied_msg' => 'You do not have the proper security privilege to access to this page. Your user name and IP have been recorded.',
     'admin'             => 'Menu Administration'
 );
 
-$LANG_MENU01 = array (
+$LANG_MENU01 = array(
     'instructions'      => 'Menu allows you to easily customize your site logo and control the display of the site slogan.',
     'javascript_required' => 'Menu Requires that you have JavaScript enabled.',
     'logo_options'      => 'Menu Logo Options',
@@ -78,7 +62,7 @@ $LANG_MENU01 = array (
     'upload_logo'       => 'Upload New Logo',
     'current_logo'      => 'Current Logo',
     'no_logo_graphic'   => 'No Logo Graphic available',
-    'logo_help'         => 'Uploaded graphic logo images are not resized, the standard size for Menu logo is 100 pixels tall and should be less than 500 pixels wide.  You can upload larger images, but you will need to modify the site CSS in styles.css to ensure it displays properly.',
+    'logo_help'         => 'Uploaded graphic logo images are not resized, the standard size for Menu logo is 100 pixels tall and should be less than 500 pixels wide. You can upload larger images, but you will need to modify the site CSS in styles.css to ensure it displays properly.',
     'save'              => 'Save',
     'create_element'    => 'Create Menu Element',
     'add_new'           => 'Add New Menu Item',
@@ -99,7 +83,7 @@ $LANG_MENU01 = array (
     'id'                => 'ID',
     'parent'            => 'Parent',
     'label'             => 'Menu Name',
-    'elementlabel'      => 'Element Name',
+    'elementlabel'      => 'Menu Item Label',
     'display_after'     => 'Display After',
     'type'              => 'Type',
     'url'               => 'URL',
@@ -124,8 +108,7 @@ $LANG_MENU01 = array (
     'gl_header_menu'    => 'Header Menu',
     'plugins'           => 'Plugin',
     'static_pages'      => 'Static Pages',
-    'geeklog_function' => 'Geeklog Function',
-    'save'              => 'Save',
+    'geeklog_function'  => 'Action',
     'cancel'            => 'Cancel',
     'action'            => 'Action',
     'first_position'    => 'First Position',
@@ -155,146 +138,175 @@ $LANG_MENU01 = array (
     'colors'                => 'Colors',
     'menu_bg_image'         => 'Main Menu BG Image',
     'currently'             => 'Currently',
-    'menu_hover_image'      => 'Main Menu Hover Image',
+    'menu_hover_image'      => 'Menu Hover Image',
     'parent_item_image'     => 'Sub Menu Parent Indicator',
     'not_used'              => 'Not used if Use Graphics is selected below.',
-	'select_color'			=> 'Select Color',
-	'menu_alignment'		=> 'Menu Alignment',
-	'alignment_question'	=> 'Align the Menu to the',
-	'align_left'			=> 'Left',
-	'align_right'			=> 'Right',
-	'blocks'                => 'Block Styles',
-	'reset'                 => 'Reset Form',
-	'defaults'              => 'Reset To Default Values',
-	'confirm_reset'         => 'This will reset the menu colors and graphics to the installation values. Are you sure you want to continue? When done, make sure to clear your local browser cache as well.',
-	'menu_properties'       => 'Menu Properties for',
-	'disabled_plugin'       => 'Not found or disabled plugin',
-	'clone'                 => 'Copy',
-	'clone_menu_label'      => 'Name for Cloned Menu',
-	'topic'                 => 'Topics',
+    'select_color'          => 'Select Color',
+    'menu_alignment'        => 'Menu Alignment',
+    'alignment_question'    => 'Align the Menu to the',
+    'align_left'            => 'Left',
+    'align_right'           => 'Right',
+    'blocks'                => 'Block Styles',
+    'reset'                 => 'Reset Form',
+    'defaults'              => 'Reset To Default Values',
+    'confirm_reset'         => 'This will reset the menu colors and graphics to the installation values. Are you sure you want to continue? When done, make sure to clear your local browser cache as well.',
+    'menu_properties'       => 'Menu Properties for',
+    'disabled_plugin'       => 'Not found or disabled plugin',
+    'clone'                 => 'Copy',
+    'clone_menu_label'      => 'Name for Cloned Menu',
+    'topic'                 => 'Topics',
 );
 
-$LANG_HC = array (
+$LANG_HC = array(
     'main_menu_bg_color'         => 'Main Menu BG',
     'main_menu_hover_bg_color'   => 'Main Menu Hover',
     'main_menu_text_color'       => 'Main Menu Text',
     'main_menu_hover_text_color' => 'Main Menu Text Hover / Sub Menu Text',
-	'menu_bg_filename'           => 'Menu Background Image File Name',
-	'menu_hover_filename'        => 'Menu Hover Image File Name',
-	'menu_parent_filename'       => 'Menu Parent File Name',
-	'menu_alignment'             => 'Menu Alignment',
-	'use_images'                 => 'Use Images',
+    'menu_bg_filename'           => 'Menu Background Image File Name',
+    'menu_hover_filename'        => 'Menu Hover Image File Name',
+    'menu_parent_filename'       => 'Sub Menu Parent Indicator',
+    'menu_alignment'             => 'Menu Alignment',
+    'use_images'                 => 'Use Images',
     'submenu_hover_text_color'   => 'Sub Menu Text Hover',
     'submenu_background_color'   => 'Sub Menu BG',
     'submenu_hover_bg_color'     => 'Sub Menu Hover BG',
     'submenu_highlight_color'    => 'Sub Menu Highlight',
     'submenu_shadow_color'       => 'Sub Menu Shadow',
 );
-$LANG_HS = array (
-    'main_menu_text_color'          => 'Text',
-    'main_menu_hover_text_color'    => 'Hover',
-    'submenu_highlight_color'       => 'Seperator',
+
+$LANG_HS = array(
+    'main_menu_text_color'       => 'Text',
+    'main_menu_hover_text_color' => 'Hover',
+    'submenu_highlight_color'    => 'Seperator',
 );
+
 $LANG_VC = array(
-    'main_menu_bg_color'           => 'Menu BG',
-    'main_menu_hover_bg_color'     => 'Menu BG Hover',
-    'main_menu_text_color'         => 'Menu Text',
-    'main_menu_hover_text_color'   => 'Menu Text Hover',
-    'submenu_text_color'           => 'Sub Menu Text',
-    'submenu_hover_text_color'     => 'Sub Menu Text Hover',
-    'submenu_highlight_color'      => 'Border',
+    'main_menu_bg_color'         => 'Menu BG',
+    'main_menu_hover_bg_color'   => 'Menu BG Hover',
+    'main_menu_text_color'       => 'Menu Text',
+    'main_menu_hover_text_color' => 'Menu Text Hover',
+    'submenu_text_color'         => 'Sub Menu Text',
+    'submenu_hover_text_color'   => 'Sub Menu Text Hover',
+    'submenu_highlight_color'    => 'Border',
 );
-$LANG_VS = array (
-    'main_menu_text_color'          => 'Menu Text',
-    'main_menu_hover_text_color'    => 'Menu Text Hover',
+
+$LANG_VS = array(
+    'main_menu_text_color'       => 'Menu Text',
+    'main_menu_hover_text_color' => 'Menu Text Hover',
 );
 
 $LANG_MENU_MENU_TYPES = array(
-    1                   => 'Horizontal - Cascading',
-    2                   => 'Horizontal - Simple',
-    3                   => 'Vertical - Cascading',
-    4                   => 'Vertical - Simple',
+    1 => 'Horizontal - Cascading',
+    2 => 'Horizontal - Simple',
+    3 => 'Vertical - Cascading',
+    4 => 'Vertical - Simple',
 );
 
 $LANG_MENU_TYPES = array(
-    1                   => 'Sub Menu',
-    2                   => 'Geeklog Action',
-    3                   => 'Geeklog Menu',
-    4                   => 'Plugin',
-    5                   => 'Static Page',
-    6                   => 'External URL',
-    7                   => 'PHP Function',
-    8                   => 'Label',
-    9                   => 'Topic',
+    1 => 'Sub Menu',
+    2 => 'Geeklog Action',
+    3 => 'Geeklog Menu',
+    4 => 'Plugin',
+    5 => 'Static Page',
+    6 => 'External URL',
+    7 => 'PHP Function',
+    8 => 'Label',
+    9 => 'Topic',
 );
 
-
 $LANG_MENU_TARGET = array(
-    1                   => 'Parent Window',
-    2                   => 'New Window with navigation',
-    3                   => 'New Window without navigation',
+    1 => 'Parent Window',
+    2 => 'New Window with navigation',
+    3 => 'New Window without navigation',
 );
 
 $LANG_MENU_GLFUNCTION = array(
-    0                   => 'Home',
-    1                   => 'Contribute',
-    2                   => 'Directory',
-    3                   => 'Preferences',
-    4                   => 'Search',
-    5                   => 'Site Stats',
+    0 => 'Home',
+    1 => 'Contribute',
+    2 => 'Directory',
+    3 => 'Preferences',
+    4 => 'Search',
+    5 => 'Site Stats',
 );
 
 $LANG_MENU_GLTYPES = array(
-    1                   => 'User Menu',
-    2                   => 'Admin Menu',
-    3                   => 'Topics Menu',
-    4                   => 'Static Pages Menu',
-    5                   => 'Plugin Menu',
-    6                   => 'Header Menu',
+    1 => 'User Menu',
+    2 => 'Admin Menu',
+    3 => 'Topics Menu',
+    4 => 'Static Pages Menu',
+    5 => 'Plugin Menu',
+    6 => 'Header Menu',
 );
 
 $LANG_MENU_ADMIN = array(
-    1                   => 'Menu Builder allows you to create and edit menus for your site. To add a new menu, click the Create New Menu link above. To edit a menu\'s items, click the icon under the Elements column. To change the menu colors, click the icon under the Options column.',
-    2                   => 'To create a new menu, specify a Menu Name and Menu type below. You can also set the active status, and what group of users will be able to see the menu, with the Active and Visible To fields.',
-    3                   => 'Click on the icon under the Edit column to edit a menu item\'s properties. Arrange the items by moving them up or down with the arrows under the Order column.',
-    4                   => 'To create a new menu element, specify its details and permissions below.',
-    5                   => 'Once an element is created, you can always go back and edit its details and permissions below.',
-    6                   => 'Menu Builder allows you to easily customize the look and feel of your menus. Adjust the values below to create a unique menu style.',
+    1 => 'Menu Builder allows you to create and edit menus for your site. To add a new menu, click the Create New Menu link above. To edit a menu\'s items, click the icon under the Elements column. To change the menu colors, click the icon under the Options column.',
+    2 => 'To create a new menu, specify a Menu Name and Menu type below. You can also set the active status, and what group of users will be able to see the menu, with the Active and Visible To fields.',
+    3 => 'Click on the icon under the Edit column to edit a menu item\'s properties. Arrange the items by moving them up or down with the arrows under the Order column.',
+    4 => 'To create a new menu element, specify its details and permissions below.',
+    5 => 'To edit a menu element, modify its details or permissions below.',
 );
 
-$PLG_menu_MESSAGE1 = 'Menu Logo Options Successfully Saved.';
-$PLG_menu_MESSAGE2 = 'Uploaded logo was not a JPG, GIF, or PNG image.';
-$PLG_menu_MESSAGE3 = 'There was a problem upgrading Menu, please check the error log file.';
-$PLG_menu_MMESSAGE4 = 'Logo exceeds the maximum allowed height or width.';
+$LANG_MENU_GLTYPES_HELP = array(
+    1 => 'Displays the standard Geeklog user menu.',
+    2 => 'Displays the Geeklog administration menu.',
+    3 => 'Displays the Geeklog topics menu.',
+    4 => 'Displays Static Pages navigation.',
+    5 => 'Displays plugin-provided menu items.',
+    6 => 'Displays the Geeklog header menu.',
+);
 
-// Messages for the plugin upgrade
-$PLG_menu_MESSAGE3002 = $LANG32[9]; // "requires a newer version of Geeklog"
+$LANG_MENU_GLFUNCTION_HELP = array(
+    0 => 'Link to the site home page.',
+    1 => 'Link to the story submission page.',
+    2 => 'Link to the article directory.',
+    3 => 'Link to user preferences.',
+    4 => 'Link to site search.',
+    5 => 'Link to site statistics.',
+);
 
-// Localization of the Admin Configuration UI
+$LANG_MENU_TYPES_HELP = array(
+    1 => 'Creates a container that may contain child items and can optionally have its own link.',
+    2 => 'Creates a link to a standard Geeklog action such as Home, Search or Contribute.',
+    3 => 'Inserts a dynamic Geeklog menu such as the User, Admin or Topics menu.',
+    4 => 'Creates a link provided by an installed plugin.',
+    5 => 'Creates a link to a published Static Page.',
+    6 => 'Creates a link to a custom or external URL.',
+    7 => 'Calls a PHP function. Use only for trusted, advanced integrations.',
+    8 => 'Displays text without a built-in destination.',
+    9 => 'Creates a link to a Geeklog topic.',
+);
+
+// Geeklog Configuration UI
 $LANG_configsections['menu'] = array(
     'label' => 'Menu',
-    'title' => 'Menu Configuration'
+    'title' => 'Menu Configuration',
 );
 
 $LANG_confignames['menu'] = array(
-    'samplesetting1' => 'Sample Setting #1',
-    'samplesetting2' => 'Sample Setting #2',
+    'samplesetting1'          => 'Legacy sample setting 1',
+    'samplesetting2'          => 'Legacy sample setting 2',
+    'enable_cache'             => 'Enable menu cache',
+    'accessibility_markup'     => 'Enable accessibility / ARIA markup',
+    'external_link_protection' => 'Protect external links opened in a new window',
+    'allow_php_elements'       => 'Allow PHP function menu elements',
+    'legacy_rendering'         => 'Enable legacy Menu rendering',
+    'load_legacy_css'          => 'Load legacy Menu CSS',
+    'load_legacy_js'           => 'Load legacy Menu JavaScript',
+    'debug'                    => 'Enable Menu debug logging',
 );
 
 $LANG_configsubgroups['menu'] = array(
-    'sg_main' => 'Main Settings'
+    'sg_main' => 'Global Settings',
 );
 
 $LANG_tab['menu'] = array(
-    'tab_main' => 'Menu Main Settings'
+    'tab_main' => 'Global Settings',
 );
 
 $LANG_fs['menu'] = array(
-    'fs_main' => 'Menu Main Settings'
+    'fs_main' => 'Menu Plugin Settings',
 );
 
 $LANG_configselects['menu'] = array(
-    0 => array('True' => 1, 'False' => 0),
-    1 => array('True' => true, 'False' => false)
+    0 => array('No' => 0, 'Yes' => 1),
 );
-?>

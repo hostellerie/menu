@@ -1,7 +1,7 @@
 <?php
 /* Reminder: always indent with 4 spaces (no tabs). */
 // +---------------------------------------------------------------------------+
-// | Menu Plugin 1.0                                                           |
+// | Menu Plugin 1.1                                                           |
 // +---------------------------------------------------------------------------+
 // | classMenuElement.php                                                      |
 // +---------------------------------------------------------------------------+
@@ -51,7 +51,7 @@ class mbElement {
     var $children;          // this elements child elements
     var $hidden;            // I have no idea -- Joe
 
-    function mbElement () {
+    public function __construct() {
         $this->children         = array();
         $this->id               = 0;
         $this->menu_id          = 0;
@@ -78,13 +78,22 @@ class mbElement {
     }
 
     function saveElement( ) {
-        global $_TABLES, $Menus;
+        global $_TABLES;
 
-        $this->label            = $this->label;
-        $this->url              = $this->url;
+        $id       = (int) $this->id;
+        $pid      = (int) $this->pid;
+        $menuId   = (int) $this->menu_id;
+        $type     = (int) $this->type;
+        $order    = (int) $this->order;
+        $active   = (int) $this->active;
+        $groupId  = (int) $this->group_id;
+        $label    = MENU_dbEscape($this->label);
+        $subtype  = MENU_dbEscape($this->subtype);
+        $url      = MENU_dbEscape($this->url);
+        $target   = MENU_dbEscape($this->target);
 
         $sqlFieldList  = 'id,pid,menu_id,element_label,element_type,element_subtype,element_order,element_active,element_url,element_target,group_id';
-        $sqlDataValues = "$this->id,$this->pid,'".$this->menu_id."','$this->label',$this->type,'$this->subtype',$this->order,$this->active,'$this->url','$this->target',$this->group_id";
+        $sqlDataValues = $id . ',' . $pid . ',' . $menuId . ",'" . $label . "'," . $type . ",'" . $subtype . "'," . $order . ',' . $active . ",'" . $url . "','" . $target . "'," . $groupId;
         DB_save($_TABLES['menu_elements'], $sqlFieldList, $sqlDataValues);
     }
 
@@ -101,27 +110,12 @@ class mbElement {
         while ($M = DB_fetchArray($result)) {
             $M['element_order'] = $orderCount;
             $orderCount += 10;
-            DB_query("UPDATE {$_TABLES['menu_elements']} SET `element_order`=" . $M['element_order'] . " WHERE menu_id=".$menu_id." AND id=" . $M['id'] );
+            DB_query("UPDATE {$_TABLES['menu_elements']} SET `element_order`=" . (int) $M['element_order'] . " WHERE menu_id=" . $menu_id . " AND id=" . (int) $M['id']);
         }
     }
 
 
-    function createElementID( $menu_id ) {
-        global $_TABLES;
 
-        $sql = "SELECT MAX(id) + 1 AS next_id FROM " . $_TABLES['menu_elements'];
-        $result = DB_query( $sql );
-        $row = DB_fetchArray( $result );
-        $id = $row['next_id'];
-        if ( $id < 1 ) {
-            $id = 1;
-        }
-        if ( $id == 0 ) {
-            COM_errorLog("Site Tailor: Error - Returned 0 as element id");
-            $id = 1;
-        }
-        return $id;
-    }
 
 
     function setAccessRights( $meadmin, $root, $groups ) {
@@ -188,7 +182,7 @@ class mbElement {
 
             $retval .= '<td>';
 
-            $elementDetails .= '<b>' . $LANG_MENU01['type'] . ':</b> ' . $LANG_MENU_TYPES[$this->type] . '<br' . XHTML . '>';
+            $elementDetails = '<b>' . $LANG_MENU01['type'] . ':</b> ' . $LANG_MENU_TYPES[$this->type] . '<br' . XHTML . '>';
             /*switch ($this->type) {
                 case 1 :
                     break;
@@ -214,24 +208,27 @@ class mbElement {
                     $elementDetails .= '<b>' . $LANG_MENU_TYPES[$this->type] . ':</b> ' . $this->subtype . '<br />'   ;
             }*/
 
-            $moveup     = '<a href="' . $_CONF['site_admin_url'] . '/plugins/menu/index.php?mode=move&amp;where=up&amp;mid=' . $this->id . '&amp;menu=' . $this->menu_id . '">';
-            $movedown   = '<a href="' . $_CONF['site_admin_url'] . '/plugins/menu/index.php?mode=move&amp;where=down&amp;mid=' . $this->id . '&amp;menu=' . $this->menu_id . '">';
-            $edit       = '<a href="' . $_CONF['site_admin_url'] . '/plugins/menu/index.php?mode=edit&amp;mid=' . $this->id . '&amp;menu=' . $this->menu_id . '">';
-            $delete     = '<a href="' . $_CONF['site_admin_url'] . '/plugins/menu/index.php?mode=delete&amp;mid=' . $this->id . '&amp;menuid='.$this->menu_id.'" onclick="return confirm(\'' . $LANG_MENU01['confirm_delete'] . '\');">';
-            $info       = COM_getTooltip('<img src="' . $_CONF['site_admin_url'] . '/plugins/menu/images/info.png" alt=""' . XHTML . '>', $elementDetails, '', $this->label, $template = 'help');
+            $actionUrl = $_CONF['site_admin_url'] . '/plugins/menu/index.php';
+            $tokenInput = MENU_adminTokenInput();
+            $moveup = '<form method="post" action="' . $actionUrl . '" style="display:inline">' . $tokenInput . '<input type="hidden" name="mode" value="move"' . XHTML . '><input type="hidden" name="where" value="up"' . XHTML . '><input type="hidden" name="mid" value="' . (int) $this->id . '"' . XHTML . '><input type="hidden" name="menu" value="' . (int) $this->menu_id . '"' . XHTML . '><button type="submit" style="border:0;background:none;padding:0;cursor:pointer">';
+            $movedown = '<form method="post" action="' . $actionUrl . '" style="display:inline">' . $tokenInput . '<input type="hidden" name="mode" value="move"' . XHTML . '><input type="hidden" name="where" value="down"' . XHTML . '><input type="hidden" name="mid" value="' . (int) $this->id . '"' . XHTML . '><input type="hidden" name="menu" value="' . (int) $this->menu_id . '"' . XHTML . '><button type="submit" style="border:0;background:none;padding:0;cursor:pointer">';
+            $edit = '<a href="' . $_CONF['site_admin_url'] . '/plugins/menu/index.php?mode=edit&amp;mid=' . $this->id . '&amp;menu=' . $this->menu_id . '">';
+            $delete = '<form method="post" action="' . $actionUrl . '" style="display:inline" onsubmit="return confirm(\'' . $LANG_MENU01['confirm_delete'] . '\');">' . $tokenInput . '<input type="hidden" name="mode" value="delete"' . XHTML . '><input type="hidden" name="mid" value="' . (int) $this->id . '"' . XHTML . '><input type="hidden" name="menuid" value="' . (int) $this->menu_id . '"' . XHTML . '><button type="submit" style="border:0;background:none;padding:0;cursor:pointer">';
+            $infoText = MENU_escapeHTML(strip_tags($LANG_MENU01['type'] . ': ' . $LANG_MENU_TYPES[$this->type]));
+            $info = '<span class="menu-info-tooltip" tabindex="0"><img src="' . MENU_escapeHTML($_CONF['site_admin_url']) . '/plugins/menu/images/info.png" alt="' . MENU_escapeHTML($LANG_MENU01['info']) . '"' . XHTML . '><span class="menu-info-tooltip-text">' . $infoText . '</span></span>';
 
-            $retval .= "<div style=\"padding:0 5px;margin-left:" . $px . "px;\">" . ($this->type == 1 ? '<b>' : '') . strip_tags($this->label) . ($this->type == 1 ? '</b>' : '') . '</div>' . LB;
+            $retval .= "<div style=\"padding:0 5px;margin-left:" . $px . "px;\">" . ($this->type == 1 ? '<b>' : '') . MENU_escapeStoredText($this->label) . ($this->type == 1 ? '</b>' : '') . '</div>' . LB;
 
             $retval .= '</td>';
             $retval .= '<td class="aligncenter">';
-            $retval .=  '<input type="checkbox" name="enableditem[' . $this->id . ']" onclick="submit()" value="1"' . ($this->active == 1 ? ' checked="checked"' : '') . XHTML . '>';
+            $retval .= '<form method="post" action="' . $actionUrl . '" style="display:inline">' . $tokenInput . '<input type="hidden" name="mode" value="activate"' . XHTML . '><input type="hidden" name="menu" value="' . (int) $this->menu_id . '"' . XHTML . '><input type="hidden" name="mid" value="' . (int) $this->id . '"' . XHTML . '><input type="hidden" name="active" value="' . ($this->active == 1 ? '0' : '1') . '"' . XHTML . '><input type="checkbox" onclick="this.form.submit()"' . ($this->active == 1 ? ' checked="checked"' : '') . XHTML . '></form>';
             $retval .= '</td>';
             $retval .= '<td class="aligncenter">';
             $retval .= $info;
             $retval .= '</td>';
             $retval .= '<td class="aligncenter">' . $edit . '<img src="' . $_CONF['site_admin_url'] . '/plugins/menu/images/edit.png" alt="' . $LANG_MENU01['edit'] . '"' . XHTML . '></a></td>';
-            $retval .= '<td class="aligncenter">' . $delete . '<img src="' . $_CONF['site_admin_url'] . '/plugins/menu/images/delete.png" alt="' . $LANG_MENU01['delete'] . '"' . XHTML . '></a></td>';
-            $retval .= '<td class="aligncenter">' . $moveup . '<img src="' . $_CONF['site_admin_url'] . '/plugins/menu/images/up.png" alt="' . $LANG_MENU01['move_up'] . '"' . XHTML . '></a></td><td class="aligncenter">' . $movedown . '<img src="' . $_CONF['site_admin_url'] . '/plugins/menu/images/down.png" alt="' . $LANG_MENU01['move_down'] . '"' . XHTML . '></a></td>';
+            $retval .= '<td class="aligncenter">' . $delete . '<img src="' . $_CONF['site_admin_url'] . '/plugins/menu/images/delete.png" alt="' . $LANG_MENU01['delete'] . '"' . XHTML . '></button></form></td>';
+            $retval .= '<td class="aligncenter">' . $moveup . '<img src="' . $_CONF['site_admin_url'] . '/plugins/menu/images/up.png" alt="' . $LANG_MENU01['move_up'] . '"' . XHTML . '></button></form></td><td class="aligncenter">' . $movedown . '<img src="' . $_CONF['site_admin_url'] . '/plugins/menu/images/down.png" alt="' . $LANG_MENU01['move_down'] . '"' . XHTML . '></button></form></td>';
             $retval .= '</tr>';
             $count++;
 
@@ -272,7 +269,7 @@ class mbElement {
 
     function showTree( $depth,$ulclass='',$liclass='',$parentaclass='',$lastclass,$selected='' ) {
         global $_SP_CONF,$_USER, $_TABLES, $LANG01, $LANG29, $_CONF,$meLevel,
-               $_DB_dbms,$_GROUPS, $config,$Menus, $_TOPICS,$_PLUGINS;
+               $_DB_dbms,$_GROUPS, $config,$Menus, $_TOPICS, $_PLUGINS;
 
         $oulclass       = $ulclass;
         $oliclass       = $liclass;
@@ -379,9 +376,9 @@ class mbElement {
                 switch ($this->subtype) {
                     case 1 : // user menu
                         if ( $this->id != 0 && $this->access > 0 && $parentaclass != '' ) {
-                            $menu .= "<li>" . '<a class="' . $parentaclass . '" name="'.$parentaclass.'" href="#">' . strip_tags($this->label) . '</a>' . LB;
+                            $menu .= "<li>" . '<a class="' . $parentaclass . '" name="'.$parentaclass.'" href="#">' . MENU_escapeStoredText($this->label) . '</a>' . LB;
                         } else {
-                            $menu .= "<li>" . '<a href="#">' . strip_tags($this->label) . '</a></li>' . LB;
+                            $menu .= "<li>" . '<a href="#">' . MENU_escapeStoredText($this->label) . '</a></li>' . LB;
                         }
                         if ( $this->id == 0 && $ulclass != '' ) {
                             $menu .= '<ul class="' . $ulclass . '">' . LB;
@@ -397,7 +394,7 @@ class mbElement {
                             {
                                 $url = $_CONF['site_admin_url'] . '/index.php';
                                 $label =  $LANG29[34];
-                                $menu .= '<li><a href="' . $url . '">' . $label . '</a></li>' . LB;
+                                $menu .= '<li><a href="' . MENU_safeHref($url) . '">' . MENU_escapeStoredText($label) . '</a></li>' . LB;
                             }
                             // what's our current URL?
                             $thisUrl = COM_getCurrentURL();
@@ -415,19 +412,19 @@ class mbElement {
                                     $label .= ' (' . $plg->numsubmissions . ')';
                                 }
                                 $url = $plg->adminurl;
-                                $menu .= '<li><a href="' . $url . '">' . $label . '</a></li>' . LB;
+                                $menu .= '<li><a href="' . MENU_safeHref($url) . '">' . MENU_escapeStoredText($label) . '</a></li>' . LB;
                                 next( $plugin_options );
                             }
                             $url = $_CONF['site_url'] . '/usersettings.php?mode=edit';
                             $label = $LANG01[48];
-                            $menu .= '<li><a href="' . $url . '">' . $label . '</a></li>' . LB;
+                            $menu .= '<li><a href="' . MENU_safeHref($url) . '">' . MENU_escapeStoredText($label) . '</a></li>' . LB;
                             $url = $_CONF['site_url'] . '/users.php?mode=logout';
                             $label = $LANG01[19];
-                            $menu .= '<li><a href="' . $url . '">' . $label . '</a></li>' . LB;
+                            $menu .= '<li><a href="' . MENU_safeHref($url) . '">' . MENU_escapeStoredText($label) . '</a></li>' . LB;
                         } else {
                             $url = $_CONF['site_url'] . '/users.php?mode=login';
                             $label = 'Login';
-                            $menu .= '<li><a href="' . $url . '">' . $label . '</a></li>' . LB;
+                            $menu .= '<li><a href="' . MENU_safeHref($url) . '">' . MENU_escapeStoredText($label) . '</a></li>' . LB;
                         }
                         $menu .= '</ul>' . LB . '</li>' . LB;
                         break;
@@ -440,9 +437,9 @@ class mbElement {
                              */
 
                             if ( $this->id != 0 && $this->access > 0 && $parentaclass != '' ) {
-                                $menu .= "<li>" . '<a class="' . $parentaclass . '" name="'.$parentaclass.'" href="#">' . strip_tags($this->label) . '</a>' . LB;
+                                $menu .= "<li>" . '<a class="' . $parentaclass . '" name="'.$parentaclass.'" href="#">' . MENU_escapeStoredText($this->label) . '</a>' . LB;
                             } else {
-                                $menu .= "<li>" . '<a href="#">' . strip_tags($this->label) . '</a></li>' . LB;
+                                $menu .= "<li>" . '<a href="#">' . MENU_escapeStoredText($this->label) . '</a></li>' . LB;
                             }
                             if ( $this->id == 0 && $ulclass != '' ) {
                                 $menu .= '<ul class="' . $ulclass . '">' . LB;
@@ -483,9 +480,9 @@ class mbElement {
                                             $tids[] = $T['tid'];
                                         }
                                         if( sizeof( $tids ) > 0 ) {
-                                            $topicsql = " (tid IN ('" . implode( "','", $tids ) . "'))";
+                                            //$topicsql = " (ta.tid IN ('" . implode( "','", $tids ) . "'))";
                                             // Geeklog 2.0
-											//$topicsql = " AND (ta.tid IN ('" . implode( "','", $tids ) . "'))";
+											$topicsql = " AND (ta.tid IN ('" . implode( "','", $tids ) . "'))";
                                         }
                                     }
                                 }
@@ -499,17 +496,17 @@ class mbElement {
                                         if( empty( $topicsql )) {
                                             $modnum += DB_count( $_TABLES['storysubmission'] );
                                         } else {
-                                            $sresult = DB_query( "SELECT COUNT(*) AS count FROM {$_TABLES['storysubmission']} WHERE" . $topicsql );
+                                            //$sresult = DB_query( "SELECT COUNT(*) AS count FROM {$_TABLES['storysubmission']} WHERE" . $topicsql );
                                             //Geeklog 2.0
-											//$sresult = DB_query( "SELECT COUNT(DISTINCT sid) AS count FROM {$_TABLES['storysubmission']}, {$_TABLES['topic_assignments']} ta WHERE ta.type = 'article' AND ta.id = sid " . $topicsql );
+											$sresult = DB_query( "SELECT COUNT(DISTINCT sid) AS count FROM {$_TABLES['storysubmission']}, {$_TABLES['topic_assignments']} ta WHERE ta.type = 'article' AND ta.id = sid " . $topicsql );
                                             $S = DB_fetchArray( $sresult );
                                             $modnum += $S['count'];
                                         }
                                     }
                                     if(( in_array('staticpages', $_PLUGINS) && $_CONF['listdraftstories'] == 1 ) && SEC_hasRights( 'story.edit' )) {
-                                        $sql = "SELECT COUNT(*) AS count FROM {$_TABLES['stories']} WHERE (draft_flag = 1)";
+                                        $sql = "SELECT COUNT(*) AS count FROM {$_TABLES['stories']}, {$_TABLES['topic_assignments']} ta WHERE (draft_flag = 1)";
                                         if( !empty( $topicsql )) {
-                                            $sql .= ' AND' . $topicsql;
+                                            $sql .= $topicsql;
                                         }
                                         $result = DB_query( $sql . COM_getPermSQL( 'AND', 0, 3 ));
                                         $A = DB_fetchArray( $result );
@@ -535,15 +532,15 @@ class mbElement {
                                     if( empty( $topicsql )) {
                                         $numstories = DB_count( $_TABLES['stories'] );
                                     } else {
-                                        $nresult = DB_query( "SELECT COUNT(*) AS count from {$_TABLES['stories']} WHERE" . $topicsql . COM_getPermSql( 'AND' ));
+                                        //$nresult = DB_query( "SELECT COUNT(*) AS count from {$_TABLES['stories']} WHERE" . $topicsql . COM_getPermSql( 'AND' ));
                                         // Geeklog 2.0
-										//$nresult = DB_query( "SELECT COUNT(DISTINCT sid) AS count FROM {$_TABLES['stories']}, {$_TABLES['topic_assignments']} ta WHERE ta.type = 'article' AND ta.id = sid " . $topicsql . COM_getPermSql( 'AND' ));
+										$nresult = DB_query( "SELECT COUNT(DISTINCT sid) AS count FROM {$_TABLES['stories']}, {$_TABLES['topic_assignments']} ta WHERE ta.type = 'article' AND ta.id = sid " . $topicsql . COM_getPermSql( 'AND' ));
                                         $N = DB_fetchArray( $nresult );
                                         $numstories = $N['count'];
                                     }
 
                                     $label .= ' (' . COM_numberFormat($numstories) . ')';
-                                    $link_array[$LANG01[11]] = '<li><a href="' . $url . '">' . $label . '</a></li>' . LB;
+                                    $link_array[$LANG01[11]] = '<li><a href="' . MENU_safeHref($url) . '">' . MENU_escapeStoredText($label) . '</a></li>' . LB;
                                 }
 
                                 if( SEC_hasRights( 'block.edit' )) {
@@ -552,7 +549,7 @@ class mbElement {
 
                                     $url = $_CONF['site_admin_url'] . '/block.php';
                                     $label = $LANG01[12] . ' (' . COM_numberFormat($count) . ')';
-                                    $link_array[$LANG01[12]] = '<li><a href="' . $url . '">' . $label . '</a></li>' . LB;
+                                    $link_array[$LANG01[12]] = '<li><a href="' . MENU_safeHref($url) . '">' . MENU_escapeStoredText($label) . '</a></li>' . LB;
                                 }
 
                                 if( SEC_hasRights( 'topic.edit' )) {
@@ -561,13 +558,13 @@ class mbElement {
 
                                     $url = $_CONF['site_admin_url'] . '/topic.php';
                                     $label = $LANG01[13] . ' (' . COM_numberFormat($count) . ')';
-                                    $link_array[$LANG01[13]] = '<li><a href="' . $url . '">' . $label . '</a></li>' . LB;
+                                    $link_array[$LANG01[13]] = '<li><a href="' . MENU_safeHref($url) . '">' . MENU_escapeStoredText($label) . '</a></li>' . LB;
                                 }
 
                                 if( SEC_hasRights( 'user.edit' )) {
                                     $url = $_CONF['site_admin_url'] . '/user.php';
                                     $label = $LANG01[17] . ' (' . COM_numberFormat(DB_count($_TABLES['users']) -1) . ')';
-                                    $link_array[$LANG01[17]] = '<li><a href="' . $url . '">' . $label . '</a></li>' . LB;
+                                    $link_array[$LANG01[17]] = '<li><a href="' . MENU_safeHref($url) . '">' . MENU_escapeStoredText($label) . '</a></li>' . LB;
                                 }
 
                                 if( SEC_hasRights( 'group.edit' )) {
@@ -582,35 +579,35 @@ class mbElement {
 
                                     $url = $_CONF['site_admin_url'] . '/group.php';
                                     $label = $LANG01[96] . ' (' . COM_numberFormat($A['count']) . ')';
-                                    $link_array[$LANG01[96]] = '<li><a href="' . $url . '">' . $label . '</a></li>' . LB;
+                                    $link_array[$LANG01[96]] = '<li><a href="' . MENU_safeHref($url) . '">' . MENU_escapeStoredText($label) . '</a></li>' . LB;
                                 }
 
                                 if( SEC_hasRights( 'user.mail' )) {
                                     $url = $_CONF['site_admin_url'] . '/mail.php';
                                     $label = $LANG01[105] . ' (N/A)';
-                                    $link_array[$LANG01[105]] = '<li><a href="' . $url . '">' . $label . '</a></li>' . LB;
+                                    $link_array[$LANG01[105]] = '<li><a href="' . MENU_safeHref($url) . '">' . MENU_escapeStoredText($label) . '</a></li>' . LB;
                                 }
 
                                 if(( $_CONF['backend'] == 1 ) && SEC_hasRights( 'syndication.edit' )) {
                                     $url = $_CONF['site_admin_url'] . '/syndication.php';
                                     $label = $LANG01[38] . ' (' . COM_numberFormat(DB_count($_TABLES['syndication'])) . ')';
-                                    $link_array[$LANG01[38]] = '<li><a href="' . $url . '">' . $label . '</a></li>' . LB;
+                                    $link_array[$LANG01[38]] = '<li><a href="' . MENU_safeHref($url) . '">' . MENU_escapeStoredText($label) . '</a></li>' . LB;
                                 }
 
                                 if(( $_CONF['trackback_enabled'] || $_CONF['pingback_enabled'] || $_CONF['ping_enabled'] ) && SEC_hasRights( 'story.ping' )) {
                                     $url = $_CONF['site_admin_url'] . '/trackback.php';
                                     $label = $LANG01[116] . ' (' . COM_numberFormat( DB_count( $_TABLES['pingservice'] )) . ')';
-                                    $link_array[$LANG01[116]] = '<li><a href="' . $url . '">' . $label . '</a></li>' . LB;
+                                    $link_array[$LANG01[116]] = '<li><a href="' . MENU_safeHref($url) . '">' . MENU_escapeStoredText($label) . '</a></li>' . LB;
                                 }
                                 if( SEC_hasRights( 'plugin.edit' )) {
                                     $url = $_CONF['site_admin_url'] . '/plugins.php';
                                     $label = $LANG01[77] . ' (' . COM_numberFormat( DB_count( $_TABLES['plugins'] )) . ')';
-                                    $link_array[$LANG01[77]] = '<li><a href="' . $url . '">' . $label . '</a></li>' . LB;
+                                    $link_array[$LANG01[77]] = '<li><a href="' . MENU_safeHref($url) . '">' . MENU_escapeStoredText($label) . '</a></li>' . LB;
                                 }
                                 if (SEC_inGroup('Root')) {
                                     $url = $_CONF['site_admin_url'] . '/configuration.php';
                                     $label = $LANG01[129] . ' (' . COM_numberFormat(count($config->_get_groups())) . ')';
-                                    $link_array[$LANG01[129]] = '<li><a href="' . $url . '">' . $label . '</a></li>' . LB;
+                                    $link_array[$LANG01[129]] = '<li><a href="' . MENU_safeHref($url) . '">' . MENU_escapeStoredText($label) . '</a></li>' . LB;
                                 }
 
                                 // This will show the admin options for all installed plugins (if any)
@@ -626,15 +623,15 @@ class mbElement {
                                     } else {
                                         $label .= ' (' . COM_numberFormat( $plg->numsubmissions ) . ')';
                                     }
-                                    $link_array[$plg->adminlabel] = '<li><a href="' . $url . '">' . $label . '</a></li>' . LB;
+                                    $link_array[$plg->adminlabel] = '<li><a href="' . MENU_safeHref($url) . '">' . MENU_escapeStoredText($label) . '</a></li>' . LB;
 
                                     next( $plugin_options );
                                 }
 
-                                if(( $_CONF['allow_mysqldump'] == 1 ) AND ( $_DB_dbms == 'mysql' ) AND SEC_inGroup( 'Root' )) {
+                                if(isset($_CONF['allow_mysqldump']) && ( $_CONF['allow_mysqldump'] == 1 ) AND ( $_DB_dbms == 'mysql' ) AND SEC_inGroup( 'Root' )) {
                                     $url = $_CONF['site_admin_url'] . '/database.php';
                                     $label = $LANG01[103] . ' (N/A)';
-                                    $link_array[$LANG01[103]] = '<li><a href="' . $url . '">' . $label . '</a></li>' . LB;
+                                    $link_array[$LANG01[103]] = '<li><a href="' . MENU_safeHref($url) . '">' . MENU_escapeStoredText($label) . '</a></li>' . LB;
                                 }
 
                                 if( $_CONF['link_documentation'] == 1 ) {
@@ -646,18 +643,18 @@ class mbElement {
                                     }
                                     $url = $docUrl;
                                     $label = $LANG01[113] . ' (N/A)';
-                                    $link_array[$LANG01[113]] = '<li><a href="' . $url . '">' . $label . '</a></li>' . LB;
+                                    $link_array[$LANG01[113]] = '<li><a href="' . MENU_safeHref($url) . '">' . MENU_escapeStoredText($label) . '</a></li>' . LB;
                                 }
 
                                 if( SEC_inGroup( 'Root' )) {
                                     $url = 'http://geeklog.net/versionchecker.php?version=' . VERSION;
                                     $label = $LANG01[107] . ' (' . VERSION . ')';
-                                    $link_array[$LANG01[107]] = '<li><a href="' . $url . '">' . $label . '</a></li>' . LB;
+                                    $link_array[$LANG01[107]] = '<li><a href="' . MENU_safeHref($url) . '">' . MENU_escapeStoredText($label) . '</a></li>' . LB;
                                 }
                                 if (SEC_isModerator()) {
                                     $url = $_CONF['site_admin_url'] . '/moderation.php';
                                     $label = $LANG01[10] . ' (' . COM_numberFormat( $modnum ) . ')';
-                                    $link_array[$LANG01[10]] = '<li><a href="' . $url . '">' . $label . '</a></li>' . LB;
+                                    $link_array[$LANG01[10]] = '<li><a href="' . MENU_safeHref($url) . '">' . MENU_escapeStoredText($label) . '</a></li>' . LB;
                                 }
 
                                 if( $_CONF['sort_admin'] ) {
@@ -666,7 +663,7 @@ class mbElement {
                                 // C&C entry
                                 $url = $_CONF['site_admin_url'] . '/index.php';
                                 $label = $LANG29[34];
-                                $menu_item = '<li><a href="' . $url . '">' . $label . '</a></li>' . LB;
+                                $menu_item = '<li><a href="' . MENU_safeHref($url) . '">' . MENU_escapeStoredText($label) . '</a></li>' . LB;
 
                                 $link_array = array( $menu_item ) + $link_array;
 
@@ -681,9 +678,9 @@ class mbElement {
 
                     case 3 : // topics menu
                         if ( $this->id != 0 && $this->access > 0 && $parentaclass != '' ) {
-                            $menu .= "<li>" . '<a class="' . $parentaclass . '" name="'.$parentaclass.'" href="#">' . strip_tags($this->label) . '</a>' . LB;
+                            $menu .= "<li>" . '<a class="' . $parentaclass . '" name="'.$parentaclass.'" href="#">' . MENU_escapeStoredText($this->label) . '</a>' . LB;
                         } else {
-                            $menu .= "<li>" . '<a href="#">' . strip_tags($this->label) . '</a></li>' . LB;
+                            $menu .= "<li>" . '<a href="#">' . MENU_escapeStoredText($this->label) . '</a></li>' . LB;
                         }
                         if ( $this->id == 0 && $ulclass != '' ) {
                             $menu .= '<ul class="' . $ulclass . '">' . LB;
@@ -692,7 +689,7 @@ class mbElement {
                         }
                         $langsql = COM_getLangSQL( 'tid', 'AND' );
 
-                        $sql = "SELECT tid,topic,imageurl FROM {$_TABLES['topics']} WHERE 1=1" . $langsql;
+                        $sql = "SELECT tid,topic,imageurl FROM {$_TABLES['topics']} WHERE hidden=0" . $langsql;
                         if( !empty( $_USER['uid'] ) && ( $_USER['uid'] > 1 )) {
                             if (COM_versionCompare(VERSION, '2.2.2', '>=')) {
                                 $tids = [];
@@ -700,15 +697,26 @@ class mbElement {
                                 $tids = DB_getItem( $_TABLES['userindex'], 'tids', "uid = {$_USER['uid']}" );
                             }
                             if( !empty( $tids )) {
-                                $sql .= " AND (tid NOT IN ('" . str_replace( ' ', "','", $tids )
-                                     . "'))" . COM_getPermSQL( 'AND' );
+                                $safeTids = array();
+                                foreach (preg_split('/\s+/', trim((string) $tids)) as $tid) {
+                                    $tid = (int) $tid;
+                                    if ($tid > 0) {
+                                        $safeTids[] = $tid;
+                                    }
+                                }
+                                if (!empty($safeTids)) {
+                                    $sql .= " AND (tid NOT IN (" . implode(',', $safeTids)
+                                         . "))" . COM_getPermSQL( 'AND' );
+                                } else {
+                                    $sql .= COM_getPermSQL( 'AND' );
+                                }
                             } else {
                                 $sql .= COM_getPermSQL( 'AND' );
                             }
                         } else {
                             $sql .= COM_getPermSQL( 'AND' );
                         }
-
+ 
                         if( $_CONF['sortmethod'] == 'alpha' ) {
                             $sql .= ' ORDER BY topic ASC';
                         } else {
@@ -747,16 +755,16 @@ class mbElement {
                             }
                             $label .= $countstring;
 							*/
-                            $menu .= '<li><a href="' . $url . '">' . $label . '</a></li>' . LB;
+                            $menu .= '<li><a href="' . MENU_safeHref($url) . '">' . MENU_escapeStoredText($label) . '</a></li>' . LB;
                         }
                         $menu .= '</ul>' . LB . '</li>' . LB;
                         break;
 
                     case 4 : // static pages menu
                         if ( $this->id != 0 && $this->access > 0 && $parentaclass != '' ) {
-                            $menu .= "<li>" . '<a class="' . $parentaclass . '" href="#">' . strip_tags($this->label) . '</a>' . LB;
+                            $menu .= "<li>" . '<a class="' . $parentaclass . '" href="#">' . MENU_escapeStoredText($this->label) . '</a>' . LB;
                         } else {
-                            $menu .= "<li>" . '<a href="#">' . strip_tags($this->label) . '</a></li>' . LB;
+                            $menu .= "<li>" . '<a href="#">' . MENU_escapeStoredText($this->label) . '</a></li>' . LB;
                         }
                         if ( $this->id == 0 && $ulclass != '' ) {
                             $menu .= '<ul class="' . $ulclass . '">' . LB;
@@ -783,15 +791,15 @@ class mbElement {
                             $A = DB_fetchArray ($result);
                             $url = COM_buildURL ($_CONF['site_url'] . '/staticpages/index.php?page=' . $A['sp_id']);
                             $label = $A['sp_label'];
-                            $menu .= '<li><a href="' . $url . '">' . $label . '</a></li>' . LB;
+                            $menu .= '<li><a href="' . MENU_safeHref($url) . '">' . MENU_escapeStoredText($label) . '</a></li>' . LB;
                         }
                         $menu .= '</ul>' . LB . '</li>' . LB;
                         break;
                     case 5 : // plugin menu
                         if ( $this->id != 0 && $this->access > 0 && $parentaclass != '' ) {
-                            $menu .= "<li>" . '<a class="' . $parentaclass . '" href="#">' . strip_tags($this->label) . '</a>' . LB;
+                            $menu .= "<li>" . '<a class="' . $parentaclass . '" href="#">' . MENU_escapeStoredText($this->label) . '</a>' . LB;
                         } else {
-                            $menu .= "<li>" . '<a href="#">' . strip_tags($this->label) . '</a>' . LB;
+                            $menu .= "<li>" . '<a href="#">' . MENU_escapeStoredText($this->label) . '</a>' . LB;
                         }
                         if ( $this->id == 0 && $ulclass != '' ) {
                             $menu .= '<ul class="' . $ulclass . '">' . LB;
@@ -805,7 +813,7 @@ class mbElement {
                             for( $i = 1; $i <= count( $plugin_menu ); $i++ ) {
                                 $url = current($plugin_menu);
                                 $label = key($plugin_menu);
-                                $menu .= '<li><a href="' . $url . '">' . $label . '</a></li>' . LB;
+                                $menu .= '<li><a href="' . MENU_safeHref($url) . '">' . MENU_escapeStoredText($label) . '</a></li>' . LB;
                                 next( $plugin_menu );
                             }
                         }
@@ -835,10 +843,14 @@ class mbElement {
                 $this->replace_macros();
                 break;
             case '7' : // php function
+                if (!MENU_runtimeConfigEnabled('allow_php_elements', false)) {
+                    MENU_debugLog('PHP menu element ' . (int) $this->id . ' skipped by configuration.');
+                    break;
+                }
                 $functionName = $this->subtype;
                 if (function_exists($functionName)) {
                     /* Pass the type of menu to custom php function */
-                    $menu = "<li>" . '<a class="' . $parentaclass . '" name="'.$parentaclass.'" href="#">' . strip_tags($this->label) . '</a>' . LB;
+                    $menu = "<li>" . '<a class="' . $parentaclass . '" name="'.$parentaclass.'" href="#">' . MENU_escapeStoredText($this->label) . '</a>' . LB;
                     $menu .= $functionName();
                     $menu .= '</li>';
                 }
@@ -867,12 +879,12 @@ class mbElement {
                 }
 
                 if ( $this->type == 1 && $parentaclass != '' ) {
-                    $retval .= "<li".$lastClass.">" . '<a class="' . $parentaclass . '" name="'.$parentaclass.'" href="' . ($this->url == '' ? '#' : $this->url) . '">' . strip_tags($this->label) . '</a>' . LB;
+                    $retval .= "<li".$lastClass.">" . '<a class="' . $parentaclass . '" name="'.$parentaclass.'" href="' . MENU_safeHref($this->url) . '"' . MENU_legacyParentAttributes() . '>' . MENU_escapeStoredText($this->label) . '</a>' . LB;
                 } else {
                     if ($this->type == 8 ) {
-                        $retval .= "<li".$lastClass.'><a><strong>' . strip_tags($this->label) . '</strong></a></li>' . LB;
+                        $retval .= "<li".$lastClass.'><a><strong>' . MENU_escapeStoredText($this->label) . '</strong></a></li>' . LB;
                     } else {
-                        $retval .= "<li".$lastClass.">" . '<a href="' . $this->url . '"' . ($this->target != '' ? ' target="' . $this->target . '"' : '') . '>' . strip_tags($this->label) . '</a></li>' . LB;
+                        $retval .= "<li".$lastClass.">" . '<a href="' . MENU_safeHref($this->url) . '"' . MENU_legacyLinkAttributes($this->url, $this->target) . '>' . MENU_escapeStoredText($this->label) . '</a></li>' . LB;
                     }
                 }
             }
