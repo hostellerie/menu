@@ -1,5 +1,7 @@
 # Menu Plugin for Geeklog
 
+![Menu Plugin 1.3.0](docs/menu-plugin-1.3.0.webp)
+
 Menu is a navigation management plugin for the [Geeklog CMS](https://www.geeklog.net/).
 
 It allows administrators to build and manage reusable navigation structures for headers, footers, blocks and content areas, while keeping compatibility with existing Geeklog themes and providing a cleaner integration path for modern themes.
