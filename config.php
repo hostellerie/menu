@@ -24,7 +24,7 @@ $_MENU_PLUGIN = array(
     'pi_name'       => 'menu',
     'pi_version'    => '1.3.0',
     'gl_version'    => '2.1.1',
-    'pi_url'        => 'https://github.com/hostellerie/menu',
+    'pi_url'        => 'https://github.com/Geeklog-Plugins/menu',
     'GROUPS'        => array(
         'Menu Admin' => 'Users in this group can administer the Menu plugin',
     ),
