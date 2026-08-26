@@ -25,8 +25,8 @@ $requiredSnippets = array(
     "MENU_runtimeConfigEnabled('legacy_rendering', true)",
     "MENU_runtimeConfigEnabled('load_legacy_css', true)",
     "MENU_runtimeConfigEnabled('load_legacy_js', true)",
-    "(int) $menu['menu_type'] === 1",
-    "!MENU_themeHandlesPresentation(isset($menu['menu_name']) ? $menu['menu_name'] : '')",
+    '(int) $menu[\'menu_type\'] === 1',
+    '!MENU_themeHandlesPresentation(isset($menu[\'menu_name\']) ? $menu[\'menu_name\'] : \'\')',
     "setCSSFile('menu_slicknav', '/menu/css/slicknav.css')",
     "setJavaScriptFile('slicknav', '/menu/js/jquery.slicknav.js')",
 );
