@@ -9,7 +9,7 @@ if ($autoinstall === false || $updates === false) {
     exit(1);
 }
 
-$fromVersions = array('1.2.6', '1.2.7', '1.2.8', '1.2.8.1');
+$fromVersions = array('1.2.5', '1.2.6', '1.2.7', '1.2.8', '1.2.8.1');
 foreach ($fromVersions as $version) {
     if (!version_compare($version, '1.3.0', '<')) {
         fwrite(STDERR, 'Supported upgrade source is not routed through 1.3.0 migration: ' . $version . "\n");
