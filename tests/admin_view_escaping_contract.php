@@ -19,7 +19,8 @@ if (strpos($view, "'menuname'          => \$Menus[\$menu_id]['menu_name']") !== 
     exit(1);
 }
 
-if (strpos($view, "'menuname'          => isset($menu_name)") !== false) {
+$undefinedLegacyFallback = "'menuname'          => isset(\$menu_name)";
+if (strpos($view, $undefinedLegacyFallback) !== false) {
     fwrite(STDERR, "Undefined legacy menu_name fallback remains in create view\n");
     exit(1);
 }
