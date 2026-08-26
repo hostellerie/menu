@@ -17,7 +17,7 @@ The modernization remains conservative: preserve existing menu data and legacy r
 
 ---
 
-## Current status — 2026-08-25
+## Current status — 2026-08-26
 
 ### Implemented and covered by automated tests
 
@@ -42,6 +42,7 @@ The modernization remains conservative: preserve existing menu data and legacy r
 - cache traversal/symlink protection;
 - removal of the unused/unsafe HTML menu cache path;
 - SlickNav loaded only for active legacy horizontal cascading menus that need it;
+- SlickNav retained intentionally as the 1.3.0 legacy mobile compatibility layer;
 - stable TableDnD 0.6 drag ordering loaded through Geeklog's jQuery stack, with keyboard move controls;
 - restored submenu creation/editing for all presentation types;
 - default `Display After` selection at the end of the current sibling list;
@@ -49,6 +50,9 @@ The modernization remains conservative: preserve existing menu data and legacy r
 - theme presentation hand-off for modern themes;
 - native/theme administration preview;
 - global Geeklog configuration for all 1.3.0 runtime switches;
+- dead administration assets removed and guarded by regression tests;
+- obsolete IE6-specific menu script removed and guarded by regression tests;
+- legacy `colorpicker.js` encapsulated so it no longer creates implicit globals while preserving its historical jQuery API;
 - minimal GitHub CI: one PHP 5.6 / PHP 8.1 lint-and-test workflow.
 
 ### Validated locally on Geeklog 2.1.1 and 2.2.2 during modernization
@@ -71,13 +75,13 @@ The following paths have been exercised successfully during development:
 
 ### Remaining blockers before 1.3.0 stable
 
-1. Finish Phase 7 legacy asset/browser-specific cleanup and remaining contextual escaping review.
-2. Audit and remove demonstrably unused legacy JavaScript/CSS/images.
-3. Review the bundled SlickNav dependency and decide whether it remains the 1.3.0 compatibility implementation.
-4. Complete manual validation of all eight global configuration switches on both Geeklog 2.1.1 and 2.2.2.
-5. Run the complete upgrade matrix from 1.2.6, 1.2.7, 1.2.8 and 1.2.8.1.
-6. Confirm fresh installation and uninstall behavior on both supported Geeklog generations.
-7. Perform a final warning/error-log audit under PHP 5.6 and PHP 8.1.
+1. Complete manual validation of all eight global configuration switches on both Geeklog 2.1.1 and 2.2.2.
+2. Run the complete upgrade matrix from 1.2.6, 1.2.7, 1.2.8 and 1.2.8.1.
+3. Confirm fresh installation and uninstall behavior on both supported Geeklog generations.
+4. Perform a final warning/error-log audit under PHP 5.6 and PHP 8.1.
+5. Validate the actual release package/install procedure.
+
+SlickNav is **not** a release blocker for 1.3.0. The bundled 2014 implementation is retained as a narrowly loaded legacy compatibility layer. Replacement or removal is deferred until after 1.3.0 stabilization unless testing reveals a concrete security or compatibility problem.
 
 There is **no GitHub Actions ZIP packaging requirement**. Release validation concerns the plugin source/package produced for an actual release, not continuous ZIP generation in CI.
 
@@ -125,7 +129,7 @@ There is **no GitHub Actions ZIP packaging requirement**. Release validation con
 - [x] Encode JavaScript values safely where modernized.
 - [x] Strictly validate legacy CSS colors and image filenames.
 - [x] Prevent broken/missing legacy image previews.
-- [ ] Continue contextual escaping cleanup as legacy view code is extracted.
+- [x] Complete the Phase 7 contextual escaping review for the retained legacy views.
 
 ### Uploads
 
@@ -183,12 +187,15 @@ There is **no GitHub Actions ZIP packaging requirement**. Release validation con
 - [x] Centralize path, compatibility and security helpers.
 - [x] Reduce `admin/index.php` to routing/page composition only, with mutations and view builders extracted.
 - [x] Remove obsolete TableDnD generations and retain only `tablednd_0_6.js` as the tested compatibility implementation.
-- [ ] Audit/remove other dead administration assets.
-- [ ] Audit obsolete browser-specific code/assets.
-- [ ] Review SlickNav version/dependency strategy.
+- [x] Audit/remove dead administration assets.
+- [x] Audit obsolete browser-specific code/assets and remove the IE6-specific script.
+- [x] Review SlickNav version/dependency strategy: retain it for 1.3.0 as legacy compatibility only.
+- [x] Add a permanent regression contract for SlickNav's narrow legacy-only loading conditions.
 - [x] Remove the dead `createElementID()` / `SELECT MAX(id)+1` generator and enforce `AUTO_INCREMENT` creation paths.
 - [x] Reject hierarchy cycles server-side and filter descendants from the edit-parent selector.
-- [ ] Prefer vanilla/dependency-free JavaScript for new administration code.
+- [x] Prefer vanilla/dependency-free JavaScript for new administration code; retained legacy dependencies are compatibility exceptions.
+
+**Phase 7 is closed for 1.3.0.** Further dependency replacement or cosmetic cleanup is post-stabilization work unless a release-blocking defect is found.
 
 ## Phase 7.5 — Global plugin configuration
 
@@ -220,7 +227,7 @@ Also completed:
 - [x] Restore submenu hierarchy editing across presentation types.
 - [x] Default new element ordering to the end of its sibling list.
 - [x] Provide native/theme preview tabs.
-- [ ] Continue responsive/accessibility polish after structural cleanup.
+- [ ] Continue responsive/accessibility polish after 1.3.0 stabilization.
 
 ## Phase 9 — Theme-facing API and future features
 
@@ -234,6 +241,7 @@ Implemented foundation:
 
 Possible post-stabilization additions:
 
+- [ ] Replace/remove SlickNav after legacy rendering stabilization.
 - [ ] JSON import/export.
 - [ ] Multisite clone/export/import workflows.
 - [ ] Optional SVG/emoji/CSS-class icons.
