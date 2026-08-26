@@ -19,7 +19,7 @@ The modernization remains conservative: preserve existing menu data and legacy r
 
 ## Current status — 2026-08-26
 
-Menu 1.3.0 has completed its planned release validation. No new feature work is planned before the stable release unless a release-blocking defect is discovered.
+Menu 1.3.0 has completed its planned release validation, including successful upgrades on production sites. No new feature work is planned before the stable release unless a release-blocking defect is discovered.
 
 ### Implemented and covered by automated tests
 
@@ -75,11 +75,12 @@ The following paths have been exercised successfully during development on Geekl
 - upgrade via the actual installable 1.3.0 archive;
 - legacy upgrade paths from Menu 1.2.5 through 1.2.8.1 across the supported Geeklog test generations;
 - save/reload validation of all eight global configuration switches;
-- final runtime warning/error-log audit.
+- final runtime warning/error-log audit;
+- successful upgrades on production Geeklog sites.
 
 ### Release status
 
-All planned 1.3.0 release checks are complete. The branch is ready to be frozen for the stable release, subject only to fixing a newly discovered release-blocking defect.
+All planned 1.3.0 release checks are complete, including production upgrade validation. The branch is ready to be frozen for the stable release, subject only to fixing a newly discovered release-blocking defect.
 
 SlickNav is **not** a release blocker for 1.3.0. Replacement/removal remains post-1.3.0 work unless a concrete security or compatibility defect is found.
 
@@ -220,6 +221,7 @@ Before publishing 1.3.0 stable:
 - [x] Validate automated release-package generation.
 - [x] Final switch-by-switch configuration pass.
 - [x] Final runtime warning/error-log audit.
+- [x] Validate upgrade on production Geeklog sites.
 
 **Phase 11 is complete. Menu 1.3.0 is ready for stable release.**
 
