@@ -1,0 +1,64 @@
+name: Build installable archive
+
+on:
+  push:
+    branches:
+      - modernize-1.4.0
+    paths-ignore:
+      - 'dist/**'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-dist:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Build Geeklog installable archive
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          rm -rf build
+          mkdir -p build/menu dist
+
+          rsync -a ./ build/menu/ \
+            --exclude '.git/' \
+            --exclude '.github/' \
+            --exclude 'build/' \
+            --exclude 'dist/'
+
+          rm -f dist/menu-1.4.0.zip
+          (
+            cd build
+            zip -q -r ../dist/menu-1.4.0.zip menu
+          )
+
+          rm -rf build
+
+          echo "Archive created: dist/menu-1.4.0.zip"
+          unzip -l dist/menu-1.4.0.zip | head -n 40
+
+      - name: Commit archive to dist
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if git diff --quiet -- dist/menu-1.4.0.zip && git ls-files --error-unmatch dist/menu-1.4.0.zip >/dev/null 2>&1; then
+            echo "Archive is already up to date."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add dist/menu-1.4.0.zip
+          git commit -m "build: update Menu 1.4.0 installable archive"
+          git push
