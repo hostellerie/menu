@@ -14,6 +14,41 @@ if (!defined('VERSION')) {
 }
 
 /**
+ * Convert a Geeklog-rendered administrative label into presentation-neutral
+ * metadata. Some core/plugin callbacks use COM_createControl() and therefore
+ * return small HTML wrappers (for example display-text-warning renders as
+ * <span class="uk-text-danger">...</span> in Denim). The resolved-tree API
+ * must not leak that theme HTML, but it should preserve the semantic intent.
+ *
+ * @param string $label
+ * @return array Array with plain-text label and optional semantic status
+ */
+function MENU_resolvedAdminLabelMetadata($label)
+{
+    $raw = (string) $label;
+    $status = '';
+
+    // Geeklog 2.2.x Denim renders COM_createControl('display-text-warning')
+    // with uk-text-danger. Accept uk-text-warning as well for theme variants.
+    if (preg_match('/class\s*=\s*(["\'])[^"\']*\buk-text-(?:danger|warning)\b[^"\']*\1/i', $raw)) {
+        $status = 'warning';
+    } elseif (preg_match('/class\s*=\s*(["\'])[^"\']*\buk-text-success\b[^"\']*\1/i', $raw)) {
+        $status = 'success';
+    } elseif (preg_match('/class\s*=\s*(["\'])[^"\']*\buk-text-(?:primary|muted)\b[^"\']*\1/i', $raw)) {
+        $status = 'info';
+    }
+
+    $plain = html_entity_decode(strip_tags($raw), ENT_QUOTES, 'UTF-8');
+    $plain = preg_replace('/\s+/u', ' ', $plain);
+    $plain = trim((string) $plain);
+
+    return array(
+        'label' => $plain,
+        'status' => $status,
+    );
+}
+
+/**
  * Resolve the legacy Geeklog admin menu into presentation-neutral nodes.
  *
  * This deliberately mirrors the legacy visibility rules without returning
@@ -116,11 +151,21 @@ function MENU_resolveGeeklogAdminChildren()
         if (!isset($option->adminurl) || !isset($option->adminlabel)) {
             continue;
         }
-        $label = (string) $option->adminlabel;
+
+        $metadata = MENU_resolvedAdminLabelMetadata($option->adminlabel);
+        $label = $metadata['label'];
         if (isset($option->numsubmissions)) {
             $label .= ' (' . MENU_resolvedFormatCount((int) $option->numsubmissions) . ')';
         }
-        $children[] = MENU_resolvedSyntheticNode($label, (string) $option->adminurl, 4, (string) $option->adminlabel);
+
+        $node = MENU_resolvedSyntheticNode(
+            $label,
+            (string) $option->adminurl,
+            4,
+            $metadata['label']
+        );
+        $node['status'] = $metadata['status'];
+        $children[] = $node;
     }
 
     if (!empty($_CONF['sort_admin']) && count($children) > 1) {
