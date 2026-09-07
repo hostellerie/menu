@@ -12,6 +12,11 @@ if (!defined('VERSION')) {
     die('This file can not be used on its own.');
 }
 
+// functions.inc loads this runtime bootstrap on every active Menu request.
+// Publish the theme-facing structured API here so themes can simply feature-
+// detect MENU_getResolvedTree() without knowing Menu's internal file layout.
+require_once __DIR__ . '/resolved_tree.php';
+
 /**
  * Load the complete Menu runtime structure using a fixed number of queries.
  *
