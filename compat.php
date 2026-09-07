@@ -40,19 +40,19 @@ namespace Geeklog {
             public static function fGet($name, $default = '')
             {
                 $value = self::get($name, $default);
-                return is_array($value) ? $value : \\COM_applyFilter($value);
+                return is_array($value) ? $value : \COM_applyFilter($value);
             }
 
             public static function fPost($name, $default = '')
             {
                 $value = self::post($name, $default);
-                return is_array($value) ? $value : \\COM_applyFilter($value);
+                return is_array($value) ? $value : \COM_applyFilter($value);
             }
 
             public static function fRequest($name, $default = '')
             {
                 $value = self::request($name, $default);
-                return is_array($value) ? $value : \\COM_applyFilter($value);
+                return is_array($value) ? $value : \COM_applyFilter($value);
             }
 
             public static function fGetOrPost($name, $default = '')
