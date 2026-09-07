@@ -119,14 +119,29 @@ namespace {
     }
 
     /*
-     * Menu 1.2.x stored some element labels already HTML-encoded. Decode one
-     * legacy layer before escaping for output so upgrades remain visually
-     * compatible while raw database values can never become markup.
+     * Menu labels are text, not presentation markup. Older Menu data and some
+     * Geeklog/plugin callbacks may provide raw, encoded or even double-encoded
+     * HTML wrappers. Decode a bounded number of legacy layers, strip markup,
+     * then escape exactly once for output. This keeps legacy rendering and the
+     * resolved-tree renderer consistent and prevents visible <span>/<strong>
+     * fragments from leaking into navigation labels.
      */
     if (!function_exists('MENU_escapeStoredText')) {
         function MENU_escapeStoredText($value)
         {
-            return MENU_escapeHTML(htmlspecialchars_decode((string) $value, ENT_QUOTES));
+            $text = (string) $value;
+
+            for ($i = 0; $i < 4; $i++) {
+                $decoded = html_entity_decode($text, ENT_QUOTES, 'UTF-8');
+                if ($decoded === $text) {
+                    break;
+                }
+                $text = $decoded;
+            }
+
+            $text = strip_tags($text);
+
+            return MENU_escapeHTML($text);
         }
     }
 
