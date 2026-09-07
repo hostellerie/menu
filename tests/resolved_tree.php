@@ -87,7 +87,9 @@ function DB_count($table, $field = '', $value = '') {
     return 0;
 }
 
-require_once dirname(__DIR__) . '/resolved_tree.php';
+// functions.inc loads runtime_loader.php in production. Requiring the runtime
+// bootstrap here verifies that Menu itself publishes MENU_getResolvedTree().
+require_once dirname(__DIR__) . '/runtime_loader.php';
 
 function menu_test_fail($message)
 {
@@ -101,6 +103,8 @@ function menu_test_assert($condition, $message)
         menu_test_fail($message);
     }
 }
+
+menu_test_assert(function_exists('MENU_getResolvedTree'), 'Menu runtime must publish MENU_getResolvedTree');
 
 class MenuResolvedTestElement
 {
