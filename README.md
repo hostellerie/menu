@@ -70,6 +70,24 @@ Legacy rendering remains available for existing themes.
 
 This is the preferred direction for integrations such as the Eclipse theme and for future contextual or external consumers.
 
+### Demand-loaded frontend assets
+
+Menu now keeps a request-scoped registry of menus that reach `MENU_getMenu()`. On Geeklog's modern document renderer, legacy CSS and SlickNav resources are considered only for menus registered during the current request.
+
+Examples on Geeklog 2.2.2:
+
+- `[menu:footer]` loads the footer menu CSS only;
+- `[menu:footer]` does not load SlickNav because a simple footer menu does not need it;
+- `[menu:footer] [menu:secondary]` loads resources for those two menus only;
+- an active vertical or horizontal menu that is not rendered contributes no Menu CSS or JavaScript;
+- `load_legacy_css = false`, `load_legacy_js = false`, `legacy_rendering = false` and theme-owned presentation remain authoritative.
+
+`plugin_templatesetvars_menu()` no longer renders both historical theme menus unconditionally. It checks the active theme source for `header_navigation` and `menu_footer`. Geeklog 2.2.2 uses the single `index.thtml` document renderer, so a referenced footer menu is prepared during the header phase, before resources are finalized.
+
+Geeklog 2.1.1 has a different lifecycle: `COM_siteHeader()` finalizes the head before arbitrary page content and its autotags can call `MENU_getMenu()`. Because late CSS cannot be safely added to the already finalized head, Menu deliberately retains the historical active-menu resource fallback on 2.1.1. This preserves `[menu:...]`, direct `MENU_getMenu()` calls and legacy themes rather than introducing missing styles. The code detects the modern capability through `COM_createHTMLDocument()` instead of maintaining separate source trees.
+
+The 2.1.1 template path still avoids unnecessary work where it is safe: `header.thtml` and `footer.thtml` are checked before historical template variables are populated, and `menu_footer` can be pre-registered before header finalization when the legacy footer template actually references it.
+
 ### Localization
 
 English is the canonical language contract for the plugin. Runtime language loading starts with English and overlays the selected translation so missing translated keys fall back safely instead of raising undefined-key warnings.
@@ -87,6 +105,8 @@ This keeps older stored menu configuration renderable on modern PHP versions wit
 ### Caching and runtime structure
 
 The modernization work includes separate runtime/configuration and cache helpers, including runtime and filesystem cache layers. Cache remains disposable and separate from persistent menu data.
+
+Per-menu/theme legacy CSS cache instances continue to use the existing `menu_css_<menu_id>__<theme>` convention. Demand loading changes the decision about which menu resource is considered; it does not require a new CSS cache format.
 
 ### Multisite support
 
@@ -112,6 +132,8 @@ The branch contains two permanent GitHub Actions workflows:
 
 - **Menu CI** for compatibility/security/test checks;
 - **Build installable archive** for producing `menu-1.4.0.zip`.
+
+The CI matrix runs the PHP-compatible test suite on PHP 5.6 and PHP 8.1. Demand-loading tests cover modern request registration, footer/navigation combinations, unused menus, theme-owned presentation, legacy configuration switches, Geeklog 2.1.1 lifecycle fallback and Geeklog 2.2.2 template detection.
 
 The build validates the language contract, creates the Geeklog installable archive, verifies the ZIP and publishes it as a downloadable GitHub Actions artifact. The generated archive is also committed under `dist/` for branch testing.
 
