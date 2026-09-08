@@ -13,6 +13,42 @@ if (!defined('VERSION')) {
 }
 
 /**
+ * Resolve a runtime menu name exactly as MENU_getMenu() does, including the
+ * active language variant when one exists.
+ *
+ * @param string $name
+ * @return int
+ */
+function MENU_resolveMenuId($name)
+{
+    global $Menus;
+
+    $name = (string) $name;
+    $languageId = function_exists('COM_getLanguageId') ? COM_getLanguageId() : '';
+
+    if (!empty($languageId) && is_array($Menus)) {
+        $localizedName = $name . '_' . $languageId;
+        foreach ($Menus as $menu) {
+            if (isset($menu['menu_name'], $menu['menu_id'])
+                && $menu['menu_name'] == $localizedName) {
+                return (int) $menu['menu_id'];
+            }
+        }
+    }
+
+    if (is_array($Menus)) {
+        foreach ($Menus as $menu) {
+            if (isset($menu['menu_name'], $menu['menu_id'])
+                && strcasecmp(trim($menu['menu_name']), trim($name)) === 0) {
+                return (int) $menu['menu_id'];
+            }
+        }
+    }
+
+    return 0;
+}
+
+/**
  * Register a menu that has actually reached the rendering boundary.
  *
  * @param int|string $menuID
@@ -33,7 +69,35 @@ function MENU_registerAssetUsage($menuID)
 }
 
 /**
- * Return menu ids rendered during the current request.
+ * Pre-register assets for a named menu when Geeklog's legacy header lifecycle
+ * requires resource knowledge before the menu itself can be rendered.
+ *
+ * This is only intended for a template variable that has already been confirmed
+ * present in the theme source. It applies the same active/permission gate as
+ * MENU_getMenu().
+ *
+ * @param string $name
+ * @return int Resolved/registered menu id, or 0
+ */
+function MENU_registerNamedAssetUsage($name)
+{
+    global $Menus;
+
+    $menuID = MENU_resolveMenuId($name);
+    if ($menuID <= 0
+        || !isset($Menus[$menuID])
+        || (int) $Menus[$menuID]['active'] !== 1
+        || (int) $Menus[$menuID]['menu_perm'] !== 3) {
+        return 0;
+    }
+
+    MENU_registerAssetUsage($menuID);
+
+    return $menuID;
+}
+
+/**
+ * Return menu ids rendered or explicitly pre-registered during this request.
  *
  * @return array
  */
