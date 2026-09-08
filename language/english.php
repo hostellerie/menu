@@ -244,6 +244,7 @@ $LANG_MENU_ADMIN = array(
     3 => 'Click on the icon under the Edit column to edit a menu item\'s properties. Arrange the items by moving them up or down with the arrows under the Order column.',
     4 => 'To create a new menu element, specify its details and permissions below.',
     5 => 'To edit a menu element, modify its details or permissions below.',
+    6 => 'Customize the selected menu appearance and layout options below.',
 );
 
 $LANG_MENU_GLTYPES_HELP = array(
