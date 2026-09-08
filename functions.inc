@@ -56,12 +56,59 @@ require_once $plugin_path . 'presentation.php';
 require_once $plugin_path . 'cache_filesystem.php';
 require_once $plugin_path . 'cache.php';
 $langfile = $plugin_path . 'language/' . $_CONF['language'] . '.php';
+$englishLangFile = $plugin_path . 'language/english.php';
 
-if (file_exists($langfile)) {
-    require_once $langfile;
-} else {
-    require_once $plugin_path . 'language/english.php';
+// English is the canonical language. Load it first and keep it as the
+// per-key fallback when a translation file is incomplete.
+require_once $englishLangFile;
+
+$menuEnglishLanguage = array(
+    'LANG_MENU_1' => $LANG_MENU_1,
+    'LANG_MENU00' => $LANG_MENU00,
+    'LANG_MENU01' => $LANG_MENU01,
+    'LANG_HC' => $LANG_HC,
+    'LANG_HS' => $LANG_HS,
+    'LANG_VC' => $LANG_VC,
+    'LANG_VS' => $LANG_VS,
+    'LANG_MENU_MENU_TYPES' => $LANG_MENU_MENU_TYPES,
+    'LANG_MENU_TYPES' => $LANG_MENU_TYPES,
+    'LANG_MENU_TARGET' => $LANG_MENU_TARGET,
+    'LANG_MENU_GLFUNCTION' => $LANG_MENU_GLFUNCTION,
+    'LANG_MENU_GLTYPES' => $LANG_MENU_GLTYPES,
+    'LANG_MENU_ADMIN' => $LANG_MENU_ADMIN,
+    'LANG_MENU_GLTYPES_HELP' => $LANG_MENU_GLTYPES_HELP,
+    'LANG_MENU_GLFUNCTION_HELP' => $LANG_MENU_GLFUNCTION_HELP,
+    'LANG_MENU_TYPES_HELP' => $LANG_MENU_TYPES_HELP,
+);
+
+$menuEnglishConfigLanguage = array(
+    'LANG_configsections' => isset($LANG_configsections['menu']) ? $LANG_configsections['menu'] : array(),
+    'LANG_confignames' => isset($LANG_confignames['menu']) ? $LANG_confignames['menu'] : array(),
+    'LANG_configsubgroups' => isset($LANG_configsubgroups['menu']) ? $LANG_configsubgroups['menu'] : array(),
+    'LANG_tab' => isset($LANG_tab['menu']) ? $LANG_tab['menu'] : array(),
+    'LANG_fs' => isset($LANG_fs['menu']) ? $LANG_fs['menu'] : array(),
+    'LANG_configselects' => isset($LANG_configselects['menu']) ? $LANG_configselects['menu'] : array(),
+);
+
+if ($langfile !== $englishLangFile && file_exists($langfile)) {
+    require $langfile;
+
+    foreach ($menuEnglishLanguage as $languageVariable => $englishValues) {
+        $translatedValues = isset(${$languageVariable}) && is_array(${$languageVariable})
+            ? ${$languageVariable}
+            : array();
+        ${$languageVariable} = array_replace($englishValues, $translatedValues);
+    }
+
+    foreach ($menuEnglishConfigLanguage as $languageVariable => $englishValues) {
+        $translatedValues = isset(${$languageVariable}['menu']) && is_array(${$languageVariable}['menu'])
+            ? ${$languageVariable}['menu']
+            : array();
+        ${$languageVariable}['menu'] = array_replace($englishValues, $translatedValues);
+    }
 }
+
+unset($menuEnglishLanguage, $menuEnglishConfigLanguage);
 /**
 * Check and see if we need to load the plugin configuration
 */ 
