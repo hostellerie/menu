@@ -54,7 +54,7 @@ $display = '';
 MENU_adminEnforceCsrf();
 
 if (!SEC_hasRights('menu.admin')) {
-    // Someone is trying to illegally access this page
+    // Someone is trying to illegally access the Menu Administration page
     COM_errorLog("Someone has tried to illegally access the Menu Administration page.  User id: {$_USER['uid']}, Username: {$_USER['username']}, IP: " . $_SERVER['REMOTE_ADDR'],1);
 
     $display .= COM_startBlock($LANG_MENU00['access_denied']);
@@ -63,16 +63,6 @@ if (!SEC_hasRights('menu.admin')) {
     COM_output(COM_createHTMLDocument($display));
     exit;
 }
-
-
-
-
-
-
-
-
-
-
 
 /*
  * Main processing loop
@@ -83,6 +73,10 @@ $mode = Geeklog\Input::fGetOrPost('mode', '');
 $menu_id = (int) Geeklog\Input::fRequest('menumid', 0);
 $menu_id = (int) Geeklog\Input::fRequest('menu', $menu_id);
 $mid = (int) Geeklog\Input::fRequest('mid', 0);
+
+if ($mode === 'menuconfig') {
+    COM_errorLog('[Menu debug] admin/index.php entered menuconfig route; requested menuid=' . (int) Geeklog\Input::fRequest('menuid', 0));
+}
 
 if ( (isset($_POST['execute']) || $mode != '') && !isset($_POST['cancel']) && !isset($_POST['defaults'])) {
     switch ( $mode ) {
@@ -167,7 +161,9 @@ if ( (isset($_POST['execute']) || $mode != '') && !isset($_POST['cancel']) && !i
             break;
         case 'menuconfig' :
             $menu_id = (int) Geeklog\Input::fRequest('menuid');
+            COM_errorLog('[Menu debug] calling MENU_menuConfig(); menuid=' . $menu_id . '; menu_exists=' . (isset($Menus[$menu_id]) ? 'yes' : 'no'));
             $content = MENU_menuConfig($menu_id);
+            COM_errorLog('[Menu debug] MENU_menuConfig() returned; menuid=' . $menu_id . '; content_type=' . gettype($content) . '; content_length=' . (is_string($content) ? strlen($content) : -1));
             $currentSelect = $LANG_MENU01['menu_colors'];
             break;
         case 'newmenu' :
@@ -200,7 +196,15 @@ $display .= '    <div class="pluginAlert aligncenter" style="border:1px dashed #
 $display .= '    <p>' . $LANG_MENU01['javascript_required'] . '</p>' . LB;
 $display .= '    </div>' . LB;
 $display .= '</noscript>' . LB;
-$display .= '<div id="menu" style="display:none;">' . LB;
+
+// Progressive enhancement: admin content must remain visible even when JavaScript
+// or an optional UI plugin fails to load.
+$display .= '<div id="menu">' . LB;
 $display .= $content;
 $display .= '</div>';
+
+if ($mode === 'menuconfig') {
+    COM_errorLog('[Menu debug] rendering Geeklog HTML document; display_length=' . strlen($display));
+}
+
 COM_output( COM_createHTMLDocument($display) );
