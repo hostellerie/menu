@@ -605,14 +605,30 @@ function plugin_templatesetvars_menu($templatename, &$template)
         return;
     }
 
-    if ($templatename === 'header'
-        && MENU_templateUsesVariable($templatename, $template, 'header_navigation')) {
-        $menu = MENU_getMenu('navigation',"gl_menu","gl_menu",'',"parent");
-        $template->set_var('header_navigation',$menu);
-    }
+    if ($templatename === 'header') {
+        if (MENU_templateUsesVariable('header', $template, 'header_navigation')) {
+            $menu = MENU_getMenu('navigation',"gl_menu","gl_menu",'',"parent");
+            $template->set_var('header_navigation',$menu);
+        }
 
-    if ($templatename === 'footer'
-        && MENU_templateUsesVariable($templatename, $template, 'menu_footer')) {
+        if (MENU_templateUsesVariable('footer', $template, 'menu_footer')) {
+            if (function_exists('COM_createHTMLDocument')) {
+                // Geeklog's modern document renderer uses one index.thtml for the
+                // complete page. Set the footer variable now so its assets are
+                // known before plugin_getheadercode_menu() runs.
+                $menu_footer = MENU_getMenu('footer',"st-fmenu","st-fmenu",'',"parent");
+                $template->set_var('menu_footer',$menu_footer);
+            } else {
+                // Geeklog 2.1.1 renders footer.thtml after the head is finalized.
+                // The source check above proves the legacy footer requests this
+                // variable, so pre-register only its assets; actual HTML remains
+                // rendered by the footer hook below.
+                MENU_registerNamedAssetUsage('footer');
+            }
+        }
+    } elseif ($templatename === 'footer'
+        && !function_exists('COM_createHTMLDocument')
+        && MENU_templateUsesVariable('footer', $template, 'menu_footer')) {
         $menu_footer = MENU_getMenu('footer',"st-fmenu","st-fmenu",'',"parent");
         $template->set_var('menu_footer',$menu_footer);
     }
