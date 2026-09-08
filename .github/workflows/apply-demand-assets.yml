@@ -1,0 +1,437 @@
+name: Apply demand-loaded Menu assets
+
+on:
+  push:
+    branches: [modernize-1.4.0]
+    paths:
+      - '.github/workflows/apply-demand-assets.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Apply source changes
+        shell: bash
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+
+          p = Path('functions.inc')
+          s = p.read_text()
+
+          old = "require_once $plugin_path . 'presentation.php';\nrequire_once $plugin_path . 'cache_filesystem.php';"
+          new = "require_once $plugin_path . 'presentation.php';\nrequire_once $plugin_path . 'asset_usage.php';\nrequire_once $plugin_path . 'cache_filesystem.php';"
+          if old not in s:
+              raise SystemExit('include anchor not found')
+          s = s.replace(old, new, 1)
+
+          old = """    $needsSlickNav = false;\n    $legacyRendering = MENU_runtimeConfigEnabled('legacy_rendering', true);\n    $loadLegacyCss = MENU_runtimeConfigEnabled('load_legacy_css', true);\n    $loadLegacyJs = MENU_runtimeConfigEnabled('load_legacy_js', true);\n"""
+          new = """    $needsSlickNav = false;\n    $legacyRendering = MENU_runtimeConfigEnabled('legacy_rendering', true);\n    $loadLegacyCss = MENU_runtimeConfigEnabled('load_legacy_css', true);\n    $loadLegacyJs = MENU_runtimeConfigEnabled('load_legacy_js', true);\n    $usedMenus = array();\n    foreach (MENU_getUsedMenuIds() as $usedMenuId) {\n        if (isset($Menus[$usedMenuId])) {\n            $usedMenus[$usedMenuId] = $Menus[$usedMenuId];\n        }\n    }\n"""
+          if old not in s:
+              raise SystemExit('header config anchor not found')
+          s = s.replace(old, new, 1)
+
+          old = """    if (is_array($Menus)) {\n        foreach ($Menus as $menu) {\n"""
+          new = """    if (is_array($usedMenus)) {\n        foreach ($usedMenus as $menu) {\n"""
+          if old not in s:
+              raise SystemExit('slicknav loop anchor not found')
+          s = s.replace(old, new, 1)
+
+          old = """    if (is_array($Menus)) {\n        foreach ($Menus AS $menu) {\n"""
+          new = """    if (is_array($usedMenus)) {\n        foreach ($usedMenus AS $menu) {\n"""
+          if old not in s:
+              raise SystemExit('css loop anchor not found')
+          s = s.replace(old, new, 1)
+
+          old = """    if ($menuID != '' && $Menus[$menuID]['active'] == 1 && $Menus[$menuID]['menu_perm'] == 3) {\n        if ($Menus[$menuID]['menu_type'] == 1) {\n"""
+          new = """    if ($menuID != '' && $Menus[$menuID]['active'] == 1 && $Menus[$menuID]['menu_perm'] == 3) {\n        MENU_registerAssetUsage($menuID);\n        if ($Menus[$menuID]['menu_type'] == 1) {\n"""
+          if old not in s:
+              raise SystemExit('MENU_getMenu registration anchor not found')
+          s = s.replace(old, new, 1)
+
+          old = """function plugin_templatesetvars_menu($templatename, &$template)\n{\n    global $_TABLES;\n\n    if (!isset($_TABLES['menu']) || !DB_checkTableExists('menu')) {\n        return;\n    }\n    $menu = MENU_getMenu('navigation',\"gl_menu\",\"gl_menu\",'',\"parent\");\n    $template->set_var('header_navigation',$menu);\n    $menu_footer = MENU_getMenu('footer',\"st-fmenu\",\"st-fmenu\",'',\"parent\");\n    $template->set_var('menu_footer',$menu_footer);\n    $template->set_var('breadcrumbs', '');\n}\n"""
+          new = """function plugin_templatesetvars_menu($templatename, &$template)\n{\n    global $_TABLES;\n\n    if (!isset($_TABLES['menu']) || !DB_checkTableExists('menu')) {\n        return;\n    }\n\n    if ($templatename === 'header'\n        && MENU_templateUsesVariable($templatename, $template, 'header_navigation')) {\n        $menu = MENU_getMenu('navigation', \"gl_menu\", \"gl_menu\", '', \"parent\");\n        $template->set_var('header_navigation', $menu);\n    }\n\n    if ($templatename === 'footer'\n        && MENU_templateUsesVariable($templatename, $template, 'menu_footer')) {\n        $menuFooter = MENU_getMenu('footer', \"st-fmenu\", \"st-fmenu\", '', \"parent\");\n        $template->set_var('menu_footer', $menuFooter);\n    }\n\n    $template->set_var('breadcrumbs', '');\n}\n"""
+          if old not in s:
+              raise SystemExit('template vars anchor not found')
+          s = s.replace(old, new, 1)
+          p.write_text(s)
+
+          Path('asset_usage.php').write_text(r'''<?php
+
+// +---------------------------------------------------------------------------+
+// | Menu Plugin                                                               |
+// +---------------------------------------------------------------------------+
+// | asset_usage.php                                                           |
+// |                                                                           |
+// | Request-scoped frontend asset usage registry.                             |
+// +---------------------------------------------------------------------------+
+
+if (!defined('VERSION')) {
+    die('This file can not be used on its own.');
+}
+
+/**
+ * Register a menu that has actually been rendered during this request.
+ *
+ * @param int|string $menuID
+ * @return void
+ */
+function MENU_registerAssetUsage($menuID)
+{
+    $menuID = (int) $menuID;
+    if ($menuID <= 0) {
+        return;
+    }
+
+    if (!isset($GLOBALS['MENU_ASSET_USAGE']) || !is_array($GLOBALS['MENU_ASSET_USAGE'])) {
+        $GLOBALS['MENU_ASSET_USAGE'] = array();
+    }
+    $GLOBALS['MENU_ASSET_USAGE'][$menuID] = true;
+}
+
+/**
+ * Return menu ids rendered during this request, in registration order.
+ *
+ * @return array
+ */
+function MENU_getUsedMenuIds()
+{
+    if (!isset($GLOBALS['MENU_ASSET_USAGE']) || !is_array($GLOBALS['MENU_ASSET_USAGE'])) {
+        return array();
+    }
+
+    return array_keys($GLOBALS['MENU_ASSET_USAGE']);
+}
+
+/**
+ * Reset the request registry. Intended for tests and isolated render contexts.
+ *
+ * @return void
+ */
+function MENU_resetAssetUsage()
+{
+    $GLOBALS['MENU_ASSET_USAGE'] = array();
+}
+
+/**
+ * Determine whether plugin legacy CSS is needed for a rendered menu.
+ *
+ * @param int|string $menuID
+ * @return bool
+ */
+function MENU_menuNeedsLegacyCss($menuID)
+{
+    global $Menus;
+
+    $menuID = (int) $menuID;
+    if (!isset($Menus[$menuID]) || empty($Menus[$menuID]['active'])) {
+        return false;
+    }
+    if (!MENU_runtimeConfigEnabled('legacy_rendering', true)
+        || !MENU_runtimeConfigEnabled('load_legacy_css', true)) {
+        return false;
+    }
+
+    $menuName = isset($Menus[$menuID]['menu_name']) ? $Menus[$menuID]['menu_name'] : '';
+    return !MENU_themeHandlesPresentation($menuName);
+}
+
+/**
+ * Determine whether legacy JavaScript (SlickNav) is needed for a rendered menu.
+ * Only horizontal cascading menus (type 1) use the legacy JavaScript path.
+ *
+ * @param int|string $menuID
+ * @return bool
+ */
+function MENU_menuNeedsLegacyJs($menuID)
+{
+    global $Menus;
+
+    $menuID = (int) $menuID;
+    if (!isset($Menus[$menuID]) || empty($Menus[$menuID]['active'])) {
+        return false;
+    }
+    if ((int) $Menus[$menuID]['menu_type'] !== 1) {
+        return false;
+    }
+    if (!MENU_runtimeConfigEnabled('legacy_rendering', true)
+        || !MENU_runtimeConfigEnabled('load_legacy_js', true)) {
+        return false;
+    }
+
+    $menuName = isset($Menus[$menuID]['menu_name']) ? $Menus[$menuID]['menu_name'] : '';
+    return !MENU_themeHandlesPresentation($menuName);
+}
+
+/**
+ * Check whether the currently loaded Geeklog template references a variable.
+ *
+ * Geeklog 2.1.1 and 2.2.2 both expose Template::get_var(), get_vars() and
+ * get_undefined(). We use those public methods only; no reflection and no
+ * final-HTML scanning. If the template implementation cannot expose enough
+ * information, return true to preserve legacy-theme compatibility.
+ *
+ * @param string $templateName
+ * @param object $template
+ * @param string $variable
+ * @return bool
+ */
+function MENU_templateUsesVariable($templateName, &$template, $variable)
+{
+    $needle = '{' . $variable . '}';
+    $inspected = false;
+
+    if (!is_object($template)) {
+        return true;
+    }
+
+    if (method_exists($template, 'get_var')) {
+        $value = $template->get_var($templateName);
+        if (is_string($value) && $value !== '') {
+            $inspected = true;
+            if (strpos($value, $needle) !== false) {
+                return true;
+            }
+        }
+    }
+
+    if (method_exists($template, 'get_vars')) {
+        $values = $template->get_vars();
+        if (is_array($values)) {
+            foreach ($values as $value) {
+                if (is_string($value) && $value !== '') {
+                    $inspected = true;
+                    if (strpos($value, $needle) !== false) {
+                        return true;
+                    }
+                }
+            }
+        }
+    }
+
+    if (method_exists($template, 'get_undefined')) {
+        $undefined = $template->get_undefined($templateName);
+        if (is_array($undefined)) {
+            $inspected = true;
+            if (isset($undefined[$variable]) || in_array($variable, array_keys($undefined), true)) {
+                return true;
+            }
+        }
+    }
+
+    return $inspected ? false : true;
+}
+''')
+
+          Path('tests/asset_usage.php').write_text(r'''<?php
+
+// Demand-loaded asset registry tests. Compatible with PHP 5.6+.
+
+define('VERSION', 'test');
+
+$menuTestConfig = array(
+    'legacy_rendering' => true,
+    'load_legacy_css' => true,
+    'load_legacy_js' => true,
+);
+$menuThemeOwned = array();
+
+function MENU_runtimeConfigEnabled($key, $default)
+{
+    global $menuTestConfig;
+    return isset($menuTestConfig[$key]) ? (bool) $menuTestConfig[$key] : (bool) $default;
+}
+
+function MENU_themeHandlesPresentation($menuName)
+{
+    global $menuThemeOwned;
+    return in_array($menuName, $menuThemeOwned, true);
+}
+
+require_once dirname(__DIR__) . '/asset_usage.php';
+
+function menu_asset_fail($message)
+{
+    fwrite(STDERR, 'FAIL: ' . $message . PHP_EOL);
+    exit(1);
+}
+
+function menu_asset_assert($condition, $message)
+{
+    if (!$condition) {
+        menu_asset_fail($message);
+    }
+}
+
+$Menus = array(
+    1 => array('menu_id' => 1, 'menu_name' => 'navigation', 'menu_type' => 1, 'active' => 1),
+    2 => array('menu_id' => 2, 'menu_name' => 'footer', 'menu_type' => 2, 'active' => 1),
+    3 => array('menu_id' => 3, 'menu_name' => 'vertical', 'menu_type' => 3, 'active' => 1),
+    4 => array('menu_id' => 4, 'menu_name' => 'secondary', 'menu_type' => 2, 'active' => 1),
+);
+
+MENU_resetAssetUsage();
+MENU_registerAssetUsage(2);
+menu_asset_assert(MENU_getUsedMenuIds() === array(2), 'footer-only registry is incorrect');
+menu_asset_assert(MENU_menuNeedsLegacyCss(2), 'footer should need legacy CSS');
+menu_asset_assert(!MENU_menuNeedsLegacyJs(2), 'footer must not need SlickNav');
+menu_asset_assert(!in_array(3, MENU_getUsedMenuIds(), true), 'unused vertical menu was registered');
+
+MENU_resetAssetUsage();
+MENU_registerAssetUsage(1);
+menu_asset_assert(MENU_getUsedMenuIds() === array(1), 'navigation-only registry is incorrect');
+menu_asset_assert(MENU_menuNeedsLegacyCss(1), 'navigation should need legacy CSS');
+menu_asset_assert(MENU_menuNeedsLegacyJs(1), 'horizontal cascading navigation should need SlickNav');
+
+MENU_resetAssetUsage();
+MENU_registerAssetUsage(2);
+MENU_registerAssetUsage(1);
+MENU_registerAssetUsage(2);
+menu_asset_assert(MENU_getUsedMenuIds() === array(2, 1), 'footer + navigation must be unique and ordered');
+
+MENU_resetAssetUsage();
+MENU_registerAssetUsage(4);
+menu_asset_assert(MENU_getUsedMenuIds() === array(4), 'only the used menu should be registered');
+menu_asset_assert(!in_array(1, MENU_getUsedMenuIds(), true), 'unused active navigation leaked into registry');
+menu_asset_assert(!in_array(3, MENU_getUsedMenuIds(), true), 'unused active vertical menu leaked into registry');
+
+$menuThemeOwned = array('navigation');
+menu_asset_assert(!MENU_menuNeedsLegacyCss(1), 'theme-owned navigation must not load plugin CSS');
+menu_asset_assert(!MENU_menuNeedsLegacyJs(1), 'theme-owned navigation must not load plugin JS');
+$menuThemeOwned = array();
+
+$menuTestConfig['load_legacy_css'] = false;
+menu_asset_assert(!MENU_menuNeedsLegacyCss(2), 'load_legacy_css=false must disable footer CSS');
+$menuTestConfig['load_legacy_css'] = true;
+
+$menuTestConfig['load_legacy_js'] = false;
+menu_asset_assert(!MENU_menuNeedsLegacyJs(1), 'load_legacy_js=false must disable navigation JS');
+$menuTestConfig['load_legacy_js'] = true;
+
+class MenuTemplateFixture
+{
+    private $values;
+    public function __construct($values) { $this->values = $values; }
+    public function get_var($name) { return isset($this->values[$name]) ? $this->values[$name] : ''; }
+    public function get_vars() { return $this->values; }
+    public function get_undefined($name) { return array(); }
+}
+
+$template = new MenuTemplateFixture(array('header' => '<header>{header_navigation}</header>'));
+menu_asset_assert(MENU_templateUsesVariable('header', $template, 'header_navigation'), 'header variable detection failed');
+menu_asset_assert(!MENU_templateUsesVariable('header', $template, 'menu_footer'), 'unused footer variable falsely detected');
+
+$template = new MenuTemplateFixture(array('footer' => '<footer>{menu_footer}</footer>'));
+menu_asset_assert(MENU_templateUsesVariable('footer', $template, 'menu_footer'), 'footer variable detection failed');
+menu_asset_assert(!MENU_templateUsesVariable('footer', $template, 'header_navigation'), 'unused navigation variable falsely detected');
+
+echo 'Demand-loaded asset registry tests passed' . PHP_EOL;
+''')
+
+          Path('tests/demand_assets_contract.php').write_text(r'''<?php
+
+// Structural regression checks for demand-loaded frontend assets.
+
+function menu_demand_fail($message)
+{
+    fwrite(STDERR, 'FAIL: ' . $message . PHP_EOL);
+    exit(1);
+}
+
+function menu_demand_assert($condition, $message)
+{
+    if (!$condition) {
+        menu_demand_fail($message);
+    }
+}
+
+$root = dirname(__DIR__);
+$functions = file_get_contents($root . '/functions.inc');
+$assets = file_get_contents($root . '/asset_usage.php');
+
+menu_demand_assert(strpos($functions, "require_once $plugin_path . 'asset_usage.php';") !== false, 'asset registry is not loaded');
+menu_demand_assert(strpos($functions, 'MENU_registerAssetUsage($menuID);') !== false, 'MENU_getMenu does not register actual usage');
+menu_demand_assert(strpos($functions, 'foreach (MENU_getUsedMenuIds() as $usedMenuId)') !== false, 'header code does not consume used menu ids');
+menu_demand_assert(strpos($functions, 'foreach ($usedMenus as $menu)') !== false, 'SlickNav decision still scans all menus');
+menu_demand_assert(strpos($functions, 'foreach ($usedMenus AS $menu)') !== false, 'CSS generation still scans all menus');
+menu_demand_assert(strpos($functions, "if ($templatename === 'header'") !== false, 'header template hook is not scoped');
+menu_demand_assert(strpos($functions, "if ($templatename === 'footer'") !== false, 'footer template hook is not scoped');
+menu_demand_assert(strpos($assets, 'function MENU_menuNeedsLegacyCss') !== false, 'CSS decision helper is missing');
+menu_demand_assert(strpos($assets, 'function MENU_menuNeedsLegacyJs') !== false, 'JS decision helper is missing');
+menu_demand_assert(strpos($assets, 'Reflection') === false, 'asset detection must not use reflection');
+menu_demand_assert(strpos($assets, 'ob_get_contents') === false, 'asset detection must not scan final HTML');
+
+echo 'Demand-loaded asset contract tests passed' . PHP_EOL;
+''')
+
+          readme = Path('README.md').read_text()
+          marker = "##"
+          section = r'''
+
+## Demand-loaded frontend assets (1.4.0)
+
+Menu 1.4.0 registers frontend resource usage when `MENU_getMenu()` successfully resolves and renders an active, permitted menu. `plugin_getheadercode_menu()` then generates legacy CSS and SlickNav resources only for menu ids registered during the current request.
+
+This applies automatically to `[menu:...]` autotags, direct `MENU_getMenu()` calls, PHP blocks and integrations that call the Menu renderer. Active menus that are not rendered no longer contribute CSS or JavaScript.
+
+Legacy controls remain authoritative:
+
+- `legacy_rendering = false`: no legacy Menu rendering or assets;
+- `load_legacy_css = false`: no plugin-generated legacy CSS;
+- `load_legacy_js = false`: no SlickNav JavaScript or initialization;
+- when the active theme declares that it owns presentation for a menu, Menu does not load legacy presentation assets for that menu.
+
+Geeklog 2.2.2 renders content, blocks, autotags and template content before its final header resource collection, which makes request-level demand loading exact for normal rendering. Geeklog 2.1.1 uses the older `COM_siteHeader()` lifecycle; resources can only be included in the head when the menu usage is known before header finalization. Historical `header_navigation` and `menu_footer` variables are handled separately and are only rendered when the Template API exposes that the corresponding variable is referenced, with a compatibility fallback for legacy template implementations that cannot expose this information.
+'''
+          if '## Demand-loaded frontend assets (1.4.0)' not in readme:
+              readme += section
+              Path('README.md').write_text(readme)
+
+          roadmap = Path('ROADMAP.md').read_text()
+          section2 = r'''
+
+### 1.4.0 - Demand-loaded Menu assets
+
+- [x] Register actual menu usage at the `MENU_getMenu()` rendering boundary.
+- [x] Generate legacy CSS only for menus rendered in the current request.
+- [x] Load SlickNav only when a rendered horizontal cascading menu requires legacy JavaScript.
+- [x] Keep `legacy_rendering`, `load_legacy_css`, `load_legacy_js` and theme presentation hand-off authoritative.
+- [x] Prevent `plugin_templatesetvars_menu()` from rendering both navigation and footer indiscriminately.
+- [x] Keep one PHP 5.6-compatible code path for Geeklog 2.1.1 through 2.2.2.
+- [x] Add request-registry and structural regression tests.
+- [ ] Continue monitoring third-party Geeklog 2.1.1 themes whose Template implementations do not expose enough information to determine whether a historical template variable is referenced before header finalization.
+'''
+          if '### 1.4.0 - Demand-loaded Menu assets' not in roadmap:
+              roadmap += section2
+              Path('ROADMAP.md').write_text(roadmap)
+          PY
+
+      - name: Validate
+        shell: bash
+        run: |
+          set -euo pipefail
+          php -l functions.inc
+          php -l asset_usage.php
+          php tests/asset_usage.php
+          php tests/demand_assets_contract.php
+          for test in tests/*.php; do php "$test" >/dev/null; done
+
+      - name: Commit source changes
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "4189826+github-actions[bot]@users.noreply.github.com"
+          git add functions.inc asset_usage.php tests/asset_usage.php tests/demand_assets_contract.php README.md ROADMAP.md
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m "feat: load Menu assets on demand"
+          git push origin HEAD:modernize-1.4.0
