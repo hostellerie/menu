@@ -155,6 +155,10 @@ $LANG_MENU01 = array(
     'clone'                 => 'Copy',
     'clone_menu_label'      => 'Name for Cloned Menu',
     'topic'                 => 'Topics',
+    'go'                => 'Go',
+    'back_to'           => 'Back to',
+    'for'               => 'for',
+
 );
 
 $LANG_HC = array(
