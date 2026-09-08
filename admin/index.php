@@ -76,6 +76,21 @@ $mid = (int) Geeklog\Input::fRequest('mid', 0);
 
 if ($mode === 'menuconfig') {
     COM_errorLog('[Menu debug] admin/index.php entered menuconfig route; requested menuid=' . (int) Geeklog\Input::fRequest('menuid', 0));
+
+    register_shutdown_function(function () {
+        $error = error_get_last();
+        if ($error === null) {
+            COM_errorLog('[Menu debug] shutdown: no PHP error recorded');
+            return;
+        }
+
+        COM_errorLog(
+            '[Menu debug] shutdown error: type=' . $error['type']
+            . '; message=' . $error['message']
+            . '; file=' . $error['file']
+            . '; line=' . $error['line']
+        );
+    });
 }
 
 if ( (isset($_POST['execute']) || $mode != '') && !isset($_POST['cancel']) && !isset($_POST['defaults'])) {
