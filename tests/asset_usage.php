@@ -42,6 +42,28 @@ function menu_asset_test_assert($condition, $message)
     }
 }
 
+class MenuAssetTemplateFixture
+{
+    private $root;
+    private $values;
+
+    public function __construct($root, $values)
+    {
+        $this->root = $root;
+        $this->values = $values;
+    }
+
+    public function getRoot()
+    {
+        return array($this->root);
+    }
+
+    public function get_vars()
+    {
+        return $this->values;
+    }
+}
+
 $Menus = array(
     1 => array('menu_id' => 1, 'menu_name' => 'navigation', 'menu_type' => 1, 'active' => 1, 'menu_perm' => 3),
     2 => array('menu_id' => 2, 'menu_name' => 'footer', 'menu_type' => 2, 'active' => 1, 'menu_perm' => 3),
@@ -51,6 +73,12 @@ $Menus = array(
 
 menu_asset_test_assert(MENU_supportsDemandAssetLoading(), 'modern renderer capability was not detected');
 menu_asset_test_assert(MENU_resolveMenuId('footer') === 2, 'footer menu resolution failed');
+
+// Empty modern registry is authoritative: no menu assets until usage is known.
+MENU_resetAssetUsage();
+menu_asset_test_assert(!MENU_menuNeedsLegacyCss(1), 'empty modern registry must not leak navigation CSS');
+menu_asset_test_assert(!MENU_menuNeedsLegacyCss(2), 'empty modern registry must not leak footer CSS');
+menu_asset_test_assert(!MENU_menuNeedsLegacyCss(3), 'empty modern registry must not leak vertical CSS');
 
 // Footer only.
 MENU_resetAssetUsage();
@@ -88,6 +116,40 @@ menu_asset_test_assert(!MENU_menuNeedsLegacyCss(1), 'unused active navigation le
 menu_asset_test_assert(!MENU_menuNeedsLegacyCss(2), 'unused active footer leaked CSS');
 menu_asset_test_assert(!MENU_menuNeedsLegacyCss(3), 'unused active vertical menu leaked CSS');
 menu_asset_test_assert(!MENU_menuNeedsLegacyJs(1), 'unused active navigation leaked JS');
+
+// Template-assigned autotag preflight must select only the referenced menu.
+$dir = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'menu-asset-preflight-' . uniqid('', true);
+if (!mkdir($dir, 0700, true)) {
+    menu_asset_test_fail('unable to create preflight fixture directory');
+}
+file_put_contents($dir . DIRECTORY_SEPARATOR . 'index.thtml', '<html>{footer_text}</html>');
+$_CONF = array('path_layout' => $dir . DIRECTORY_SEPARATOR);
+$template = new MenuAssetTemplateFixture($dir, array(
+    'footer_text' => '<div>[menu:footer]</div>',
+    'other' => '<p>No menu here</p>',
+));
+MENU_resetAssetUsage();
+MENU_preflightTemplateAssets('header', $template);
+menu_asset_test_assert(MENU_getUsedMenuIds() === array(2), 'preflight must register only footer');
+menu_asset_test_assert(MENU_menuNeedsLegacyCss(2), 'preflighted footer must receive CSS');
+menu_asset_test_assert(!MENU_menuNeedsLegacyCss(3), 'preflight must not leak vertical CSS');
+@unlink($dir . DIRECTORY_SEPARATOR . 'index.thtml');
+@rmdir($dir);
+
+// Direct autotag in active template source is also preflighted.
+$dir = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'menu-asset-source-' . uniqid('', true);
+if (!mkdir($dir, 0700, true)) {
+    menu_asset_test_fail('unable to create source fixture directory');
+}
+file_put_contents($dir . DIRECTORY_SEPARATOR . 'index.thtml', '<html><footer>[menu:footer]</footer></html>');
+$_CONF = array('path_layout' => $dir . DIRECTORY_SEPARATOR);
+$template = new MenuAssetTemplateFixture($dir, array());
+MENU_resetAssetUsage();
+MENU_preflightTemplateAssets('footer', $template);
+menu_asset_test_assert(MENU_getUsedMenuIds() === array(2), 'source preflight must register footer');
+menu_asset_test_assert(!MENU_menuNeedsLegacyCss(3), 'source preflight must not register vertical menu');
+@unlink($dir . DIRECTORY_SEPARATOR . 'index.thtml');
+@rmdir($dir);
 
 // Theme owns the presentation.
 MENU_resetAssetUsage();
