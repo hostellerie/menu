@@ -53,6 +53,7 @@ if (stripos($_SERVER['PHP_SELF'], basename(__FILE__)) !== false) {
 $plugin_path = $_CONF['path'] . 'plugins/menu/';
 require_once $plugin_path . 'storage.php';
 require_once $plugin_path . 'presentation.php';
+require_once $plugin_path . 'asset_usage.php';
 require_once $plugin_path . 'cache_filesystem.php';
 require_once $plugin_path . 'cache.php';
 $langfile = $plugin_path . 'language/' . $_CONF['language'] . '.php';
@@ -298,9 +299,7 @@ function plugin_getheadercode_menu() {
 
     if (is_array($Menus)) {
         foreach ($Menus as $menu) {
-            if (!empty($menu['active'])
-                && (int) $menu['menu_type'] === 1
-                && !MENU_themeHandlesPresentation(isset($menu['menu_name']) ? $menu['menu_name'] : '')) {
+            if (MENU_menuNeedsLegacyJs($menu['menu_id'])) {
                 $needsSlickNav = true;
                 break;
             }
@@ -322,6 +321,10 @@ function plugin_getheadercode_menu() {
 
     if (is_array($Menus)) {
         foreach ($Menus AS $menu) {
+            if (!MENU_isAssetUsageRegistered($menu['menu_id'])) {
+                continue;
+            }
+
             if ($menu['active'] == 1) {
                 if (MENU_themeHandlesPresentation(isset($menu['menu_name']) ? $menu['menu_name'] : '')) {
                     continue;
@@ -435,7 +438,7 @@ function plugin_getheadercode_menu() {
                     }
                 }
 
-                if ((int) $menu['menu_type'] === 1 && $loadLegacyJs) {
+                if (MENU_menuNeedsLegacyJs($menu['menu_id'])) {
                     $siteName = json_encode((string) $_CONF['site_name']);
                     if ($siteName === false) {
                         $siteName = '"Menu"';
@@ -505,6 +508,8 @@ function MENU_getMenu($name='navigation',$wrapper='',$ulclass='',$liclass='',$pa
         }
     }
     if ($menuID != '' && $Menus[$menuID]['active'] == 1 && $Menus[$menuID]['menu_perm'] == 3) {
+        MENU_registerAssetUsage($menuID);
+
         if ($Menus[$menuID]['menu_type'] == 1) {
             $retval .= '<div id="gl_menu'.($noid == 0 ? $menuID : '').'"'
                 . MENU_legacyNavigationAttributes($name) . '>'. LB;
@@ -599,12 +604,20 @@ function plugin_templatesetvars_menu($templatename, &$template)
     if (!isset($_TABLES['menu']) || !DB_checkTableExists('menu')) {
         return;
     }
-    $menu = MENU_getMenu('navigation',"gl_menu","gl_menu",'',"parent");
-    $template->set_var('header_navigation',$menu);
-    $menu_footer = MENU_getMenu('footer',"st-fmenu","st-fmenu",'',"parent");
-    $template->set_var('menu_footer',$menu_footer);
+
+    if ($templatename === 'header'
+        && MENU_templateUsesVariable($templatename, $template, 'header_navigation')) {
+        $menu = MENU_getMenu('navigation',"gl_menu","gl_menu",'',"parent");
+        $template->set_var('header_navigation',$menu);
+    }
+
+    if ($templatename === 'footer'
+        && MENU_templateUsesVariable($templatename, $template, 'menu_footer')) {
+        $menu_footer = MENU_getMenu('footer',"st-fmenu","st-fmenu",'',"parent");
+        $template->set_var('menu_footer',$menu_footer);
+    }
+
     $template->set_var('breadcrumbs', '');
 }
 
 MENU_ensureDataDirs();
-
