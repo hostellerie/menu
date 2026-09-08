@@ -50,21 +50,34 @@ menu_render_test_assert(
 );
 
 $functions = file_get_contents($root . DIRECTORY_SEPARATOR . 'functions.inc');
+$assets = file_get_contents($root . DIRECTORY_SEPARATOR . 'asset_usage.php');
 menu_render_test_assert(
     strpos($functions, '$needsSlickNav = false;') !== false,
     'SlickNav loading must use a dedicated need flag'
 );
 menu_render_test_assert(
-    strpos($functions, "(int) \$menu['menu_type'] === 1") !== false,
-    'SlickNav assets must be limited to horizontal cascading menus'
+    strpos($functions, 'MENU_menuNeedsLegacyJs($menu[\'menu_id\'])') !== false,
+    'SlickNav loading must be decided per rendered menu'
+);
+menu_render_test_assert(
+    strpos($functions, 'MENU_isAssetUsageRegistered($menu[\'menu_id\'])') !== false,
+    'header generation must ignore menus that were not rendered'
+);
+menu_render_test_assert(
+    strpos($functions, 'MENU_registerAssetUsage($menuID);') !== false,
+    'MENU_getMenu must register successful rendering'
+);
+menu_render_test_assert(
+    strpos($assets, "(int) \$Menus[\$menuID]['menu_type'] !== 1") !== false,
+    'SlickNav assets must remain limited to horizontal cascading menus'
 );
 menu_render_test_assert(
     strpos($functions, 'if ($needsSlickNav && $loadLegacyCss)') !== false,
-    'SlickNav CSS must only load when a compatible menu needs it'
+    'SlickNav CSS must only load when a compatible rendered menu needs it'
 );
 menu_render_test_assert(
     strpos($functions, 'if ($needsSlickNav && $loadLegacyJs)') !== false,
-    'SlickNav JavaScript must only load when a compatible menu needs it'
+    'SlickNav JavaScript must only load when a compatible rendered menu needs it'
 );
 
 echo "Frontend rendering asset tests passed" . PHP_EOL;
