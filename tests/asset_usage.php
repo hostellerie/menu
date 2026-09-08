@@ -3,6 +3,8 @@
 // Demand-loaded asset registry tests. Compatible with PHP 5.6+.
 
 define('VERSION', 'test');
+function COM_createHTMLDocument() {}
+function COM_getLanguageId() { return ''; }
 
 $menuTestConfig = array(
     'legacy_rendering' => true,
@@ -41,11 +43,14 @@ function menu_asset_test_assert($condition, $message)
 }
 
 $Menus = array(
-    1 => array('menu_id' => 1, 'menu_name' => 'navigation', 'menu_type' => 1, 'active' => 1),
-    2 => array('menu_id' => 2, 'menu_name' => 'footer', 'menu_type' => 2, 'active' => 1),
-    3 => array('menu_id' => 3, 'menu_name' => 'vertical', 'menu_type' => 3, 'active' => 1),
-    4 => array('menu_id' => 4, 'menu_name' => 'secondary', 'menu_type' => 2, 'active' => 1),
+    1 => array('menu_id' => 1, 'menu_name' => 'navigation', 'menu_type' => 1, 'active' => 1, 'menu_perm' => 3),
+    2 => array('menu_id' => 2, 'menu_name' => 'footer', 'menu_type' => 2, 'active' => 1, 'menu_perm' => 3),
+    3 => array('menu_id' => 3, 'menu_name' => 'vertical', 'menu_type' => 3, 'active' => 1, 'menu_perm' => 3),
+    4 => array('menu_id' => 4, 'menu_name' => 'secondary', 'menu_type' => 2, 'active' => 1, 'menu_perm' => 3),
 );
+
+menu_asset_test_assert(MENU_supportsDemandAssetLoading(), 'modern renderer capability was not detected');
+menu_asset_test_assert(MENU_resolveMenuId('footer') === 2, 'footer menu resolution failed');
 
 // Footer only.
 MENU_resetAssetUsage();
@@ -109,6 +114,11 @@ $menuTestConfig['legacy_rendering'] = false;
 menu_asset_test_assert(!MENU_menuNeedsLegacyCss(1), 'legacy_rendering=false must disable legacy CSS');
 menu_asset_test_assert(!MENU_menuNeedsLegacyJs(1), 'legacy_rendering=false must disable legacy JS');
 $menuTestConfig['legacy_rendering'] = true;
+
+// Named pre-registration uses the same visibility gate as MENU_getMenu().
+MENU_resetAssetUsage();
+menu_asset_test_assert(MENU_registerNamedAssetUsage('footer') === 2, 'named footer pre-registration failed');
+menu_asset_test_assert(MENU_getUsedMenuIds() === array(2), 'named pre-registration did not register footer');
 
 // Invalid ids are ignored.
 MENU_resetAssetUsage();
