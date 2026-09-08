@@ -1,0 +1,41 @@
+name: Run language migration
+
+on:
+  push:
+    branches:
+      - modernize-1.4.0
+    paths:
+      - '.github/workflows/run-language-migration.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
+          coverage: none
+      - name: Apply migration
+        run: php tools/apply-language-runtime.php
+      - name: Validate PHP
+        run: |
+          php -l functions.inc
+          php -l language/english.php
+          php -l language/french_france_utf-8.php
+          php -l language/persian_utf-8.php
+          php tests/language_contract.php
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add functions.inc language/persian_utf-8.php
+          git diff --cached --check
+          git commit -m "feat: add per-key English language fallback"
+          git pull --rebase origin modernize-1.4.0
+          git push origin HEAD:modernize-1.4.0
