@@ -1,0 +1,106 @@
+name: Cleanup temporary 1.4.0 diagnostics
+
+on:
+  push:
+    branches:
+      - modernize-1.4.0
+    paths:
+      - '.github/workflows/cleanup-debug-1.4.0.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Remove temporary diagnostics and reveal shims
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          p = Path('admin/index.php')
+          s = p.read_text()
+
+          trace_block = """if ($mode === 'menuconfig') {
+              COM_errorLog('[Menu debug] admin/index.php entered menuconfig route; requested menuid=' . (int) Geeklog\\Input::fRequest('menuid', 0));
+
+              register_shutdown_function(function () {
+                  $error = error_get_last();
+                  if ($error === null) {
+                      COM_errorLog('[Menu debug] shutdown: no PHP error recorded');
+                      return;
+                  }
+
+                  COM_errorLog(
+                      '[Menu debug] shutdown error: type=' . $error['type']
+                      . '; message=' . $error['message']
+                      . '; file=' . $error['file']
+                      . '; line=' . $error['line']
+                  );
+              });
+          }
+
+          """
+          s = s.replace(trace_block, '')
+          s = s.replace("            COM_errorLog('[Menu debug] calling MENU_menuConfig(); menuid=' . $menu_id . '; menu_exists=' . (isset($Menus[$menu_id]) ? 'yes' : 'no'));\n", '')
+          s = s.replace("            COM_errorLog('[Menu debug] MENU_menuConfig() returned; menuid=' . $menu_id . '; content_type=' . gettype($content) . '; content_length=' . (is_string($content) ? strlen($content) : -1));\n", '')
+          s = s.replace("\nif ($mode === 'menuconfig') {\n    COM_errorLog('[Menu debug] rendering Geeklog HTML document; display_length=' . strlen($display));\n}\n", '\n')
+          p.write_text(s)
+
+          p = Path('admin_element_views.php')
+          lines = p.read_text().splitlines(True)
+          lines = [line for line in lines if "COM_errorLog('[Menu debug]" not in line]
+          p.write_text(''.join(lines))
+
+          reveal = re.compile(
+              r'<script type="text/javascript">\s*document\.getElementById\(\'menu\'\)\.style\.display=\'\'\s*</script>\s*',
+              re.MULTILINE
+          )
+          for template in Path('templates').rglob('*.thtml'):
+              original = template.read_text()
+              cleaned = reveal.sub('', original)
+              if cleaned != original:
+                  template.write_text(cleaned)
+          PY
+
+          rm -f .github/workflows/debug-menuconfig-trace.yml
+          rm -f .github/workflows/fix-i18n-hardcoded.yml
+          rm -f .github/workflows/cleanup-debug-1.4.0.yml
+
+          if grep -RFn '[Menu debug]' --include='*.php' .; then
+            echo 'Temporary Menu debug traces remain.' >&2
+            exit 1
+          fi
+
+      - name: Validate cleaned sources
+        shell: bash
+        run: |
+          set -euo pipefail
+          php -l admin/index.php
+          php -l admin_element_views.php
+          php -l color_utils.php
+          php tests/language_contract.php
+
+      - name: Commit cleanup
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo 'Nothing to clean.'
+            exit 0
+          fi
+          git commit -m "chore: remove temporary debug traces and shims"
+          git pull --rebase origin modernize-1.4.0
+          git push origin HEAD:modernize-1.4.0
