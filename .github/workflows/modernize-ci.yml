@@ -3,8 +3,18 @@ name: Menu CI
 on:
   push:
     branches: [modernize-1.4.0]
+    paths-ignore:
+      - 'dist/**'
   pull_request:
     branches: [modernize-1.4.0]
+  workflow_dispatch:
+
+concurrency:
+  group: menu-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
 
 jobs:
   test:
@@ -26,7 +36,7 @@ jobs:
       - name: Lint and test
         shell: bash
         run: |
-          set -e
+          set -euo pipefail
 
           while IFS= read -r -d '' file; do
             php -l "$file" >/dev/null
@@ -39,30 +49,62 @@ jobs:
 
   package:
     name: Build installable ZIP
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: Build Geeklog plugin archive
+      - name: Build and verify archive
         shell: bash
         run: |
-          set -e
-          mkdir -p package/menu
-          rsync -a \
-            --exclude='.git' \
-            --exclude='.github' \
-            --exclude='tests' \
-            --exclude='ROADMAP.md' \
-            --exclude='package' \
-            --exclude='dist' \
-            ./ package/menu/
-          cd package
-          zip -rq ../menu-1.4.0.zip menu
+          set -euo pipefail
 
-      - name: Upload installable archive
+          rm -rf package
+          mkdir -p package/menu dist
+
+          rsync -a ./ package/menu/ \
+            --exclude='.git/' \
+            --exclude='.github/' \
+            --exclude='tests/' \
+            --exclude='package/' \
+            --exclude='dist/' \
+            --exclude='ROADMAP.md'
+
+          rm -f dist/menu-1.4.0.zip
+          (cd package && zip -qr ../dist/menu-1.4.0.zip menu)
+          rm -rf package
+
+          test -s dist/menu-1.4.0.zip
+          unzip -tq dist/menu-1.4.0.zip
+          echo "Archive size: $(stat -c%s dist/menu-1.4.0.zip) bytes"
+
+      - name: Upload archive
         uses: actions/upload-artifact@v4
         with:
           name: menu-1.4.0
-          path: menu-1.4.0.zip
+          path: dist/menu-1.4.0.zip
           if-no-files-found: error
+          retention-days: 30
+          compression-level: 0
+
+      - name: Update dist archive
+        if: github.event_name == 'push'
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if git diff --quiet -- dist/menu-1.4.0.zip; then
+            echo "dist/menu-1.4.0.zip is already current."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add dist/menu-1.4.0.zip
+          git commit -m "build: update Menu 1.4.0 installable archive"
+          git push origin HEAD:modernize-1.4.0
