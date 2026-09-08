@@ -55,6 +55,26 @@ The following work is already present on `modernize-1.4.0` and is now part of th
 - [x] Support native/theme preview integration from administration.
 - [x] Maintain the architectural hand-off required by modern themes such as Eclipse.
 
+### Demand-loaded frontend resources
+
+- [x] Add a request-scoped menu asset registry populated at the `MENU_getMenu()` rendering boundary.
+- [x] On the modern Geeklog document renderer, consider legacy CSS only for menus used in the current request.
+- [x] Load SlickNav only when a used horizontal cascading menu requires legacy JavaScript.
+- [x] Keep simple footer and vertical menus free from SlickNav when they do not need it.
+- [x] Preserve `legacy_rendering`, `load_legacy_css` and `load_legacy_js` as authoritative switches.
+- [x] Preserve theme-owned presentation: Menu does not add legacy CSS/JS for a menu whose presentation is handled by the active theme.
+- [x] Stop `plugin_templatesetvars_menu()` from rendering both `navigation` and `footer` unconditionally.
+- [x] Detect historical `header_navigation` / `menu_footer` use from the active template source rather than scanning final HTML.
+- [x] Respect theme template-root precedence when checking inherited templates.
+- [x] Prepare `menu_footer` early enough on the modern `index.thtml` lifecycle for its resources to reach the head.
+- [x] Preserve Geeklog 2.1.1 late-render compatibility with a conservative active-menu resource fallback because `COM_siteHeader()` finalizes CSS before arbitrary page-content autotags/direct render calls execute.
+- [x] Use capability detection (`COM_createHTMLDocument()`) rather than separate Geeklog-version source trees.
+- [x] Add PHP 5.6/8.1-compatible tests for footer only, navigation only, footer + navigation, unused vertical menus, several active menus with one used, theme-owned presentation and legacy configuration switches.
+- [x] Add explicit Geeklog 2.1.1 lifecycle-fallback and Geeklog 2.2.2 template-detection coverage.
+- [ ] Continue watching upstream Geeklog caching/autotag behavior: cached content can bypass render-time autotag execution, so any future asset contract should remain aligned with Geeklog core rather than adding final-HTML scanning or inline-style workarounds.
+
+The strict per-request optimization is therefore available where Geeklog itself exposes a deferred document/header lifecycle. Geeklog 2.1.1 intentionally keeps the historical safe fallback for arbitrary late menu calls; exact demand loading for those calls is not possible without violating the compatibility constraints (late CSS injection, final HTML scanning, or preloading all possible page content).
+
 ### Cache and multisite foundations
 
 - [x] Separate runtime configuration helpers.
