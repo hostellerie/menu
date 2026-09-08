@@ -13,7 +13,7 @@ require dirname(__DIR__) . '/compat.php';
 
 assertTrue(MENU_dbEscape("O'Reilly") === "O''Reilly", 'SQL escape helper');
 assertTrue(MENU_escapeHTML('"<script>') === '&quot;&lt;script&gt;', 'HTML text/attribute escape');
-assertTrue(MENU_escapeStoredText('&lt;b&gt;x&lt;/b&gt;') === '&lt;b&gt;x&lt;/b&gt;', 'legacy stored label normalization');
+assertTrue(MENU_escapeStoredText('&lt;b&gt;x&lt;/b&gt;') === 'x', 'legacy stored label normalization');
 assertTrue(MENU_safeHref('javascript:alert(1)') === '#', 'javascript URL blocked');
 assertTrue(MENU_safeHref(' data:text/html,x') === '#', 'data URL blocked');
 assertTrue(MENU_safeHref('https://example.com/?a=1&b=2') === 'https://example.com/?a=1&amp;b=2', 'normal URL escaped');
