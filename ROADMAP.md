@@ -3,476 +3,332 @@
 Target version: **1.4.0**  
 Working branch: **modernize-1.4.0**
 
-## Baseline
+## Baseline and compatibility policy
 
-Menu 1.4.0 starts from the validated Menu 1.3.0 codebase.
+Menu 1.4.0 continues the modernization started in 1.3.0 while preserving the established compatibility target:
 
-The 1.3.0 release established the compatibility, security and architecture baseline:
+- Geeklog **2.1.1 through 2.2.2**;
+- PHP **5.6 through 8.1**;
+- MySQL / MariaDB;
+- single-site and multisite installations;
+- conservative upgrades from supported legacy Menu installations.
 
-- Geeklog **2.1.1 through 2.2.2**
-- PHP **5.6 through 8.1**
-- MySQL / MariaDB
-- single-site and multisite installations
-- upgrades from Menu **1.2.5 through 1.2.8.1**
-- multisite-safe private storage
-- safe upgrade/migration plumbing
-- stable resolved-tree API
-- theme presentation hand-off
-- native/theme preview
-- hardened administration and rendering paths
-- CI on PHP 5.6 and PHP 8.1
-
-Menu 1.4.0 must preserve that baseline. New capabilities should build on the existing resolved-tree and theme-facing architecture instead of reintroducing presentation logic into the plugin core.
+One shared source tree should continue to support the declared range. Prefer capability checks and small compatibility helpers over duplicated old/new implementations.
 
 ---
 
-## Development principles
+## Completed or substantially implemented foundations
 
-### Compatibility first
+The following work is already present on `modernize-1.4.0` and is now part of the baseline rather than future roadmap work.
 
-- Keep one shared codebase across the supported Geeklog and PHP range unless the project explicitly changes that policy.
-- Prefer capability checks and compatibility helpers over version-specific source trees.
-- Preserve legacy `MENU_getMenu()` behavior while extending modern APIs.
+### Administration architecture
 
-### Data safety first
+- [x] Split major administration responsibilities into dedicated modules.
+- [x] Separate menu views from menu mutations.
+- [x] Add dedicated element validation and element view modules.
+- [x] Add dedicated administration security helpers.
+- [x] Isolate image-upload handling.
+- [x] Add configuration-validation helpers.
+- [x] Keep administration content visible through progressive enhancement instead of depending on a JavaScript reveal shim.
 
-- Never silently delete or rewrite user menu data during upgrades.
-- Keep migrations idempotent and repeatable.
-- Preserve unresolved or unavailable destinations in administration whenever possible.
-- Export/import and multisite operations must be explicit and reversible where practical.
+### Security and input handling
 
-### Structure before presentation
+- [x] Use Geeklog security/permission checks for administration.
+- [x] Add CSRF protection helpers to mutation paths.
+- [x] Normalize request handling with Geeklog input helpers where modernized.
+- [x] Escape stored and user-controlled labels/values before administration rendering.
+- [x] Harden CSS/configuration handling through dedicated validation helpers.
+- [x] Keep PHP-function menu elements behind explicit configuration/security controls.
 
-- The plugin owns menu structure, destination resolution, permissions, conditions and metadata.
-- Themes own markup, layout, responsive behavior, dropdown presentation, animations and visual styling.
-- New API fields must remain presentation-neutral wherever possible.
+### Element architecture
 
-### Incremental delivery
+- [x] Introduce explicit element-type helpers.
+- [x] Separate editor/runtime behavior from large legacy administration functions.
+- [x] Preserve legacy destination families while moving validation toward type-specific handling.
+- [x] Preserve hierarchical ordering behavior and keyboard/non-drag alternatives where available.
 
-Large features should be introduced in small, testable layers. Prefer completing and validating one coherent capability before starting the next one.
+### Runtime and theme integration
+
+- [x] Maintain the legacy renderer for existing themes.
+- [x] Provide a presentation-neutral resolved-tree path for modern themes.
+- [x] Keep hierarchy, destination resolution, permissions and ordering in Menu rather than duplicating them in themes.
+- [x] Support native/theme preview integration from administration.
+- [x] Maintain the architectural hand-off required by modern themes such as Eclipse.
+
+### Cache and multisite foundations
+
+- [x] Separate runtime configuration helpers.
+- [x] Provide runtime and filesystem cache helpers.
+- [x] Keep cache disposable and separate from persistent menu data.
+- [x] Use multisite-safe/site-specific plugin storage where appropriate.
+- [x] Keep migration behavior conservative and non-destructive.
+
+### Localization
+
+- [x] Make English the canonical language contract.
+- [x] Load English first and overlay the selected translation for safe fallback.
+- [x] Extend French localization for modernized administration strings.
+- [x] Add an automated language-contract test for PHP/INC language-key references.
+- [x] Remove a set of hardcoded administration labels in favor of language keys.
+- [ ] Extend the language-contract audit to templates so hardcoded or missing template strings are caught automatically.
+- [ ] Finish localization of remaining hardcoded administration/security messages.
+
+### Legacy menu configuration compatibility
+
+- [x] Restore a dedicated RGB conversion helper used by menu configuration.
+- [x] Accept historical `#RRGGBB`, `RRGGBB`, `#RGB` and `RGB` values.
+- [x] Handle empty, `none` and malformed historical color values safely.
+- [x] Keep the menu configuration page renderable on PHP 8.1 with historical stored configuration.
+- [x] Remove temporary trace logging and diagnostic workflows after validation.
+
+### Build and release workflow
+
+- [x] Keep a permanent CI workflow for compatibility/security/tests.
+- [x] Build an installable `menu-1.4.0.zip` through GitHub Actions.
+- [x] Validate language files before packaging.
+- [x] Validate the generated ZIP.
+- [x] Publish the installable ZIP as a GitHub Actions artifact.
+- [x] Keep a branch `dist/menu-1.4.0.zip` for installation testing.
+- [x] Validate changes through real Geeklog plugin upload/install/upgrade testing.
+- [ ] Add build metadata (commit SHA/date) to the development archive so successive `menu-1.4.0.zip` builds are easier to identify.
 
 ---
 
-## Priority order for 1.4.0
+## Immediate 1.4.0 stabilization priorities
 
-The recommended implementation order is:
+These items should take precedence over large new features before a stable 1.4.0 release.
 
-1. destination integrity and diagnostics;
-2. active/selected state;
-3. modern link metadata;
-4. import/export JSON;
-5. multisite clone/export/import;
-6. multilingual menu resolution and fallback;
-7. richer display conditions;
-8. reusable/contextual menu structures;
-9. accessibility and cache refinements;
-10. optional ecosystem/API extensions.
+### 1. Complete warning/error cleanup
 
-This order intentionally strengthens the data model and API contracts before adding more complex automation or inter-plugin behavior.
+- [ ] Run a final warning/error-log audit on Geeklog 2.1.1.
+- [ ] Run a final warning/error-log audit on Geeklog 2.2.2.
+- [ ] Test PHP 5.6 and PHP 8.1 paths for all administration screens.
+- [ ] Remove remaining obsolete legacy loops or assumptions that can produce PHP 8 warnings.
+- [ ] Confirm no temporary debug traces or one-off patch workflows remain.
+
+### 2. Finish localization contract
+
+- [ ] Audit all PHP, INC and template-visible interface text.
+- [ ] Ensure every referenced key exists in `language/english.php`.
+- [ ] Extend automated checks to `.thtml` templates where practical.
+- [ ] Localize remaining hardcoded security/error messages.
+- [ ] Keep other language files as optional overlays with English fallback.
+
+### 3. Administration consistency
+
+- [ ] Continue replacing legacy `current()/next()` iteration patterns with clearer `foreach` loops where behavior is equivalent and PHP 5.6 compatible.
+- [ ] Verify every mutation path uses CSRF protection and validated input.
+- [ ] Verify every administration output path escapes stored labels and URLs correctly.
+- [ ] Remove obsolete duplicate reveal/presentation code left from historical templates.
+
+### 4. Archive/install validation
+
+- [ ] Test fresh installation from the generated ZIP on Geeklog 2.1.1.
+- [ ] Test fresh installation from the generated ZIP on Geeklog 2.2.2.
+- [ ] Test upgrade of an existing Menu installation on both Geeklog generations.
+- [ ] Verify all newly added source files are included and installed in the expected private/public locations.
+- [ ] Add build identification metadata to prevent confusion between same-named development ZIPs.
+
+### 5. CI cleanup
+
+- [ ] Resolve the remaining failing CI contract test(s), including the stored-label normalization regression currently reported by the test suite.
+- [ ] Keep CI failures meaningful: temporary debugging workflows must not become permanent release infrastructure.
 
 ---
 
-## Phase 1 — Destination integrity and administrator diagnostics
+## Functional roadmap after stabilization
+
+The following capabilities remain strategic work for 1.4.x or later. They should build on the resolved-tree, validation and multisite foundations above.
+
+## Phase A — Destination integrity and diagnostics
 
 ### Goal
 
-Keep stored menu definitions intact even when their target disappears, while preventing broken public navigation.
+Preserve menu definitions when a destination disappears while preventing broken public navigation.
 
-### Planned work
-
-- [ ] Preserve references to missing plugins, static pages, topics and other resolvable Geeklog destinations.
-- [ ] Represent unavailable destinations in administration using a clear status such as `[Unavailable ...]`.
-- [ ] Prevent unavailable destinations from generating broken public links by default.
-- [ ] Keep labels, hierarchy, permissions and ordering intact when a destination becomes unavailable.
-- [ ] Automatically restore normal behavior if the destination becomes available again.
-- [ ] Add administrator diagnostics for:
-  - [ ] unavailable destinations;
-  - [ ] malformed or rejected URLs;
-  - [ ] orphaned elements;
-  - [ ] invalid parent references;
-  - [ ] hierarchy cycles or structural inconsistencies;
-  - [ ] duplicate or suspicious menu definitions where useful.
-- [ ] Provide a safe diagnostic summary without changing data automatically.
-- [ ] Add automated tests for destination disappearance/reappearance and malformed references.
-
-### Acceptance criteria
-
-A menu may survive removal and later restoration of a referenced destination without losing the original menu definition.
+- [ ] Detect missing plugins, static pages, topics and other resolvable Geeklog destinations.
+- [ ] Preserve stored destination references rather than deleting them automatically.
+- [ ] Show unavailable destinations clearly in administration.
+- [ ] Prevent unavailable destinations from producing broken public links by default.
+- [ ] Restore normal behavior automatically if the destination returns.
+- [ ] Detect orphaned elements, invalid parents and hierarchy cycles.
+- [ ] Provide a non-destructive administrator diagnostic summary.
 
 ---
 
-## Phase 2 — Active / selected navigation state
+## Phase B — Active/current navigation state
 
 ### Goal
 
-Allow themes and other consumers to understand which menu node corresponds to the current request.
+Expose which node corresponds to the current request without embedding theme-specific CSS logic in Menu.
 
-### Planned work
-
-- [ ] Extend the resolved-tree contract with presentation-neutral current-state information.
-- [ ] Detect direct matches for supported destinations.
-- [ ] Mark ancestor nodes when a descendant is active.
-- [ ] Define stable states such as `active`, `current`, `ancestor` or equivalent without requiring theme-specific CSS names.
-- [ ] Preserve existing API behavior for consumers that ignore the new fields.
-- [ ] Validate topic, static page, plugin and URL matching behavior.
-- [ ] Document how Eclipse and other themes can consume the state.
-
-### Future consumers
-
-- current navigation highlighting;
-- breadcrumbs;
-- contextual navigation;
-- section-aware layouts;
-- structured navigation data.
+- [ ] Extend the resolved-tree contract with presentation-neutral current-state metadata.
+- [ ] Detect direct destination matches.
+- [ ] Mark ancestors of the active node.
+- [ ] Map cleanly to theme behavior such as `aria-current` and current-navigation highlighting.
+- [ ] Validate topic, static-page, plugin and URL matching.
 
 ---
 
-## Phase 3 — Modern link metadata and icons
+## Phase C — Modern link metadata and icons
 
-### Goal
-
-Add modern link capabilities without coupling Menu to a CSS framework or icon library.
-
-### Planned work
-
-- [ ] Support safe `target` values.
+- [ ] Support validated `target` values.
 - [ ] Support validated `rel` values.
 - [ ] Support optional `aria-label`.
-- [ ] Support optional CSS class metadata.
-- [ ] Evaluate a restricted, safe `data-*` attribute model.
-- [ ] Keep external-link protection compatible with explicit link metadata.
-- [ ] Add optional icon metadata supporting one or more of:
-  - [ ] emoji;
-  - [ ] safe SVG references/content under a defined policy;
-  - [ ] CSS class names.
-- [ ] Do not impose Font Awesome, Bootstrap Icons or another external library.
-- [ ] Expose link/icon metadata through the resolved-tree API.
-- [ ] Keep legacy rendering backward compatible.
+- [ ] Support optional CSS-class metadata.
+- [ ] Evaluate a restricted safe `data-*` model.
+- [ ] Add presentation-neutral icon metadata without requiring a specific icon library.
+- [ ] Expose the metadata through the resolved tree while retaining legacy compatibility.
 
 ---
 
-## Phase 4 — JSON import / export
+## Phase D — Versioned JSON import/export
 
 ### Goal
 
-Provide a portable, versioned representation of menu structures for backup, transfer and duplication.
-
-### Planned work
+Provide a portable and validated menu representation for backup, duplication and transfer.
 
 - [ ] Define a versioned Menu JSON schema.
-- [ ] Export complete menu structure including:
-  - [ ] hierarchy;
-  - [ ] labels;
-  - [ ] destinations;
-  - [ ] permissions where portable;
-  - [ ] ordering;
-  - [ ] link metadata;
-  - [ ] conditions when implemented;
-  - [ ] icon metadata when implemented.
-- [ ] Separate portable data from site-specific identifiers where necessary.
-- [ ] Validate JSON strictly before import.
-- [ ] Provide dry-run/validation feedback before modifying data.
-- [ ] Prevent hierarchy cycles and invalid parents during import.
-- [ ] Define collision behavior for existing menu IDs/names.
+- [ ] Export hierarchy, labels, destinations, permissions where portable, ordering and metadata.
+- [ ] Validate imports before any mutation.
+- [ ] Provide dry-run feedback.
+- [ ] Prevent invalid parents and hierarchy cycles.
+- [ ] Define collision behavior explicitly.
 - [ ] Never overwrite an existing menu silently.
-- [ ] Add round-trip tests: export → import → equivalent resolved tree.
-
-### Security requirements
-
-- Imported data must pass the same validation as manually edited menu data.
-- PHP-function elements must never gain execution permission simply because imported JSON requests it.
+- [ ] Add export → import → equivalent-tree tests.
 
 ---
 
-## Phase 5 — Advanced clone and multisite transfer
+## Phase E — Multisite clone and transfer
 
-### Goal
-
-Build on JSON portability and existing multisite-safe storage to make menus transferable between sites.
-
-### Planned work
-
-- [ ] Improve same-site cloning where useful.
-- [ ] Support explicit clone/export/import workflows between multisite instances.
-- [ ] Re-map internal element/parent IDs safely.
-- [ ] Detect site-specific destinations that do not exist on the target site.
-- [ ] Preserve unavailable destinations instead of dropping them.
-- [ ] Define handling of permissions/groups that do not exist on the target site.
-- [ ] Define handling of images/custom CSS referenced by a menu.
-- [ ] Provide confirmation/dry-run information before cross-site operations.
-- [ ] Keep site data isolated throughout the operation.
+- [ ] Build cross-site transfer on the JSON format rather than direct table copying.
+- [ ] Re-map element/parent identifiers safely.
+- [ ] Detect target-site destinations or groups that do not exist.
+- [ ] Preserve unavailable references instead of silently dropping them.
+- [ ] Define handling for images and custom CSS.
+- [ ] Keep site isolation authoritative throughout the operation.
 
 ---
 
-## Phase 6 — Multilingual menu resolution
+## Phase F — Multilingual menu resolution
 
-### Goal
-
-Make language-specific navigation predictable and automatic while preserving current installations.
-
-### Planned work
-
-- [ ] Define an explicit language association strategy for menus.
-- [ ] Support variants such as `navigation_fr`, `navigation_en` or a cleaner metadata-based equivalent.
+- [ ] Define explicit language association for menus.
 - [ ] Resolve the preferred menu from the active Geeklog language.
-- [ ] Add configurable fallback behavior.
-- [ ] Support a generic/default menu when no localized version exists.
-- [ ] Ensure language fallback cannot create recursive resolution loops.
-- [ ] Expose resolved language/fallback metadata to themes when useful.
-- [ ] Add cache separation by language where required.
-- [ ] Test multilingual behavior in single-site and multisite configurations.
+- [ ] Add deterministic fallback to a generic/default menu.
+- [ ] Prevent recursive fallback loops.
+- [ ] Vary cache by language only when required.
+- [ ] Expose useful language/fallback metadata to consumers.
+
+This is separate from the plugin interface-language fallback already implemented for administration strings.
 
 ---
 
-## Phase 7 — Rich display conditions
+## Phase G — Rich display conditions
 
-### Goal
-
-Allow menu elements to appear according to controlled runtime conditions without embedding arbitrary presentation logic in themes.
-
-### Candidate conditions
+Candidate conditions:
 
 - [ ] authenticated / anonymous;
 - [ ] Geeklog group membership;
 - [ ] active language;
 - [ ] plugin active/inactive;
-- [ ] current destination/plugin/content type;
-- [ ] topic or section context;
-- [ ] date/time windows where appropriate;
-- [ ] other conditions only when they can be evaluated safely and predictably.
+- [ ] current destination/content type;
+- [ ] topic/section context;
+- [ ] optional date/time windows.
 
-### Design constraints
-
-- [ ] Keep condition evaluation centralized.
-- [ ] Avoid arbitrary PHP expressions.
-- [ ] Keep conditions serializable for JSON import/export.
-- [ ] Ensure permission checks remain authoritative even when conditions match.
-- [ ] Define cache variation/invalidation for condition-dependent trees.
-
-Device detection should be treated cautiously because responsive presentation normally belongs to the theme. Add it only if a concrete non-presentation use case justifies it.
+Conditions must remain serializable, centrally validated and subordinate to Geeklog permissions. Arbitrary PHP expressions should not be introduced.
 
 ---
 
-## Phase 8 — Reusable and contextual menu structures
+## Phase H — Reusable and contextual navigation
 
-### Goal
-
-Reduce duplication and enable centralized navigation components.
-
-### Reusable structures
-
-- [ ] Allow a menu or submenu structure to be referenced from more than one menu.
-- [ ] Prevent recursive inclusion loops.
-- [ ] Preserve permissions and destination resolution through included structures.
-- [ ] Decide whether inclusion is live/reference-based or snapshot-based; prefer explicit semantics.
-
-### Contextual menus
-
-- [ ] Allow centralized menu definitions to be selected by context.
-- [ ] Support use cases such as Store, Documents, Videos or other plugins requesting a contextual navigation tree.
-- [ ] Keep plugin-specific presentation outside Menu.
-- [ ] Build contextual behavior on the same resolved-tree contract rather than parallel rendering APIs.
+- [ ] Allow reusable menu/submenu structures without recursive inclusion loops.
+- [ ] Define explicit live-reference versus snapshot semantics.
+- [ ] Allow plugins such as Store, Documents or Videos to request contextual navigation through a generic contract.
+- [ ] Keep plugin-specific HTML outside Menu.
+- [ ] Reuse the same resolved-tree contract rather than creating parallel renderers.
 
 ---
 
-## Phase 9 — Administration editing improvements
+## Phase I — Accessibility and smarter caching
 
-### Goal
-
-Make the editor clearer as Menu supports richer element metadata.
-
-### Planned work
-
-- [ ] Continue specialized forms for element types:
-  - [ ] Geeklog Action;
-  - [ ] Geeklog Menu;
-  - [ ] Plugin;
-  - [ ] Static Page;
-  - [ ] Topic;
-  - [ ] URL;
-  - [ ] Sub Menu;
-  - [ ] Label;
-  - [ ] PHP Function where enabled.
-- [ ] Show only fields relevant to the selected type.
-- [ ] Surface unavailable destination state clearly.
-- [ ] Integrate diagnostics into editing without making the editor noisy.
-- [ ] Improve preview for active/selected state and new metadata.
-- [ ] Preserve keyboard ordering controls.
+- [ ] Review semantic navigation/list structure in retained native rendering.
+- [ ] Improve keyboard submenu behavior where feasible.
+- [ ] Expose metadata suitable for `aria-expanded` and `aria-current`.
+- [ ] Verify icon-only labels remain accessible.
+- [ ] Define cache variation only from dimensions that actually affect resolved output: site, language, permission context and future conditions.
+- [ ] Prevent cross-site, cross-language or cross-user cache leakage.
 
 ---
 
-## Phase 10 — Accessibility refinement
+## Phase J — Versioning, drafts and scheduled publication
 
-### Goal
+- [ ] Define menu revisions and efficient history storage.
+- [ ] Restore prior revisions without destroying history.
+- [ ] Allow draft menu editing/preview.
+- [ ] Add controlled scheduled activation if a concrete editorial need justifies it.
 
-Strengthen the semantic information supplied to themes and improve the retained native renderer.
-
-### Planned work
-
-- [ ] Review semantic list/navigation structure.
-- [ ] Improve keyboard interaction in native/legacy rendering where feasible.
-- [ ] Support appropriate `aria-expanded` / submenu state metadata.
-- [ ] Ensure active/current state can map cleanly to `aria-current`.
-- [ ] Verify labels for icon-only navigation.
-- [ ] Avoid forcing theme-specific ARIA behavior through the core API.
-- [ ] Test basic keyboard and screen-reader behavior for native rendering.
+These features remain lower priority than destination integrity, portability and contextual APIs.
 
 ---
 
-## Phase 11 — Smarter caching
+## Phase K — SEO/navigation semantics
 
-### Goal
-
-Extend the stable 1.3.0 cache foundation to handle richer context without stale or cross-context navigation.
-
-### Planned work
-
-- [ ] Define cache keys from only the dimensions that affect resolved output.
-- [ ] Evaluate variation by:
-  - [ ] site;
-  - [ ] language;
-  - [ ] permissions/group context;
-  - [ ] relevant display conditions;
-  - [ ] menu version/state.
-- [ ] Avoid unnecessary cache fragmentation.
-- [ ] Invalidate only affected menu trees when practical.
-- [ ] Keep cache disposable and separate from persistent data.
-- [ ] Add tests preventing cross-user, cross-language and cross-site leakage.
-
----
-
-## Phase 12 — Versioning, drafts and scheduled publishing
-
-These are valuable editorial features but should follow the core data/API work above.
-
-### History / rollback
-
-- [ ] Define what constitutes a menu revision.
-- [ ] Store revision metadata efficiently.
-- [ ] Allow administrators to inspect and restore a previous version.
-- [ ] Ensure restoring a revision creates a new revision rather than destroying history.
-
-### Draft menus
-
-- [ ] Allow editing without immediate public activation.
-- [ ] Preview draft trees through native and theme preview paths.
-- [ ] Define permissions for draft viewing/editing.
-
-### Scheduled publishing
-
-- [ ] Allow activation/publication at a defined date/time.
-- [ ] Define timezone behavior using Geeklog conventions.
-- [ ] Avoid requiring high-frequency cron execution where possible.
-- [ ] Ensure cache invalidation occurs when scheduled state changes.
-
----
-
-## Phase 13 — SEO and structured navigation
-
-### Goal
-
-Reuse the resolved hierarchy for navigation semantics without turning Menu into a full SEO plugin.
-
-### Candidate work
-
-- [ ] Provide breadcrumb-ready ancestry data.
-- [ ] Evaluate optional breadcrumb helpers built on active/selected state.
-- [ ] Evaluate schema.org/BreadcrumbList output or a presentation-neutral data helper.
+- [ ] Provide breadcrumb-ready ancestry data from the resolved tree.
+- [ ] Evaluate optional breadcrumb helpers.
+- [ ] Evaluate presentation-neutral data for schema.org `BreadcrumbList`.
 - [ ] Avoid duplicate structured data when themes or SEO plugins already provide it.
 
 ---
 
-## Phase 14 — Inter-plugin services and dynamic hubs
-
-This phase should be attempted only after the tree, diagnostics, conditions and contextual APIs are stable.
+## Phase L — Inter-plugin and external APIs
 
 ### Inter-plugin services
 
-- [ ] Define a narrow contract allowing plugins to advertise safe navigation destinations or navigation blocks.
-- [ ] Prefer official Geeklog plugin APIs/services where available.
-- [ ] Keep Menu in control of validation, permissions and final tree composition.
-- [ ] Avoid tight compile-time dependencies on Store, Documents, Videos or other individual plugins.
+- [ ] Define a narrow contract for plugins to advertise safe navigation destinations or contextual navigation blocks.
+- [ ] Prefer existing Geeklog plugin/service APIs where they fit.
+- [ ] Keep Menu responsible for validation, permissions and final tree composition.
+- [ ] Avoid hard dependencies on individual plugins.
 
-### Pages pillars / hubs
+### Dynamic hubs
 
-- [ ] Explore automatically populated menu/submenu structures derived from content related to a pillar page/topic.
-- [ ] Keep automatically generated relationships distinguishable from manually maintained menu nodes.
-- [ ] Define update/invalidation behavior when related content changes.
-- [ ] Avoid making Menu responsible for full content indexing; consume structured relationships from the appropriate plugin/service instead.
+- [ ] Allow future Hub/page-pillar integrations to consume structured relationships rather than making Menu a content indexer.
+- [ ] Keep automatically generated relationships distinguishable from manually maintained nodes.
+- [ ] Define invalidation when related content changes.
 
----
+### External/headless API
 
-## Phase 15 — External / headless API
-
-### Goal
-
-Expose the resolved tree to non-theme consumers only after the internal API contract is mature.
-
-### Candidate work
-
-- [ ] Define a JSON representation based on the stable resolved-tree model.
-- [ ] Decide authentication/permission behavior for anonymous and authenticated consumers.
-- [ ] Ensure the API never bypasses Geeklog permissions.
-- [ ] Support language/context parameters only when safely validated.
-- [ ] Add cache headers/version information where useful.
-- [ ] Document use by decoupled frontends, applications and AI/agent tooling.
-
-This should reuse the same resolver as themes rather than introduce a second navigation engine.
+- [ ] Expose a JSON representation only after the internal resolved-tree contract is stable.
+- [ ] Reuse the same permission-aware resolver used by themes.
+- [ ] Define authentication/context behavior explicitly.
+- [ ] Document use by decoupled frontends, applications and agent tooling.
 
 ---
 
-## Deferred / optional work
+## Release validation requirements
 
-The following remain optional unless a concrete need or maintenance problem justifies them:
+A stable 1.4.x release should not be published until the relevant items below are green:
 
-- replace/remove SlickNav after legacy rendering stabilization;
-- replace remaining legacy drag/drop dependencies;
-- device-specific display conditions;
-- arbitrary custom `data-*` attributes;
-- direct structured-data rendering inside the plugin;
-- plugin-specific adapters that would create tight dependencies.
-
----
-
-## 1.4.0 scope recommendation
-
-Do not require every phase in this document for the 1.4.0 release.
-
-A coherent and realistic **1.4.0 core scope** would be:
-
-- [ ] Phase 1 — destination integrity and diagnostics;
-- [ ] Phase 2 — active/selected state;
-- [ ] Phase 3 — modern link metadata;
-- [ ] Phase 4 — JSON import/export;
-- [ ] Phase 6 — multilingual resolution/fallback if implementation remains low-risk;
-- [ ] targeted accessibility/cache work required by those features.
-
-Phases 5 and 7–15 can move to 1.4.x or later releases depending on complexity and community feedback.
-
----
-
-## Validation requirements for every 1.4.x release
-
-- [ ] No regression in Geeklog 2.1.1 support unless the compatibility policy is explicitly changed.
-- [ ] No regression in Geeklog 2.2.2 support.
-- [ ] PHP 5.6 lint/tests remain green unless the PHP support policy is explicitly changed.
-- [ ] PHP 8.1 lint/tests remain green.
-- [ ] Existing 1.3.0 menus upgrade without destructive changes.
+- [ ] Geeklog 2.1.1 compatibility verified.
+- [ ] Geeklog 2.2.2 compatibility verified.
+- [ ] PHP 5.6 lint/tests verified for the declared support surface.
+- [ ] PHP 8.1 lint/tests verified.
+- [ ] Existing menus upgrade without destructive changes.
 - [ ] Legacy rendering remains functional.
 - [ ] Resolved-tree consumers remain backward compatible or receive an explicitly versioned contract.
-- [ ] Multisite isolation tests remain green.
-- [ ] Import/export, conditions and cache changes receive dedicated automated tests when introduced.
-- [ ] Final runtime warning/error-log audit on supported Geeklog test installations.
-- [ ] Upgrade through the actual generated release ZIP before stable publication.
+- [ ] Multisite isolation remains intact.
+- [ ] English language contract passes.
+- [ ] No unexplained warnings/fatal errors in supported test environments.
+- [ ] Fresh install and upgrade are both tested using the actual generated ZIP.
+- [ ] Generated archive content is verified before publication.
 
-## Compatibility principle
+## Guiding principles
 
-Do not maintain separate source trees for old and new Geeklog releases. Prefer small compatibility helpers and runtime capability checks so one Menu release supports the declared range.
+**Compatibility:** avoid separate source trees for old and new Geeklog releases while the shared compatibility policy remains practical.
 
-## Data-safety principle
+**Data safety:** existing user data takes precedence over cleanup convenience. Migrations must remain conservative, repeatable and non-destructive.
 
-Existing user data takes precedence over cleanup convenience. Upgrade routines must remain non-destructive, repeatable and conservative. Unavailable destinations and legacy references should be preserved whenever possible rather than silently discarded.
+**Localization:** English is the canonical interface contract; translations overlay it and may fall back safely.
 
-## API principle
+**Architecture:** `MENU_getResolvedTree()` remains the central presentation-neutral structural contract for modern consumers. New functionality should extend that model rather than duplicate menu-resolution logic.
 
-`MENU_getResolvedTree()` is the central structural contract for modern consumers. New features should extend that model carefully, preserve backward compatibility and avoid duplicating resolution logic across themes, plugins or external APIs.
+**Release discipline:** test what users actually install — the generated plugin archive — not only the repository checkout.
