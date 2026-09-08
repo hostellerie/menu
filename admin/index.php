@@ -46,6 +46,7 @@ require_once $_CONF['path'].'system/lib-admin.php';
 require_once $_CONF['path'].'plugins/menu/image_upload.php';
 require_once $_CONF['path'].'plugins/menu/admin_menu_views.php';
 require_once $_CONF['path'].'plugins/menu/admin_menu_mutations.php';
+require_once $_CONF['path'].'plugins/menu/color_utils.php';
 require_once $_CONF['path'].'plugins/menu/admin_element_views.php';
 
 $display = '';
