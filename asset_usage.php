@@ -134,8 +134,9 @@ function MENU_menuNeedsLegacyJs($menuID)
  * This deliberately inspects the template source, never the final HTML. Geeklog
  * 2.1.1 uses header.thtml/footer.thtml while the modern document renderer uses
  * index.thtml. Detection is capability-based through COM_createHTMLDocument().
- * If no readable source can be identified, return true to preserve compatibility
- * with custom/legacy Template implementations.
+ * Template roots are checked in Geeklog resolution order and the first readable
+ * matching source is authoritative. If no readable source can be identified,
+ * return true to preserve compatibility with custom/legacy Template engines.
  *
  * @param string $templateName
  * @param object $template
@@ -186,11 +187,10 @@ function MENU_templateUsesVariable($templateName, &$template, $variable)
 
     $roots = array_unique($roots);
     $needle = '{' . $variable . '}';
-    $inspected = false;
 
-    foreach ($roots as $root) {
-        $root = rtrim($root, "/\\") . DIRECTORY_SEPARATOR;
-        foreach ($fileNames as $fileName) {
+    foreach ($fileNames as $fileName) {
+        foreach ($roots as $root) {
+            $root = rtrim($root, "/\\") . DIRECTORY_SEPARATOR;
             $path = $root . $fileName;
             if (!is_file($path) || !is_readable($path)) {
                 continue;
@@ -201,12 +201,9 @@ function MENU_templateUsesVariable($templateName, &$template, $variable)
                 continue;
             }
 
-            $inspected = true;
-            if (strpos($source, $needle) !== false) {
-                return true;
-            }
+            return strpos($source, $needle) !== false;
         }
     }
 
-    return $inspected ? false : true;
+    return true;
 }
