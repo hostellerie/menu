@@ -19,15 +19,12 @@ function MENU_displayTree( $menu_id ) {
     global $_CONF, $LANG_MENU00, $LANG_MENU01, $LANG_MENU_ADMIN, $LANG_ADMIN,
            $_MENU_CONF, $Menus, $_SCRIPTS;
 
-    COM_errorLog('[Menu debug] MENU_menuConfig step=before-assets');
     $_SCRIPTS->setJavaScriptLibrary('jquery');
     $_SCRIPTS->setJavaScriptFile('menu_tablednd', '/admin/plugins/menu/js/tablednd_0_6.js');
     $_SCRIPTS->setJavaScriptFile('menu_order_handle', '/admin/plugins/menu/js/menu-order-handle.js');
 
     $retval = '';
-    COM_errorLog('[Menu debug] MENU_menuConfig step=before-menu-name');
     $safeMenuName = MENU_escapeStoredText($Menus[$menu_id]['menu_name']);
-    COM_errorLog('[Menu debug] MENU_menuConfig step=after-menu-name; name=' . $safeMenuName);
 
     $menu_arr = array(
             array('url'  => $_CONF['site_admin_url'] .'/plugins/menu/index.php?mode=new&amp;menuid='.$menu_id,
@@ -74,7 +71,6 @@ function MENU_displayTree( $menu_id ) {
 
     $T->parse('output', 'admin');
     $retval .= $T->finish($T->get_var('output'));
-    COM_errorLog('[Menu debug] MENU_menuConfig step=after-finish; retval_length=' . strlen($retval));
     $retval .= COM_endBlock(COM_getBlockTemplate('_admin_block', 'footer'));
     return $retval;
 }
@@ -212,11 +208,9 @@ function MENU_createElement ( $menu_id ) {
     }
     $order_select .= '</select>' . LB;
 
-    COM_errorLog('[Menu debug] MENU_menuConfig step=menu-type-select-ready');
 
     // build group select
 
-    COM_errorLog('[Menu debug] MENU_menuConfig step=before-groups');
     $rootUser = DB_getItem($_TABLES['group_assignments'],'ug_uid','ug_main_grp_id=1');
 
     $usergroups = SEC_getUserGroups($rootUser);
@@ -230,8 +224,6 @@ function MENU_createElement ( $menu_id ) {
         next($usergroups);
     }
     $group_select .= '</select>' . LB;
-    COM_errorLog('[Menu debug] MENU_menuConfig step=groups-ready; count=' . count($usergroups));
-    COM_errorLog('[Menu debug] MENU_menuConfig step=before-template');
     
     $T = COM_newTemplate(CTL_plugin_templatePath('menu'));
     $T->set_var('security_token_input', MENU_adminTokenInput());
@@ -507,7 +499,6 @@ function MENU_menuConfig( $mid ) {
            $LANG_MENU_ADMIN, $LANG_MENU_TYPES, $LANG_MENU_GLTYPES, $LANG_MENU_GLFUNCTION,
            $_SCRIPTS, $LANG_MENU_MENU_TYPES, $LANG_VC, $LANG_HS, $LANG_HC, $LANG_VS;
 
-    COM_errorLog('[Menu debug] MENU_menuConfig step=enter; mid=' . (int) $mid);
 
     $js = '      jQuery(document).ready(
         function()
@@ -531,7 +522,6 @@ function MENU_menuConfig( $mid ) {
         
     $_SCRIPTS->setJavaScriptFile('menu_colorpicker', '/admin/plugins/menu/js/colorpicker.js',true);
     $_SCRIPTS->setCSSFile('colorpicker', '/admin/plugins/menu/css/colorPicker.css',true);
-    COM_errorLog('[Menu debug] MENU_menuConfig step=after-assets');
 
     /* define the active attributes for each menu type */
 
@@ -587,7 +577,6 @@ function MENU_menuConfig( $mid ) {
                              'menu_alignment',
                         );
 
-    COM_errorLog('[Menu debug] MENU_menuConfig step=attributes-ready');
     $retval = '';
     $menu_id = $mid;
     $safeMenuName = MENU_escapeStoredText($Menus[$menu_id]['menu_name']);
@@ -595,13 +584,9 @@ function MENU_menuConfig( $mid ) {
             array('url'  => $_CONF['site_admin_url'] .'/plugins/menu/index.php',
                   'text' => $LANG_MENU01['menu_list']),
     );
-    COM_errorLog('[Menu debug] MENU_menuConfig step=before-start-block');
     $retval  .= COM_startBlock($LANG_MENU01['menu_builder'].' :: '.$LANG_MENU01['menu_colors'] . ' ' . $LANG_MENU01['for'] . ' ' . $safeMenuName,'', COM_getBlockTemplate('_admin_block', 'header'));
-    COM_errorLog('[Menu debug] MENU_menuConfig step=after-start-block; retval_length=' . strlen($retval));
-    COM_errorLog('[Menu debug] MENU_menuConfig step=before-admin-menu');
     $retval  .= ADMIN_createMenu($menu_arr, $LANG_MENU_ADMIN[6],
                                 $_CONF['site_admin_url'] . '/plugins/menu/images/menu.png');
-    COM_errorLog('[Menu debug] MENU_menuConfig step=after-admin-menu; retval_length=' . strlen($retval));
 
 
 
@@ -620,8 +605,6 @@ function MENU_menuConfig( $mid ) {
     }
 
 
-    COM_errorLog('[Menu debug] MENU_menuConfig step=config-loaded; config_type=' . gettype($Menus[$mid]['config']));
-    COM_errorLog('[Menu debug] MENU_menuConfig step=before-rgb');
     $main_menu_bg_colorRGB         = '[' . MENU_hexrgb($menuConfig['main_menu_bg_color'],'r') .
                                       ',' . MENU_hexrgb($menuConfig['main_menu_bg_color'],'g') .
                                       ',' . MENU_hexrgb($menuConfig['main_menu_bg_color'],'b') . ']';
@@ -662,7 +645,6 @@ function MENU_menuConfig( $mid ) {
                                       ',' . MENU_hexrgb($menuConfig['submenu_shadow_color'],'g')  .
                                       ',' . MENU_hexrgb($menuConfig['submenu_shadow_color'],'b')  . ']';
 
-    COM_errorLog('[Menu debug] MENU_menuConfig step=after-rgb');
     $menu_active_check = ($Menus[$mid]['active'] == 1  ? ' checked="checked"' : '');
 
     $menu_align_left_checked  = ($menuConfig['menu_alignment'] == 1 ? 'checked="checked"' : '');
@@ -678,12 +660,10 @@ function MENU_menuConfig( $mid ) {
         'submenu_background_color', 'submenu_hover_bg_color',
         'submenu_highlight_color', 'submenu_shadow_color',
     );
-    COM_errorLog('[Menu debug] MENU_menuConfig step=before-css-colors');
     foreach ($legacyColorKeys as $colorKey) {
         $menuConfig[$colorKey] = MENU_cssColor($menuConfig[$colorKey]);
     }
 
-    COM_errorLog('[Menu debug] MENU_menuConfig step=after-css-colors');
 
     // build menu type select
 
@@ -718,9 +698,7 @@ function MENU_menuConfig( $mid ) {
     $T = COM_newTemplate(CTL_plugin_templatePath('menu'));
     $T->set_var('security_token_input', MENU_adminTokenInput());
     $T->set_file(array('admin' => 'menuconfig.thtml'));
-    COM_errorLog('[Menu debug] MENU_menuConfig step=template-file-ready');
 
-    COM_errorLog('[Menu debug] MENU_menuConfig step=before-template-vars');
     $T->set_var(array(
         'group_select'      => $group_select,
         'menutype'          => $Menus[$menu_id]['menu_type'],
@@ -785,7 +763,6 @@ function MENU_menuConfig( $mid ) {
         'LANG_MENU01[confirm_reset]' => $LANG_MENU01['confirm_reset']
     ));
 
-    COM_errorLog('[Menu debug] MENU_menuConfig step=template-vars-ready');
 
     if ( $Menus[$menu_id]['menu_type'] == 1 ) {
         $T->set_var('show_warning','1');
@@ -826,9 +803,7 @@ function MENU_menuConfig( $mid ) {
         $T->set_var($name.'_show', $display);
     }
 
-    COM_errorLog('[Menu debug] MENU_menuConfig step=before-parse');
     $T->parse('output', 'admin');
-    COM_errorLog('[Menu debug] MENU_menuConfig step=after-parse');
 
     $retval .= $T->finish($T->get_var('output'));
     $retval .= COM_endBlock(COM_getBlockTemplate('_admin_block', 'footer'));

@@ -1,7 +1,3 @@
-<script type="text/javascript">
-    document.getElementById('menu').style.display=''
-</script>
-
 <div class="glfform">
   <form method="post" action="{form_action}" id="edititem">
     {security_token_input}

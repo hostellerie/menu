@@ -75,25 +75,6 @@ $menu_id = (int) Geeklog\Input::fRequest('menumid', 0);
 $menu_id = (int) Geeklog\Input::fRequest('menu', $menu_id);
 $mid = (int) Geeklog\Input::fRequest('mid', 0);
 
-if ($mode === 'menuconfig') {
-    COM_errorLog('[Menu debug] admin/index.php entered menuconfig route; requested menuid=' . (int) Geeklog\Input::fRequest('menuid', 0));
-
-    register_shutdown_function(function () {
-        $error = error_get_last();
-        if ($error === null) {
-            COM_errorLog('[Menu debug] shutdown: no PHP error recorded');
-            return;
-        }
-
-        COM_errorLog(
-            '[Menu debug] shutdown error: type=' . $error['type']
-            . '; message=' . $error['message']
-            . '; file=' . $error['file']
-            . '; line=' . $error['line']
-        );
-    });
-}
-
 if ( (isset($_POST['execute']) || $mode != '') && !isset($_POST['cancel']) && !isset($_POST['defaults'])) {
     switch ( $mode ) {
         case 'clone' :
@@ -177,9 +158,7 @@ if ( (isset($_POST['execute']) || $mode != '') && !isset($_POST['cancel']) && !i
             break;
         case 'menuconfig' :
             $menu_id = (int) Geeklog\Input::fRequest('menuid');
-            COM_errorLog('[Menu debug] calling MENU_menuConfig(); menuid=' . $menu_id . '; menu_exists=' . (isset($Menus[$menu_id]) ? 'yes' : 'no'));
             $content = MENU_menuConfig($menu_id);
-            COM_errorLog('[Menu debug] MENU_menuConfig() returned; menuid=' . $menu_id . '; content_type=' . gettype($content) . '; content_length=' . (is_string($content) ? strlen($content) : -1));
             $currentSelect = $LANG_MENU01['menu_colors'];
             break;
         case 'newmenu' :
@@ -219,8 +198,5 @@ $display .= '<div id="menu">' . LB;
 $display .= $content;
 $display .= '</div>';
 
-if ($mode === 'menuconfig') {
-    COM_errorLog('[Menu debug] rendering Geeklog HTML document; display_length=' . strlen($display));
-}
 
 COM_output( COM_createHTMLDocument($display) );

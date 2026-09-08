@@ -1,10 +1,5 @@
 
-<script type="text/javascript">
-    document.getElementById('menu').style.display=''
-</script>
-
-
-    <table style="width:100%;" class="tbl_repeat">
+<table style="width:100%;" class="tbl_repeat">
       <tr>
           <th style="width:60%;">Menu Name</th>
           <th class="aligncenter" style="width:10%;text-align:center;">{$LANG_MENU01[clone]}</th>
