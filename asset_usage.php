@@ -119,13 +119,20 @@ function MENU_getUsedMenuIds()
 /**
  * Return whether header resource generation should consider this menu.
  *
- * On Geeklog's modern document renderer the registry is authoritative, even
- * when empty. Menu references that live in template source or assigned template
- * values are preflighted before plugin_getheadercode_menu() runs. This prevents
- * unrelated active menus from leaking CSS/JS into the page.
+ * When modern Geeklog exposes one or more menu usages before the head is built,
+ * the request registry is authoritative and only those menus qualify.
  *
- * Geeklog 2.1.1 keeps the historical fallback because COM_siteHeader() can
- * finalize the head before arbitrary page content or autotags are rendered.
+ * Some themes and late render surfaces call MENU_getMenu() from index.thtml or
+ * expand a Menu autotag only after {plg_headercode}. An empty registry therefore
+ * cannot safely mean "no menu". In that narrow case keep only Menu's historical
+ * canonical resources (navigation/footer) eligible. This preserves legacy theme
+ * compatibility without reverting to the old "all active menus" fallback.
+ * Theme presentation ownership is still applied later by
+ * MENU_menuNeedsLegacyCss()/MENU_menuNeedsLegacyJs(), so a theme that owns the
+ * navigation presentation will not receive Menu's legacy navigation assets.
+ *
+ * Geeklog 2.1.1 retains the historical conservative fallback because its header
+ * can be finalized before arbitrary page content or autotags are rendered.
  *
  * @param int|string $menuID
  * @return bool
@@ -141,9 +148,17 @@ function MENU_isAssetUsageRegistered($menuID)
         return true;
     }
 
-    return isset($GLOBALS['MENU_ASSET_USAGE'])
+    if (isset($GLOBALS['MENU_ASSET_USAGE'])
         && is_array($GLOBALS['MENU_ASSET_USAGE'])
-        && isset($GLOBALS['MENU_ASSET_USAGE'][$menuID]);
+        && count($GLOBALS['MENU_ASSET_USAGE']) > 0) {
+        return isset($GLOBALS['MENU_ASSET_USAGE'][$menuID]);
+    }
+
+    $navigationID = MENU_resolveMenuId('navigation');
+    $footerID = MENU_resolveMenuId('footer');
+
+    return ($navigationID > 0 && $menuID === $navigationID)
+        || ($footerID > 0 && $menuID === $footerID);
 }
 
 /**
