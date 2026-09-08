@@ -1,17 +1,17 @@
 # Menu Plugin for Geeklog
 
-![Menu Plugin 1.3.0](docs/menu-plugin-1.3.0.webp)
+![Menu Plugin](docs/menu-plugin-1.3.0.webp)
 
 Menu is a navigation management plugin for the [Geeklog CMS](https://www.geeklog.net/).
 
-It allows administrators to build and manage reusable navigation structures for headers, footers, blocks and content areas, while keeping compatibility with existing Geeklog themes and providing a cleaner integration path for modern themes.
+It lets administrators build reusable hierarchical navigation for headers, footers, blocks and content areas while preserving compatibility with existing Geeklog sites and exposing cleaner structural APIs for modern themes.
 
-> **Official project:** https://github.com/Geeklog-Plugins/menu  
-> Documentation, releases, issues and future project information will be maintained there.
+> Development repository: https://github.com/hostellerie/menu  
+> Current development branch: `modernize-1.4.0`
 
-## Menu 1.3.0
+## Menu 1.4.0 development line
 
-Menu 1.3.0 is a compatibility and modernization release focused on preserving existing installations while making the plugin safer and easier to integrate with current Geeklog sites.
+Menu 1.4.0 builds on the compatibility and modernization work completed for 1.3.0. The current branch focuses on safer administration, clearer separation of responsibilities, stronger localization, improved theme integration and a more reliable development/release workflow.
 
 ### Compatibility target
 
@@ -19,105 +19,136 @@ Menu 1.3.0 is a compatibility and modernization release focused on preserving ex
 - PHP **5.6 through 8.1**
 - MySQL / MariaDB
 - single-site and multisite installations
-- upgrades from Menu **1.2.5 through 1.2.8.1**
+- upgrades from legacy Menu installations supported by the 1.3.0 migration path
 
-One shared codebase is used across the supported Geeklog versions.
+The goal remains one shared codebase across the supported Geeklog and PHP range.
 
 ## Main features
 
 - create horizontal, vertical and footer navigation menus;
 - build hierarchical menus and submenus;
-- reorder menu items from the administration interface;
+- reorder menu items from administration;
 - control menu visibility and permissions;
-- use Geeklog destinations such as topics, static pages and plugin-provided links;
+- use Geeklog destinations such as topics, static pages, Geeklog actions and plugin-provided links;
 - add menus to content with the `[menu:]` autotag;
-- customize legacy menu presentation with colors, images and CSS;
-- preview native and theme-provided menu rendering from administration;
-- expose a presentation-neutral resolved menu tree for modern themes;
-- retain legacy rendering for existing sites and themes.
+- customize retained legacy rendering with colors, images and CSS;
+- preview native and theme-provided rendering from administration;
+- expose a presentation-neutral resolved tree for modern themes;
+- retain the legacy rendering path for existing sites and themes;
+- support runtime and filesystem-backed cache helpers;
+- support multisite-safe plugin storage.
 
-## Modern theme integration
+## 1.4.0 modernization already present
 
-Menu 1.3.0 separates menu structure from presentation more clearly.
+### Safer administration
 
-Modern themes can consume the resolved menu tree and provide their own HTML, CSS and JavaScript without duplicating Menu's destination, hierarchy, permission and ordering logic.
+The administration code has been split into smaller responsibilities instead of concentrating view generation, validation and mutations in one legacy file. The current branch includes dedicated modules for:
 
-Legacy themes can continue using the traditional Menu rendering path.
+- menu views;
+- menu mutations;
+- element views;
+- element validation;
+- administration security;
+- image upload handling;
+- configuration validation.
 
-## Global configuration
+Administration actions use Geeklog security and CSRF helpers, validate incoming values and escape stored/user-controlled text before rendering.
 
-Menu 1.3.0 adds global Geeklog configuration switches for:
+The admin wrapper now follows progressive enhancement: menu administration content remains visible even if optional JavaScript fails to load.
 
-- runtime cache;
-- accessibility markup;
-- external-link protection;
-- PHP menu elements;
-- legacy rendering;
-- legacy CSS loading;
-- legacy JavaScript loading;
-- debug logging.
+### Element handling and validation
 
-Conservative defaults preserve the historical Menu behavior after an upgrade.
+Menu element creation/editing has been progressively normalized around explicit element types and dedicated validation. Supported legacy destination families remain available while the code moves away from loosely handled request values.
 
-## Multisite support
+The current branch contains dedicated element-type and editor runtime helpers so type-specific behavior can evolve without duplicating large blocks of administration code.
 
-Menu 1.3.0 improves support for Geeklog installations where several sites share the same plugin code.
+### Theme and resolved-tree integration
 
-Plugin data is stored using site-specific Geeklog paths. Legacy `menu_data/` content is migrated non-destructively when the plugin is upgraded.
+Modern themes can consume Menu's resolved structural data and provide their own HTML, CSS and JavaScript. Menu keeps responsibility for hierarchy, destination resolution, permissions and ordering while themes remain responsible for presentation.
 
-Deploying the new shared code and upgrading each Geeklog site individually is supported by design: sites that have not yet completed the plugin upgrade continue to use conservative runtime defaults and the legacy storage fallback until their own upgrade is performed.
+Legacy rendering remains available for existing themes.
 
-## Upgrading
+This is the preferred direction for integrations such as the Eclipse theme and for future contextual or external consumers.
 
-Always back up the database and site files before upgrading a production installation.
+### Localization
 
-The 1.3.0 upgrade is designed to preserve existing menu structures, permissions, custom CSS and uploaded images.
+English is the canonical language contract for the plugin. Runtime language loading starts with English and overlays the selected translation so missing translated keys fall back safely instead of raising undefined-key warnings.
 
-The database migration is deliberately small and idempotent. It adds the composite `menu_parent_order` index to `menu_elements` when missing and initializes the new configuration entries without overwriting existing values.
+The branch includes a language-contract test that checks code references against the canonical English language file. French localization has also been extended for the modernized administration interface.
 
-Legacy plugin-owned files are copied to the preferred site-specific storage location without deleting or overwriting the originals.
+User-facing interface strings should be defined in language files rather than hardcoded in PHP or templates.
 
-Upgrade validation now covers the supported legacy range from Menu 1.2.5 through 1.2.8.1 on the supported Geeklog generations.
+### Menu configuration and legacy color compatibility
 
-## Installation
+The menu configuration page has been hardened for historical configuration values. A dedicated `color_utils.php` helper provides robust RGB conversion for legacy CSS color values and safely accepts `#RRGGBB`, `RRGGBB`, `#RGB` and `RGB` forms as well as empty, `none` or malformed historical values.
 
-Install Menu through the standard Geeklog plugin administration interface.
+This keeps older stored menu configuration renderable on modern PHP versions without relying on temporary debugging code.
+
+### Caching and runtime structure
+
+The modernization work includes separate runtime/configuration and cache helpers, including runtime and filesystem cache layers. Cache remains disposable and separate from persistent menu data.
+
+### Multisite support
+
+Plugin-owned private data uses site-specific Geeklog paths where appropriate. Migration logic is conservative: legacy data is preserved and migration routines are designed to be repeatable and non-destructive.
+
+Shared-code multisite installations can therefore upgrade individual Geeklog sites without intentionally overwriting another site's plugin-owned data.
+
+## Installation and upgrade testing
+
+Install the plugin through Geeklog's standard plugin upload/administration interface.
 
 After installation, open:
 
 `Admin → Plugins → Menu`
 
-and create or configure the menus required by the site.
+During 1.4.0 development, the generated installable ZIP is also used for real upgrade tests. This is important because release validation must cover the actual archive layout and installer path, not only a checked-out source tree.
 
-For current installation and upgrade instructions, use the official project repository:
+Always back up the database and site files before upgrading a production installation.
 
-https://github.com/Geeklog-Plugins/menu
+## Build and CI
 
-## Development and testing
+The branch contains two permanent GitHub Actions workflows:
 
-The modernization branch is continuously linted and tested with PHP 5.6 and PHP 8.1.
+- **Menu CI** for compatibility/security/test checks;
+- **Build installable archive** for producing `menu-1.4.0.zip`.
 
-The release validation also includes real Geeklog 2.1.1 and 2.2.2 installations, legacy upgrade paths, multisite behavior, administration workflows and frontend rendering.
+The build validates the language contract, creates the Geeklog installable archive, verifies the ZIP and publishes it as a downloadable GitHub Actions artifact. The generated archive is also committed under `dist/` for branch testing.
 
-The development roadmap is available in [`ROADMAP.md`](ROADMAP.md).
+Temporary debugging/patch workflows are not part of the retained development workflow.
+
+## Development principles
+
+- preserve Geeklog 2.1.1 → 2.2.2 compatibility unless the policy is explicitly changed;
+- preserve PHP 5.6 → 8.1 compatibility while that remains the declared target;
+- prefer small compatibility helpers over separate old/new source trees;
+- keep upgrades non-destructive and idempotent;
+- keep menu structure separate from theme presentation;
+- keep user-facing text in language files;
+- validate changes through the generated installable ZIP before release.
+
+## Roadmap
+
+See [`ROADMAP.md`](ROADMAP.md) for completed 1.4.0 foundations, remaining release work and longer-term capabilities such as destination diagnostics, active state, JSON portability, multilingual menu resolution, contextual menus and external APIs.
 
 ## Bugs and feature requests
 
-Please report bugs, compatibility issues and feature requests on the official project tracker:
+Use the repository issue tracker:
 
-https://github.com/Geeklog-Plugins/menu/issues
+https://github.com/hostellerie/menu/issues
 
-When reporting an issue, include the Geeklog version, PHP version, database server/version, Menu version and any relevant Geeklog `error.log` entries.
+When reporting a problem, include the Geeklog version, PHP version, database server/version, Menu version or commit/build used, and relevant Geeklog/PHP error output.
 
 ## Contributing
 
-Contributions, testing reports and documentation improvements are welcome.
+Contributions, test reports and documentation improvements are welcome.
 
-1. Fork the official repository.
-2. Create a dedicated branch for the change.
-3. Keep compatibility with the supported Geeklog/PHP range unless the project roadmap explicitly changes it.
-4. Test the change on the relevant supported environments.
-5. Open a pull request describing the problem and the proposed solution.
+1. Create a dedicated branch for the change.
+2. Keep compatibility with the declared support range unless the roadmap explicitly changes it.
+3. Keep interface text localizable.
+4. Add or update tests when behavior changes.
+5. Test the generated installable archive on the relevant Geeklog versions.
+6. Open a pull request describing the problem, the implementation and validation performed.
 
 ## License
 
