@@ -21,7 +21,8 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: shivammathur/setup-php@v2
+      - name: Set up PHP 8.1
+        uses: shivammathur/setup-php@v2
         with:
           php-version: '8.1'
           coverage: none
@@ -58,8 +59,20 @@ jobs:
 
           rm -rf build
 
+          test -s dist/menu-1.4.0.zip
           echo "Archive created: dist/menu-1.4.0.zip"
+          echo "Archive size: $(stat -c%s dist/menu-1.4.0.zip) bytes"
+          unzip -t dist/menu-1.4.0.zip
           unzip -l dist/menu-1.4.0.zip | head -n 40
+
+      - name: Upload installable archive artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: menu-1.4.0
+          path: dist/menu-1.4.0.zip
+          if-no-files-found: error
+          retention-days: 30
+          compression-level: 0
 
       - name: Commit archive to dist
         shell: bash
