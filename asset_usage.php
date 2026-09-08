@@ -13,11 +13,11 @@ if (!defined('VERSION')) {
 }
 
 /**
- * Return true when Geeklog renders page content before final header resources.
+ * Return true when Geeklog provides the modern document renderer.
  *
- * Geeklog 2.2.x exposes COM_createHTMLDocument(). The older COM_siteHeader()
- * lifecycle finalizes CSS before arbitrary content/autotags can render, so exact
- * demand loading cannot safely be enabled there without breaking late menu use.
+ * This capability alone does not guarantee that every block/autotag has already
+ * rendered before plugin_getheadercode_menu(). Some render surfaces can still
+ * discover Menu usage later in the request.
  *
  * @return bool
  */
@@ -127,9 +127,14 @@ function MENU_getUsedMenuIds()
 /**
  * Return whether header resource generation should consider this menu.
  *
- * On the modern document renderer, only registered menus qualify. On Geeklog
- * 2.1.1, retain the historical active-menu fallback because arbitrary content
- * can call MENU_getMenu() only after COM_siteHeader() has finalized the head.
+ * When at least one menu has already been registered, the registry is
+ * authoritative and only those menu ids qualify. When the registry is still
+ * empty, usage may simply not have been discovered yet (for example an autotag
+ * or block rendered after the header hook), so the historical active-menu
+ * fallback is preserved to avoid rendering a menu without its legacy CSS/JS.
+ *
+ * This means exact demand loading is applied whenever Geeklog exposes usage in
+ * time, while late-rendered surfaces remain backward compatible.
  *
  * @param int|string $menuID
  * @return bool
@@ -137,14 +142,21 @@ function MENU_getUsedMenuIds()
 function MENU_isAssetUsageRegistered($menuID)
 {
     $menuID = (int) $menuID;
-
-    if (!MENU_supportsDemandAssetLoading()) {
-        return $menuID > 0;
+    if ($menuID <= 0) {
+        return false;
     }
 
-    return isset($GLOBALS['MENU_ASSET_USAGE'])
-        && is_array($GLOBALS['MENU_ASSET_USAGE'])
-        && isset($GLOBALS['MENU_ASSET_USAGE'][$menuID]);
+    if (!MENU_supportsDemandAssetLoading()) {
+        return true;
+    }
+
+    if (!isset($GLOBALS['MENU_ASSET_USAGE'])
+        || !is_array($GLOBALS['MENU_ASSET_USAGE'])
+        || count($GLOBALS['MENU_ASSET_USAGE']) === 0) {
+        return true;
+    }
+
+    return isset($GLOBALS['MENU_ASSET_USAGE'][$menuID]);
 }
 
 /**
