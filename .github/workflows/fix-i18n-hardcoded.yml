@@ -23,6 +23,7 @@ jobs:
         run: |
           python3 - <<'PY'
           from pathlib import Path
+          import re
 
           views_path = Path('admin_element_views.php')
           lang_path = Path('language/english.php')
@@ -54,16 +55,17 @@ jobs:
                   raise SystemExit('Expected hardcoded fragment not found: ' + old)
               views = views.replace(old, new)
 
-          anchor = "    'topic'             => 'Topics',\n"
-          additions = (
-              "    'go'                => 'Go',\n"
-              "    'back_to'           => 'Back to',\n"
-              "    'for'               => 'for',\n"
-          )
-          if "'go'                => 'Go'" not in lang:
-              if anchor not in lang:
+          if "'go'" not in lang or "'back_to'" not in lang or "'for'" not in lang:
+              topic_pattern = re.compile(r"^(\s*'topic'\s*=>\s*'Topics',\s*)$", re.MULTILINE)
+              match = topic_pattern.search(lang)
+              if not match:
                   raise SystemExit('Language insertion anchor not found')
-              lang = lang.replace(anchor, anchor + additions)
+              additions = (
+                  "    'go'                => 'Go',\n"
+                  "    'back_to'           => 'Back to',\n"
+                  "    'for'               => 'for',\n"
+              )
+              lang = lang[:match.end()] + "\n" + additions + lang[match.end():]
 
           forbidden = [
               '<strong>Menu</strong>',
