@@ -13,6 +13,20 @@ if (!defined('VERSION')) {
 }
 
 /**
+ * Return true when Geeklog renders page content before final header resources.
+ *
+ * Geeklog 2.2.x exposes COM_createHTMLDocument(). The older COM_siteHeader()
+ * lifecycle finalizes CSS before arbitrary content/autotags can render, so exact
+ * demand loading cannot safely be enabled there without breaking late menu use.
+ *
+ * @return bool
+ */
+function MENU_supportsDemandAssetLoading()
+{
+    return function_exists('COM_createHTMLDocument');
+}
+
+/**
  * Resolve a runtime menu name exactly as MENU_getMenu() does, including the
  * active language variant when one exists.
  *
@@ -111,7 +125,11 @@ function MENU_getUsedMenuIds()
 }
 
 /**
- * Return true when a menu has been registered during this request.
+ * Return whether header resource generation should consider this menu.
+ *
+ * On the modern document renderer, only registered menus qualify. On Geeklog
+ * 2.1.1, retain the historical active-menu fallback because arbitrary content
+ * can call MENU_getMenu() only after COM_siteHeader() has finalized the head.
  *
  * @param int|string $menuID
  * @return bool
@@ -119,6 +137,10 @@ function MENU_getUsedMenuIds()
 function MENU_isAssetUsageRegistered($menuID)
 {
     $menuID = (int) $menuID;
+
+    if (!MENU_supportsDemandAssetLoading()) {
+        return $menuID > 0;
+    }
 
     return isset($GLOBALS['MENU_ASSET_USAGE'])
         && is_array($GLOBALS['MENU_ASSET_USAGE'])
@@ -215,7 +237,7 @@ function MENU_templateUsesVariable($templateName, &$template, $variable)
     $variable = (string) $variable;
     $fileNames = array();
 
-    if (function_exists('COM_createHTMLDocument')) {
+    if (MENU_supportsDemandAssetLoading()) {
         if ($templateName === 'header' || $templateName === 'footer') {
             $fileNames[] = 'index.thtml';
         }
