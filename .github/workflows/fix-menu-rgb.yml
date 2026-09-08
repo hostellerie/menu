@@ -1,0 +1,105 @@
+name: Fix menu RGB compatibility
+
+on:
+  push:
+    branches:
+      - modernize-1.4.0
+    paths:
+      - '.github/workflows/fix-menu-rgb.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Patch RGB conversion
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('admin_element_views.php')
+          s = p.read_text()
+
+          marker = "/*\n * Displays a list of all menu elements for the given menu\n */"
+          helper = r'''/**
+ * Convert a CSS hex color channel to an integer without relying on legacy
+ * helpers that may reject historical or malformed values. Compatible with
+ * PHP 5.6+ and Geeklog 2.1.1 through 2.2.2.
+ *
+ * @param mixed  $color   #RGB, #RRGGBB, RGB/RRGGBB, empty or legacy value
+ * @param string $channel r, g or b
+ * @return int
+ */
+function MENU_safeHexRgb($color, $channel)
+{
+    $color = trim((string) $color);
+    if ($color === '' || strcasecmp($color, 'none') === 0) {
+        return 0;
+    }
+
+    if ($color[0] === '#') {
+        $color = substr($color, 1);
+    }
+
+    if (strlen($color) === 3 && ctype_xdigit($color)) {
+        $color = $color[0] . $color[0]
+               . $color[1] . $color[1]
+               . $color[2] . $color[2];
+    }
+
+    if (strlen($color) !== 6 || !ctype_xdigit($color)) {
+        return 0;
+    }
+
+    switch (strtolower((string) $channel)) {
+        case 'r':
+            $offset = 0;
+            break;
+        case 'g':
+            $offset = 2;
+            break;
+        case 'b':
+            $offset = 4;
+            break;
+        default:
+            return 0;
+    }
+
+    return hexdec(substr($color, $offset, 2));
+}
+
+'''
+          if 'function MENU_safeHexRgb' not in s:
+              if marker not in s:
+                  raise SystemExit('Insertion marker not found')
+              s = s.replace(marker, helper + marker, 1)
+
+          s = s.replace('MENU_hexrgb(', 'MENU_safeHexRgb(')
+          p.write_text(s)
+          PY
+
+          php -l admin_element_views.php
+          grep -n "MENU_safeHexRgb" admin_element_views.php | head -n 20
+
+      - name: Commit patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add admin_element_views.php
+          if git diff --cached --quiet; then
+            echo "RGB compatibility patch already applied."
+            exit 0
+          fi
+          git commit -m "fix: harden menu color RGB conversion"
+          git pull --rebase origin modernize-1.4.0
+          git push origin HEAD:modernize-1.4.0
