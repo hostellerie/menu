@@ -16,7 +16,8 @@ border-right:1px solid {submenu_highlight_color};
 display:inline;
 padding:0 1.1em 0 .8em;
 }
-.st-fmenu{menu_id} ul li.st-f-last{menu_id} {
+.st-fmenu{menu_id} ul li.st-f-last{menu_id},
+.st-fmenu{menu_id} ul li:last-child {
 border-right:0;
 }
 .st-fmenu{menu_id} a:link,
