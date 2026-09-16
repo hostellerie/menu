@@ -1,0 +1,9 @@
+{
+  "schema": 1,
+  "id": "menu",
+  "name": "Menu",
+  "icon": "admin/images/menu.png",
+  "requires": {
+    "php": "5.6.0"
+  }
+}
