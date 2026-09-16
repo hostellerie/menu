@@ -74,11 +74,14 @@ $Menus = array(
 menu_asset_test_assert(MENU_supportsDemandAssetLoading(), 'modern renderer capability was not detected');
 menu_asset_test_assert(MENU_resolveMenuId('footer') === 2, 'footer menu resolution failed');
 
-// Empty modern registry is authoritative: no menu assets until usage is known.
+// Empty modern registry keeps only canonical late-render resources eligible.
+// This supports navigation/footer menus rendered after {plg_headercode}
+// without reverting to the legacy all-active-menus behavior.
 MENU_resetAssetUsage();
-menu_asset_test_assert(!MENU_menuNeedsLegacyCss(1), 'empty modern registry must not leak navigation CSS');
-menu_asset_test_assert(!MENU_menuNeedsLegacyCss(2), 'empty modern registry must not leak footer CSS');
+menu_asset_test_assert(MENU_menuNeedsLegacyCss(1), 'empty modern registry must keep navigation CSS eligible');
+menu_asset_test_assert(MENU_menuNeedsLegacyCss(2), 'empty modern registry must keep footer CSS eligible');
 menu_asset_test_assert(!MENU_menuNeedsLegacyCss(3), 'empty modern registry must not leak vertical CSS');
+menu_asset_test_assert(!MENU_menuNeedsLegacyCss(4), 'empty modern registry must not leak secondary CSS');
 
 // Footer only.
 MENU_resetAssetUsage();
