@@ -2,7 +2,7 @@
 
 /* Reminder: always indent with 4 spaces (no tabs). */
 // +---------------------------------------------------------------------------+
-// | Menu Plugin 1.3.0                                                         |
+// | Menu Plugin 1.4.0                                                         |
 // +---------------------------------------------------------------------------+
 // | autoinstall.php                                                           |
 // |                                                                           |
@@ -66,12 +66,13 @@ function plugin_load_configuration_menu($pi_name)
 }
 
 /**
- * Check compatibility and run pre-version configuration migration when an
- * existing installation is moving to 1.3.0.
+ * Check compatibility and run historical pre-version configuration migrations
+ * required by installations older than 1.3.0.
  *
  * The complete upgrade sequence remains owned by plugin_upgrade_menu() in
  * functions.inc. Configuration and database mutations live in
- * install_updates.php.
+ * install_updates.php. Historical migration function names intentionally keep
+ * their original version suffixes.
  *
  * @param string $pi_name
  * @return bool
