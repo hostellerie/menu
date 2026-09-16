@@ -54,6 +54,8 @@ The following work is already present on `modernize-1.4.0` and is now part of th
 - [x] Keep hierarchy, destination resolution, permissions and ordering in Menu rather than duplicating them in themes.
 - [x] Support native/theme preview integration from administration.
 - [x] Maintain the architectural hand-off required by modern themes such as Eclipse.
+- [x] Keep plugin-owned legacy presentation authoritative when a theme merely embeds a Menu autotag instead of declaring ownership of that menu's presentation.
+- [x] Preserve configured link and hover colors for horizontal simple menus even inside theme footers whose selectors are more specific.
 
 ### Demand-loaded frontend resources
 
@@ -68,9 +70,11 @@ The following work is already present on `modernize-1.4.0` and is now part of th
 - [x] Respect theme template-root precedence when checking inherited templates.
 - [x] Prepare `menu_footer` early enough on the modern `index.thtml` lifecycle for its resources to reach the head.
 - [x] Preserve Geeklog 2.1.1 late-render compatibility with a conservative active-menu resource fallback because `COM_siteHeader()` finalizes CSS before arbitrary page-content autotags/direct render calls execute.
+- [x] On the modern renderer, preserve canonical `navigation`/`footer` fallback when the request registry is still empty so late template/autotag rendering is not left unstyled.
 - [x] Use capability detection (`COM_createHTMLDocument()`) rather than separate Geeklog-version source trees.
 - [x] Add PHP 5.6/8.1-compatible tests for footer only, navigation only, footer + navigation, unused vertical menus, several active menus with one used, theme-owned presentation and legacy configuration switches.
 - [x] Add explicit Geeklog 2.1.1 lifecycle-fallback and Geeklog 2.2.2 template-detection coverage.
+- [x] Align the asset-usage test contract with the canonical late-render fallback instead of incorrectly treating an empty modern registry as "no assets at all".
 - [ ] Continue watching upstream Geeklog caching/autotag behavior: cached content can bypass render-time autotag execution, so any future asset contract should remain aligned with Geeklog core rather than adding final-HTML scanning or inline-style workarounds.
 
 The strict per-request optimization is therefore available where Geeklog itself exposes a deferred document/header lifecycle. Geeklog 2.1.1 intentionally keeps the historical safe fallback for arbitrary late menu calls; exact demand loading for those calls is not possible without violating the compatibility constraints (late CSS injection, final HTML scanning, or preloading all possible page content).
@@ -82,6 +86,7 @@ The strict per-request optimization is therefore available where Geeklog itself 
 - [x] Keep cache disposable and separate from persistent menu data.
 - [x] Use multisite-safe/site-specific plugin storage where appropriate.
 - [x] Keep migration behavior conservative and non-destructive.
+- [x] Version generated per-menu CSS cache entries with a presentation-template fingerprint so template changes invalidate stale generated CSS automatically.
 
 ### Localization
 
@@ -109,7 +114,9 @@ The strict per-request optimization is therefore available where Geeklog itself 
 - [x] Validate the generated ZIP.
 - [x] Publish the installable ZIP as a GitHub Actions artifact.
 - [x] Keep a branch `dist/menu-1.4.0.zip` for installation testing.
-- [x] Validate changes through real Geeklog plugin upload/install/upgrade testing.
+- [x] Regenerate the development archive automatically when release-source files change.
+- [x] Keep plugin metadata synchronized with the 1.4.0 release line.
+- [ ] Validate changes through final real Geeklog plugin upload/install/upgrade testing on both declared Geeklog generations.
 - [ ] Add build metadata (commit SHA/date) to the development archive so successive `menu-1.4.0.zip` builds are easier to identify.
 
 ---
@@ -149,9 +156,11 @@ These items should take precedence over large new features before a stable 1.4.0
 - [ ] Verify all newly added source files are included and installed in the expected private/public locations.
 - [ ] Add build identification metadata to prevent confusion between same-named development ZIPs.
 
-### 5. CI cleanup
+### 5. CI and release checks
 
-- [ ] Resolve the remaining failing CI contract test(s), including the stored-label normalization regression currently reported by the test suite.
+- [x] Resolve the stale asset-usage CI contract that rejected the intentional canonical late-render fallback.
+- [x] Keep the PHP 5.6 / PHP 8.1 matrix and installable archive build as permanent release gates.
+- [ ] Confirm the latest branch-head CI run is green before opening/merging the release PR.
 - [ ] Keep CI failures meaningful: temporary debugging workflows must not become permanent release infrastructure.
 
 ---
