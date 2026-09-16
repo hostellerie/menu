@@ -23,6 +23,26 @@ require_once __DIR__ . '/resolved_tree.php';
 require_once __DIR__ . '/color_utils.php';
 
 /**
+ * Return whether the current visitor can access Geeklog's core statistics page.
+ *
+ * Geeklog core stats.php does not require a stats.view feature. Anonymous
+ * access is controlled by the global login requirement and statsloginrequired.
+ * Registered users can access the page when the site itself is available.
+ *
+ * @return bool
+ */
+function MENU_coreStatsActionAllowed()
+{
+    global $_CONF;
+
+    if (!COM_isAnonUser()) {
+        return true;
+    }
+
+    return empty($_CONF['loginrequired']) && empty($_CONF['statsloginrequired']);
+}
+
+/**
  * Load the complete Menu runtime structure using a fixed number of queries.
  *
  * @param bool  $mbadmin Whether the current user has menu.admin
@@ -32,7 +52,7 @@ require_once __DIR__ . '/color_utils.php';
  */
 function MENU_loadRuntimeMenus($mbadmin, $root, $groups)
 {
-    global $_TABLES;
+    global $_CONF, $_TABLES;
 
     $menus = array();
     $groups = is_array($groups) ? $groups : array();
@@ -104,6 +124,18 @@ function MENU_loadRuntimeMenus($mbadmin, $root, $groups)
         $menuId = (int) $row['menu_id'];
         if (!isset($menus[$menuId])) {
             continue;
+        }
+
+        // Geeklog core action subtype 5 is the Site Statistics page. The
+        // historical renderer checks a non-core stats.view feature and can hide
+        // an otherwise public Stats link. Normalize this action to the resolved
+        // core URL after applying the same access rule as stats.php itself.
+        if ((int) $row['element_type'] === 2 && (int) $row['element_subtype'] === 5) {
+            if (!MENU_coreStatsActionAllowed()) {
+                continue;
+            }
+            $row['element_type'] = 6;
+            $row['element_url'] = $_CONF['site_url'] . '/stats.php';
         }
 
         $element = new mbElement();
