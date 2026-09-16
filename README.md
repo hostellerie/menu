@@ -11,7 +11,7 @@ It lets administrators build reusable hierarchical navigation for headers, foote
 
 ## Menu 1.4.0 development line
 
-Menu 1.4.0 builds on the compatibility and modernization work completed for 1.3.0. The current branch focuses on safer administration, clearer separation of responsibilities, stronger localization, improved theme integration and a more reliable development/release workflow.
+Menu 1.4.0 builds on the compatibility and modernization work completed for 1.3.0. The current branch focuses on safer administration, clearer separation of responsibilities, stronger localization, improved theme integration, more predictable frontend asset loading and a more reliable development/release workflow.
 
 ### Compatibility target
 
@@ -64,22 +64,24 @@ The current branch contains dedicated element-type and editor runtime helpers so
 
 ### Theme and resolved-tree integration
 
-Modern themes can consume Menu's resolved structural data and provide their own HTML, CSS and JavaScript. Menu keeps responsibility for hierarchy, destination resolution, permissions and ordering while themes remain responsible for presentation.
+Modern themes can consume Menu's resolved structural data and provide their own HTML, CSS and JavaScript. Menu keeps responsibility for hierarchy, destination resolution, permissions and ordering while themes remain responsible for presentation when they explicitly declare ownership of that menu's presentation.
 
-Legacy rendering remains available for existing themes.
+Legacy rendering remains available for existing themes and for Menu autotags embedded inside theme areas such as headers, footers or content. In those cases the plugin keeps ownership of its generated presentation, including configured text and hover colors.
+
+This distinction matters for integrations such as Eclipse: embedding `[menu:footer]` inside a theme footer does not by itself transfer presentation ownership to the theme. The colors selected in Menu remain authoritative for that menu.
 
 This is the preferred direction for integrations such as the Eclipse theme and for future contextual or external consumers.
 
 ### Demand-loaded frontend assets
 
-Menu now keeps a request-scoped registry of menus that reach `MENU_getMenu()`. On Geeklog's modern document renderer, legacy CSS and SlickNav resources are considered only for menus registered during the current request.
+Menu now keeps a request-scoped registry of menus that reach `MENU_getMenu()`. On Geeklog's modern document renderer, legacy CSS and SlickNav resources are considered only for menus registered during the current request, with a compatibility fallback for canonical navigation/footer resources when the registry is still empty during early header generation.
 
 Examples on Geeklog 2.2.2:
 
 - `[menu:footer]` loads the footer menu CSS only;
 - `[menu:footer]` does not load SlickNav because a simple footer menu does not need it;
-- `[menu:footer] [menu:secondary]` loads resources for those two menus only;
-- an active vertical or horizontal menu that is not rendered contributes no Menu CSS or JavaScript;
+- `[menu:footer] [menu:secondary]` loads resources for those two menus only once usage is known;
+- an active vertical or horizontal menu that is not rendered contributes no Menu CSS or JavaScript once the request registry is populated;
 - `load_legacy_css = false`, `load_legacy_js = false`, `legacy_rendering = false` and theme-owned presentation remain authoritative.
 
 `plugin_templatesetvars_menu()` no longer renders both historical theme menus unconditionally. It checks the active theme source for `header_navigation` and `menu_footer`. Geeklog 2.2.2 uses the single `index.thtml` document renderer, so a referenced footer menu is prepared during the header phase, before resources are finalized.
@@ -87,6 +89,12 @@ Examples on Geeklog 2.2.2:
 Geeklog 2.1.1 has a different lifecycle: `COM_siteHeader()` finalizes the head before arbitrary page content and its autotags can call `MENU_getMenu()`. Because late CSS cannot be safely added to the already finalized head, Menu deliberately retains the historical active-menu resource fallback on 2.1.1. This preserves `[menu:...]`, direct `MENU_getMenu()` calls and legacy themes rather than introducing missing styles. The code detects the modern capability through `COM_createHTMLDocument()` instead of maintaining separate source trees.
 
 The 2.1.1 template path still avoids unnecessary work where it is safe: `header.thtml` and `footer.thtml` are checked before historical template variables are populated, and `menu_footer` can be pre-registered before header finalization when the legacy footer template actually references it.
+
+### Menu colors inside theme footers
+
+Horizontal simple menus now keep their configured normal/visited/active and hover/focus colors even when rendered inside a footer whose theme CSS uses more specific selectors such as `#footer a:link`.
+
+The plugin does not replace Menu's configured colors with theme colors. Instead, the generated Menu CSS keeps the values selected in the Menu administration interface authoritative for that menu.
 
 ### Localization
 
@@ -106,7 +114,11 @@ This keeps older stored menu configuration renderable on modern PHP versions wit
 
 The modernization work includes separate runtime/configuration and cache helpers, including runtime and filesystem cache layers. Cache remains disposable and separate from persistent menu data.
 
-Per-menu/theme legacy CSS cache instances continue to use the existing `menu_css_<menu_id>__<theme>` convention. Demand loading changes the decision about which menu resource is considered; it does not require a new CSS cache format.
+Generated per-menu CSS cache keys are versioned by menu id, active theme and a presentation-template fingerprint. Conceptually the key is now:
+
+`menu_css_<menu_id>__<theme>__<presentation-fingerprint>`
+
+The fingerprint is derived from Menu's presentation templates. When one of those templates changes, the cache key changes automatically and stale generated CSS is not reused. This is independent of the regular Geeklog cache-clear operation and prevents an updated plugin template from continuing to serve an older generated CSS payload.
 
 ### Multisite support
 
@@ -133,11 +145,15 @@ The branch contains two permanent GitHub Actions workflows:
 - **Menu CI** for compatibility/security/test checks;
 - **Build installable archive** for producing `menu-1.4.0.zip`.
 
-The CI matrix runs the PHP-compatible test suite on PHP 5.6 and PHP 8.1. Demand-loading tests cover modern request registration, footer/navigation combinations, unused menus, theme-owned presentation, legacy configuration switches, Geeklog 2.1.1 lifecycle fallback and Geeklog 2.2.2 template detection.
+The CI matrix runs the PHP-compatible test suite on PHP 5.6 and PHP 8.1. Demand-loading tests cover modern request registration, canonical late-render fallback, footer/navigation combinations, unused menus, theme-owned presentation, legacy configuration switches, Geeklog 2.1.1 lifecycle fallback and Geeklog 2.2.2 template detection.
 
-The build validates the language contract, creates the Geeklog installable archive, verifies the ZIP and publishes it as a downloadable GitHub Actions artifact. The generated archive is also committed under `dist/` for branch testing.
+The build validates the language contract, creates the Geeklog installable archive, verifies the ZIP and publishes it as a downloadable GitHub Actions artifact. The generated archive is also committed under `dist/` for branch testing and is regenerated automatically when release-source files change.
 
 Temporary debugging/patch workflows are not part of the retained development workflow.
+
+## Release notes
+
+See [`RELEASE_NOTES_1.4.0.md`](RELEASE_NOTES_1.4.0.md) for the 1.4.0 changes and upgrade notes.
 
 ## Development principles
 
