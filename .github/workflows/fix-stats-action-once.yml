@@ -21,8 +21,8 @@ jobs:
           fetch-depth: 0
 
       - name: Align Stats menu visibility with Geeklog core
-        shell: python
         run: |
+          python - <<'PY'
           from pathlib import Path
 
           path = Path('classes/classMenuElement.php')
@@ -51,34 +51,34 @@ jobs:
               raise SystemExit('Expected Stats action block was not found')
           path.write_text(text.replace(old, new, 1))
 
-          test = Path('tests/stats_action_contract.php')
-          test.write_text("""<?php
+          Path('tests/stats_action_contract.php').write_text("""<?php
 
 // Stats action visibility contract. Compatible with PHP 5.6+.
 
 $source = file_get_contents(dirname(__DIR__) . '/classes/classMenuElement.php');
 if ($source === false) {
-    fwrite(STDERR, "FAIL: unable to read classMenuElement.php\n");
+    fwrite(STDERR, "FAIL: unable to read classMenuElement.php\\n");
     exit(1);
 }
 
 if (strpos($source, "SEC_hasRights('stats.view')") !== false) {
-    fwrite(STDERR, "FAIL: Stats action must not require stats.view\n");
+    fwrite(STDERR, "FAIL: Stats action must not require stats.view\\n");
     exit(1);
 }
 
-if (strpos($source, "$_CONF['statsloginrequired']") === false) {
-    fwrite(STDERR, "FAIL: Stats action must honor statsloginrequired\n");
+if (strpos($source, 'statsloginrequired') === false) {
+    fwrite(STDERR, "FAIL: Stats action must honor statsloginrequired\\n");
     exit(1);
 }
 
 if (strpos($source, 'COM_isAnonUser()') === false) {
-    fwrite(STDERR, "FAIL: Stats action must apply login restrictions to anonymous users\n");
+    fwrite(STDERR, "FAIL: Stats action must apply login restrictions to anonymous users\\n");
     exit(1);
 }
 
-echo "Stats action visibility contract passed\n";
+echo "Stats action visibility contract passed\\n";
 """)
+          PY
 
       - name: Commit patch
         run: |
