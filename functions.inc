@@ -330,7 +330,8 @@ function plugin_getheadercode_menu() {
                     continue;
                 }
 
-                $cacheInstance = 'menu_css_' . $menu['menu_id'] . '__' . $_CONF['theme'];
+                $cacheInstance = 'menu_css_' . $menu['menu_id'] . '__' . $_CONF['theme']
+                    . '__' . MENU_presentationCacheFingerprint();
                 $retval = MENU_CACHE_check_instance($cacheInstance, 0);
 
                 $custom_css = MENU_dataDir() . 'css' . DIRECTORY_SEPARATOR
