@@ -13,6 +13,48 @@ if (!defined('VERSION')) {
 }
 
 /**
+ * Return a stable fingerprint for the CSS presentation templates shipped by
+ * the plugin. The fingerprint becomes part of the generated CSS cache key so
+ * updating a template cannot leave an older cached stylesheet active.
+ *
+ * @return string
+ */
+function MENU_presentationCacheFingerprint()
+{
+    static $fingerprint = null;
+    if ($fingerprint !== null) {
+        return $fingerprint;
+    }
+
+    global $_CONF;
+
+    $templateRoot = isset($_CONF['path'])
+        ? rtrim($_CONF['path'], "/\\") . DIRECTORY_SEPARATOR . 'plugins' . DIRECTORY_SEPARATOR . 'menu' . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR
+        : __DIR__ . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR;
+
+    $templates = array(
+        'gl_horizontal-cascading.thtml',
+        'gl_horizontal-simple.thtml',
+        'gl_vertical-cascading.thtml',
+        'gl_vertical-simple.thtml',
+    );
+
+    $parts = array();
+    foreach ($templates as $template) {
+        $file = $templateRoot . $template;
+        if (is_file($file)) {
+            $hash = @sha1_file($file);
+            $parts[] = is_string($hash) && $hash !== '' ? $hash : $template;
+        } else {
+            $parts[] = $template . ':missing';
+        }
+    }
+
+    $fingerprint = substr(sha1(implode('|', $parts)), 0, 12);
+    return $fingerprint;
+}
+
+/**
  * Return presentation capabilities declared by the active theme.
  *
  * A theme may provide layout/<theme>/plugin-presentation.php returning:
