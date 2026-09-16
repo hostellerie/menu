@@ -17,50 +17,10 @@ if (!defined('VERSION')) {
 // detect MENU_getResolvedTree() without knowing Menu's internal file layout.
 require_once __DIR__ . '/resolved_tree.php';
 
-/**
- * Return one RGB component from a hexadecimal CSS color.
- *
- * The legacy menu color editor still builds JavaScript RGB arrays one
- * component at a time. Keep this helper available for that UI while accepting
- * both #RRGGBB and #RGB notation. Invalid colors/components safely return 0.
- *
- * @param string $hex       CSS hexadecimal color
- * @param string $component Component name: r, g or b
- * @return int              Component value from 0 to 255
- */
-function MENU_hexrgb($hex, $component)
-{
-    $hex = ltrim(trim((string) $hex), '#');
-
-    if (preg_match('/^[0-9a-fA-F]{3}$/', $hex)) {
-        $hex = $hex[0] . $hex[0]
-             . $hex[1] . $hex[1]
-             . $hex[2] . $hex[2];
-    }
-
-    if (!preg_match('/^[0-9a-fA-F]{6}$/', $hex)) {
-        return 0;
-    }
-
-    switch (strtolower((string) $component)) {
-        case 'r':
-            $offset = 0;
-            break;
-
-        case 'g':
-            $offset = 2;
-            break;
-
-        case 'b':
-            $offset = 4;
-            break;
-
-        default:
-            return 0;
-    }
-
-    return hexdec(substr($hex, $offset, 2));
-}
+// Shared color helpers are kept in one dedicated module. Loading them here
+// makes MENU_hexrgb() available to all plugin paths while admin/index.php can
+// safely require the same file again via require_once.
+require_once __DIR__ . '/color_utils.php';
 
 /**
  * Load the complete Menu runtime structure using a fixed number of queries.
