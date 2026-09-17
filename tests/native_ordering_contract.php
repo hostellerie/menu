@@ -7,51 +7,61 @@ $module = file_get_contents($root . '/admin_element_views.php');
 $library = file_get_contents($root . '/admin/js/tablednd_0_6.js');
 $endpoint = file_get_contents($root . '/admin/tree-action.php');
 
-$forbidden = array(
-    'tablednd.js',
-    'tablednd_0_5.js',
-    "addEventListener('dragstart'",
-    "document.addEventListener('mousemove'",
-    'document.elementFromPoint',
-);
-
-foreach ($forbidden as $needle) {
-    if (stripos($script, $needle) !== false
-        || stripos($template, $needle) !== false) {
-        fwrite(STDERR, "Obsolete ordering path remains: {$needle}\n");
-        exit(1);
-    }
-}
-
 $requiredScript = array(
     "typeof $.fn.tableDnD !== 'function'",
     '$table.tableDnD({',
     "dragHandle: 'menu-drag-handle'",
-    "onDrop: function ()",
-    "tree_action: 'order'",
-    "orders: orders",
+    "onDrop: saveOrder",
     "type: 'POST'",
-    'data[tokenName] = tokenValue',
-    'refreshToken(response)',
-    "tree_action: 'activate'",
+    "'X-Requested-With': 'XMLHttpRequest'",
+    'menu_id: menuId',
+    'orders: orders',
+    'pendingOrder = orders',
 );
 foreach ($requiredScript as $needle) {
     if (strpos($script, $needle) === false) {
-        fwrite(STDERR, "TableDnD ordering behavior missing: {$needle}\n");
+        fwrite(STDERR, "Simplified drag ordering behavior missing: {$needle}\n");
+        exit(1);
+    }
+}
+
+$forbiddenScript = array(
+    'tokenValue',
+    'refreshToken',
+    "tree_action: 'activate'",
+    'window.location.reload()',
+);
+foreach ($forbiddenScript as $needle) {
+    if (strpos($script, $needle) !== false) {
+        fwrite(STDERR, "Unwanted drag complexity remains: {$needle}\n");
         exit(1);
     }
 }
 
 $requiredEndpoint = array(
-    "MENU_adminCheckToken()",
-    "MENU_saveElementOrder",
-    "MENU_changeActiveStatusElement",
-    "MENU_adminCreateToken()",
-    "'tokenValue' => $newToken",
+    "SEC_hasRights('menu.admin')",
+    "HTTP_X_REQUESTED_WITH",
+    "xmlhttprequest",
+    "HTTP_ORIGIN",
+    "MENU_adminPostMutationError('', $_POST)",
+    'MENU_saveElementOrder',
+    "'ok' => true",
 );
 foreach ($requiredEndpoint as $needle) {
     if (strpos($endpoint, $needle) === false) {
-        fwrite(STDERR, "Tree action endpoint behavior missing: {$needle}\n");
+        fwrite(STDERR, "Drag endpoint behavior missing: {$needle}\n");
+        exit(1);
+    }
+}
+
+$forbiddenEndpoint = array(
+    'MENU_adminCheckToken()',
+    'MENU_changeActiveStatusElement',
+    'MENU_adminCreateToken()',
+);
+foreach ($forbiddenEndpoint as $needle) {
+    if (strpos($endpoint, $needle) !== false) {
+        fwrite(STDERR, "Drag endpoint still depends on one-shot CSRF flow: {$needle}\n");
         exit(1);
     }
 }
@@ -81,4 +91,4 @@ if (strpos($template, 'id="menu-order-token"') === false
     exit(1);
 }
 
-echo "TableDnD menu ordering contract tests passed\n";
+echo "Simplified TableDnD ordering contract tests passed\n";
