@@ -238,14 +238,15 @@ function plugin_cclabel_menu()
 
 function plugin_getadminoption_menu()
 {
-    global $_CONF, $LANG_MENU_1;
+    global $_CONF, $_TABLES, $LANG_MENU_1;
 
     if (SEC_hasRights('menu.admin')) {
         $label = (isset($LANG_MENU_1) && is_array($LANG_MENU_1)
             && isset($LANG_MENU_1['plugin_name']))
             ? $LANG_MENU_1['plugin_name'] : 'Menu';
+        $totalMenus = (int) DB_getItem($_TABLES['menu'], 'COUNT(*)');
         return array($label,
-            $_CONF['site_admin_url'] . '/plugins/menu/index.php', 0);
+            $_CONF['site_admin_url'] . '/plugins/menu/index.php', $totalMenus);
     }
 }
 
@@ -317,6 +318,72 @@ function plugin_autouninstall_menu()
     return $out;
 }
 
+/**
+ * Publish generated menu CSS to a cacheable public file.
+ *
+ * The filename contains a content fingerprint, so browsers may cache it for a
+ * long time without stale styles after a menu configuration change.
+ *
+ * @param int $menuId
+ * @param string $css
+ * @return string Public stylesheet URL, or an empty string when publishing fails.
+ */
+function MENU_publishCssAsset($menuId, $css)
+{
+    $menuId = (int) $menuId;
+    $css = (string) $css;
+
+    if ($menuId <= 0 || $css === '') {
+        return '';
+    }
+
+    $baseDir = rtrim(MENU_imageDir(), "/\\");
+    $baseUrl = rtrim(MENU_imageUrl(), '/');
+    if ($baseDir === '' || $baseUrl === '') {
+        return '';
+    }
+
+    $cssDir = $baseDir . DIRECTORY_SEPARATOR . 'css' . DIRECTORY_SEPARATOR;
+    if (!MENU_ensureDirectory($cssDir)) {
+        return '';
+    }
+
+    $fingerprint = substr(sha1($css), 0, 12);
+    $filename = 'menu-' . $menuId . '-' . $fingerprint . '.css';
+    $path = $cssDir . $filename;
+
+    if (!is_file($path)) {
+        $written = @file_put_contents($path, $css, LOCK_EX);
+        if ($written === false) {
+            return '';
+        }
+    }
+
+    return $baseUrl . '/css/' . $filename;
+}
+
+/**
+ * Return the HTML used to load generated menu CSS.
+ *
+ * A public fingerprinted stylesheet is preferred. Inline CSS is retained only
+ * as a compatibility fallback for installations where the public image path is
+ * not writable.
+ *
+ * @param int $menuId
+ * @param string $css
+ * @return string
+ */
+function MENU_cssAssetMarkup($menuId, $css)
+{
+    $url = MENU_publishCssAsset($menuId, $css);
+    if ($url !== '') {
+        return '<link rel="stylesheet" type="text/css" href="'
+            . htmlspecialchars($url, ENT_QUOTES, 'UTF-8') . '">' . LB;
+    }
+
+    return '<style type="text/css">' . $css . '</style>' . LB;
+}
+
 function plugin_getheadercode_menu() {
     global $_CONF, $Menus, $_SCRIPTS;
 
@@ -380,7 +447,7 @@ function plugin_getheadercode_menu() {
                 if ($retval) {
                     $css_minify = MENU_compress($retval . $custom_ccs_code);
                     if ($loadLegacyCss) {
-                        $menu_header .= LB . '<style type="text/css">' . $css_minify . '</style>' . LB;
+                        $menu_header .= LB . MENU_cssAssetMarkup($menu['menu_id'], $css_minify);
                     }
                 } else {
                     $ms = new Template($_CONF['path'].'plugins/menu/templates/');
@@ -470,7 +537,7 @@ function plugin_getheadercode_menu() {
                     MENU_CACHE_create_instance($cacheInstance, $fCSS, 0);
                     $css_minify = MENU_compress($fCSS . $custom_ccs_code);
                     if ($loadLegacyCss) {
-                        $menu_header .= LB . '<style type="text/css">' . $css_minify . '</style>' . LB;
+                        $menu_header .= LB . MENU_cssAssetMarkup($menu['menu_id'], $css_minify);
                     }
                 }
 
