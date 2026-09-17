@@ -48,10 +48,13 @@
 #menu_table .menu-info-tooltip:focus .menu-info-tooltip-text {
     display: block;
 }
+#menu_table.menu-tree-saving {
+    opacity: .92;
+}
 </style>
 
 <div>
-  <table style="width:100%;" class="tbl_repeat" id="menu_table" name="menu_table" data-menuid="{menuid}" data-post-url="{site_admin_url}/plugins/menu/index.php">
+  <table style="width:100%;" class="tbl_repeat" id="menu_table" name="menu_table" data-menuid="{menuid}" data-post-url="{site_admin_url}/plugins/menu/index.php" data-tree-action-url="{site_admin_url}/plugins/menu/tree-action.php">
     <tr>
       <th>{$LANG_MENU01[menu_element]}</th>
       <th class="aligncenter" style="text-align:center;">{LANG_MENU01[enabled]}</th>
@@ -66,7 +69,7 @@
   </table>
 </div>
 
-<script type="text/javascript" src="{site_admin_url}/plugins/menu/js/menu-tree-actions-1.4.0.js?v=20260917-1"></script>
+<script type="text/javascript" src="{site_admin_url}/plugins/menu/js/menu-tree-actions-1.4.0.js?v=20260917-2"></script>
 
 <div class="menu-preview" style="margin:25px 0 5px 0;clear:both;">
   <div style="font-weight:bold;margin-bottom:8px;">Preview</div>
