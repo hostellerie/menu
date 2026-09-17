@@ -46,8 +46,8 @@
             return parts.join('&');
         }
 
-        function reloadOnFailure(request) {
-            request.fail(function () {
+        function reloadAfterRequest(request) {
+            request.always(function () {
                 window.location.reload();
             });
             return request;
@@ -95,7 +95,7 @@
                     return;
                 }
 
-                reloadOnFailure($.ajax({
+                reloadAfterRequest($.ajax({
                     type: 'POST',
                     url: postUrl,
                     data: addToken({
@@ -123,7 +123,7 @@
 
             event.preventDefault();
 
-            $.ajax({
+            reloadAfterRequest($.ajax({
                 type: 'POST',
                 url: postUrl,
                 data: addToken({
@@ -132,9 +132,7 @@
                     mid: parseInt($(this).attr('data-mid'), 10) || 0,
                     menu: menuId
                 })
-            }).always(function () {
-                window.location.reload();
-            });
+            }));
         });
     }
 
