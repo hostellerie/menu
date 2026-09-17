@@ -126,11 +126,18 @@ function MENU_loadRuntimeMenus($mbadmin, $root, $groups)
             continue;
         }
 
+        // Older persisted rows and lightweight test fixtures may not expose
+        // every optional column. Normalize missing type information to zero so
+        // runtime loading stays warning-free until an explicit site upgrade has
+        // completed, which is important for shared-files multisite deployments.
+        $elementType = isset($row['element_type']) ? (int) $row['element_type'] : 0;
+        $elementSubtype = isset($row['element_subtype']) ? (int) $row['element_subtype'] : 0;
+
         // Geeklog core action subtype 5 is the Site Statistics page. The
         // historical renderer checks a non-core stats.view feature and can hide
         // an otherwise public Stats link. Normalize this action to the resolved
         // core URL after applying the same access rule as stats.php itself.
-        if ((int) $row['element_type'] === 2 && (int) $row['element_subtype'] === 5) {
+        if ($elementType === 2 && $elementSubtype === 5) {
             if (!MENU_coreStatsActionAllowed()) {
                 continue;
             }
