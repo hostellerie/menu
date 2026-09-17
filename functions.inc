@@ -14,7 +14,7 @@
 // | Authors: Ben - ben AT geeklog DOT fr                                      |
 // |                                                                           |
 // | Based on the original Sitetailor Plugin                                   |
-// | Copyright (C) 2008-2011 by the following authors:                         |
+// | Copyright (C) 2008-2011 by the following authors:                        |
 // |                                                                           |
 // | Mark R. Evans - mark AT glfusion DOT org                                  |
 // +---------------------------------------------------------------------------+
@@ -138,6 +138,42 @@ require_once $_CONF['path'] . 'plugins/menu/runtime_loader.php';
 // | Geeklog Plugin API Implementation                                         |
 // +---------------------------------------------------------------------------+
 
+/**
+ * Resolve a [menu:] autotag argument to a menu ID and canonical menu name.
+ *
+ * Existing name-based behavior has priority. A strictly numeric argument is
+ * treated as an ID only when no menu with that exact name exists.
+ *
+ * @param string $reference
+ * @return array|null Array with id and name, or null when no menu exists.
+ */
+function MENU_resolveAutotagReference($reference)
+{
+    global $_TABLES;
+
+    $reference = trim((string) $reference);
+    if ($reference === '') {
+        return null;
+    }
+
+    $referenceSql = MENU_dbEscape($reference);
+    $id = (int) DB_getItem($_TABLES['menu'], 'id', 'menu_name="' . $referenceSql . '"');
+    if ($id > 0) {
+        return array('id' => $id, 'name' => $reference);
+    }
+
+    if (ctype_digit($reference)) {
+        $id = (int) $reference;
+        if ($id > 0) {
+            $name = DB_getItem($_TABLES['menu'], 'menu_name', 'id=' . $id);
+            if ($name !== '' && $name !== null && $name !== false) {
+                return array('id' => $id, 'name' => (string) $name);
+            }
+        }
+    }
+
+    return null;
+}
 
 /**
 * Implements a [menu:] autotag.
@@ -164,23 +200,22 @@ function plugin_autotags_menu($op,$content='',$autotag='') {
         switch( $autotag['tag'] ) {
             case 'menu' :
                 $menu = '';
-                $menuID = trim($autotag['parm1']);
-                $menuIDSql = MENU_dbEscape($menuID);
-                $id = DB_getItem($_TABLES['menu'], 'id', 'menu_name="' . $menuIDSql . '"');
-                if ( $id > 0 ) {
-                    if ( $Menus[$id]['menu_type'] == 1 ) {
-                        $menu = MENU_getMenu($menuID,"gl_menu","gl_menu",'',"parent");
-                    } else if ( $Menus[$id]['menu_type'] == 2 ) {
-                        $menu = MENU_getMenu($menuID,'st-fmenu','','','','st-f-last');
-                    } else if ( $Menus[$id]['menu_type'] == 3 ) {
-                        $menu = phpblock_getMenu('',trim($autotag['parm1']));
-                    } else if ( $Menus[$id]['menu_type'] == 4 ) {
-                        $menu = MENU_getMenu($menuID,'st-vmenu','','','');
+                $reference = trim($autotag['parm1']);
+                $resolved = MENU_resolveAutotagReference($reference);
+                if ($resolved !== null) {
+                    $id = $resolved['id'];
+                    $menuName = $resolved['name'];
+                    if (isset($Menus[$id]) && $Menus[$id]['menu_type'] == 1) {
+                        $menu = MENU_getMenu($menuName,"gl_menu","gl_menu",'',"parent");
+                    } else if (isset($Menus[$id]) && $Menus[$id]['menu_type'] == 2) {
+                        $menu = MENU_getMenu($menuName,'st-fmenu','','','','st-f-last');
+                    } else if (isset($Menus[$id]) && $Menus[$id]['menu_type'] == 3) {
+                        $menu = phpblock_getMenu('',$menuName);
+                    } else if (isset($Menus[$id]) && $Menus[$id]['menu_type'] == 4) {
+                        $menu = MENU_getMenu($menuName,'st-vmenu','','','');
                     }
-                    $content = str_replace($autotag['tagstr'],$menu,$content);
-                } else {
-                    $content = str_replace($autotag['tagstr'],$menu,$content);
                 }
+                $content = str_replace($autotag['tagstr'],$menu,$content);
                 break;
         }
         return $content;
