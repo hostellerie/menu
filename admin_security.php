@@ -92,8 +92,13 @@ function MENU_adminTokenName()
 
 function MENU_adminTokenInput($token = null)
 {
+    static $requestToken = null;
+
     if ($token === null) {
-        $token = MENU_adminCreateToken();
+        if ($requestToken === null) {
+            $requestToken = MENU_adminCreateToken();
+        }
+        $token = $requestToken;
     }
     if ($token === '') {
         return '';
@@ -265,4 +270,3 @@ function MENU_adminEnforceCsrf()
         COM_redirect($_CONF['site_admin_url'] . '/plugins/menu/index.php');
     }
 }
-
