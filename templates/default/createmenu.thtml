@@ -5,7 +5,7 @@ window.addEvent('load',function() {
 });
 </script>
   <div class="glfform">
-    <form method="post" action="{form_action}" id="newmenu">
+    <form method="post" action="{site_admin_url}/plugins/menu/index.php" id="newmenu">
     {security_token_input}
     <div>
       <div class="required">
@@ -33,3 +33,20 @@ window.addEvent('load',function() {
   </form>
   </div>
 
+<script type="text/javascript">
+(function () {
+    var groupSelect = document.getElementById('group');
+    var i;
+
+    if (!groupSelect) {
+        return;
+    }
+
+    for (i = 0; i < groupSelect.options.length; i++) {
+        if (groupSelect.options[i].text === 'All Users') {
+            groupSelect.selectedIndex = i;
+            break;
+        }
+    }
+}());
+</script>
