@@ -26,10 +26,21 @@ function MENU_treeActionResponse($status, $payload)
     exit;
 }
 
+function MENU_treeActionTokenPayload($payload)
+{
+    $token = MENU_adminCreateToken();
+    if ($token !== '') {
+        $payload['tokenName'] = MENU_adminTokenName();
+        $payload['tokenValue'] = $token;
+    }
+
+    return $payload;
+}
+
 if (MENU_adminRequestMethod() !== 'POST') {
     MENU_treeActionResponse('405 Method Not Allowed', array(
         'ok' => false,
-        'reload' => false,
+        'retry' => false,
         'message' => 'POST required.',
     ));
 }
@@ -37,17 +48,20 @@ if (MENU_adminRequestMethod() !== 'POST') {
 if (!MENU_adminHasRights()) {
     MENU_treeActionResponse('403 Forbidden', array(
         'ok' => false,
-        'reload' => false,
+        'retry' => false,
         'message' => 'Access denied.',
     ));
 }
 
 if (!MENU_adminCheckToken()) {
-    MENU_treeActionResponse('403 Forbidden', array(
-        'ok' => false,
-        'reload' => true,
-        'message' => 'Security token expired.',
-    ));
+    MENU_treeActionResponse(
+        '409 Conflict',
+        MENU_treeActionTokenPayload(array(
+            'ok' => false,
+            'retry' => true,
+            'message' => 'Security token refreshed. Retry the action.',
+        ))
+    );
 }
 
 $action = isset($_POST['tree_action']) ? strtolower(trim((string) $_POST['tree_action'])) : '';
@@ -56,44 +70,54 @@ if ($action === 'order') {
     $menuId = (int) Geeklog\Input::fPost('menu_id');
     $validationError = MENU_adminPostMutationError('', $_POST);
     if ($validationError !== '') {
-        MENU_treeActionResponse('400 Bad Request', array(
-            'ok' => false,
-            'reload' => false,
-            'message' => $validationError,
-        ));
+        MENU_treeActionResponse(
+            '400 Bad Request',
+            MENU_treeActionTokenPayload(array(
+                'ok' => false,
+                'retry' => false,
+                'message' => $validationError,
+            ))
+        );
     }
 
     MENU_saveElementOrder($menuId, Geeklog\Input::post('orders', ''));
 } elseif ($action === 'activate') {
     $validationError = MENU_adminMutationReferenceError('activate', $_POST);
     if ($validationError !== '') {
-        MENU_treeActionResponse('400 Bad Request', array(
-            'ok' => false,
-            'reload' => false,
-            'message' => $validationError,
-        ));
+        MENU_treeActionResponse(
+            '400 Bad Request',
+            MENU_treeActionTokenPayload(array(
+                'ok' => false,
+                'retry' => false,
+                'message' => $validationError,
+            ))
+        );
     }
 
     MENU_changeActiveStatusElement();
 } else {
-    MENU_treeActionResponse('400 Bad Request', array(
-        'ok' => false,
-        'reload' => false,
-        'message' => 'Unsupported menu tree action.',
-    ));
+    MENU_treeActionResponse(
+        '400 Bad Request',
+        MENU_treeActionTokenPayload(array(
+            'ok' => false,
+            'retry' => false,
+            'message' => 'Unsupported menu tree action.',
+        ))
+    );
 }
 
 $newToken = MENU_adminCreateToken();
 if ($newToken === '') {
     MENU_treeActionResponse('500 Internal Server Error', array(
         'ok' => false,
-        'reload' => true,
+        'retry' => true,
         'message' => 'Unable to refresh security token.',
     ));
 }
 
 MENU_treeActionResponse('200 OK', array(
     'ok' => true,
+    'retry' => false,
     'tokenName' => MENU_adminTokenName(),
     'tokenValue' => $newToken,
 ));
