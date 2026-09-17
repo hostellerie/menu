@@ -13,7 +13,7 @@ $checks = array(
     'statsloginrequired' => 'Stats action must honor statsloginrequired',
     'loginrequired' => 'Stats action must honor global loginrequired',
     '$elementType === 2 && $elementSubtype === 5' => 'Stats Geeklog action subtype is not normalized',
-    "$row['element_type'] = 6;" => 'Stats action type is not converted to URL mode',
+    '$row[\'element_type\'] = 6;' => 'Stats action type is not converted to URL mode',
     "'/stats.php'" => 'Stats action URL is missing',
 );
 
@@ -29,8 +29,8 @@ if (strpos($source, 'if (!COM_isAnonUser())') === false) {
     exit(1);
 }
 
-if (strpos($source, "isset($row['element_type'])") === false
-    || strpos($source, "isset($row['element_subtype'])") === false) {
+if (strpos($source, "isset(\$row['element_type'])") === false
+    || strpos($source, "isset(\$row['element_subtype'])") === false) {
     fwrite(STDERR, "FAIL: Stats normalization must tolerate incomplete legacy rows\n");
     exit(1);
 }
