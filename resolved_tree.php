@@ -2,7 +2,7 @@
 
 /* Reminder: always indent with 4 spaces (no tabs). */
 // +---------------------------------------------------------------------------+
-// | Menu Plugin 1.3.0                                                        |
+// | Menu Plugin 1.4.0                                                        |
 // +---------------------------------------------------------------------------+
 // | resolved_tree.php                                                         |
 // |                                                                           |
@@ -13,8 +13,25 @@ if (!defined('VERSION')) {
     die('This file can not be used on its own.');
 }
 
+if (!defined('MENU_RESOLVED_TREE_CONTRACT_VERSION')) {
+    define('MENU_RESOLVED_TREE_CONTRACT_VERSION', 1);
+}
+
 require_once __DIR__ . '/runtime_config.php';
 require_once __DIR__ . '/resolved_admin.php';
+
+/**
+ * Return the public resolved-tree contract version.
+ *
+ * Version 1 is additive: existing field meanings/types must remain stable and
+ * consumers must ignore fields they do not understand.
+ *
+ * @return int
+ */
+function MENU_getResolvedTreeContractVersion()
+{
+    return MENU_RESOLVED_TREE_CONTRACT_VERSION;
+}
 
 function MENU_findMenuIdByName($name)
 {
@@ -41,6 +58,17 @@ function MENU_findMenuIdByName($name)
     return 0;
 }
 
+/**
+ * Return the permission-filtered public representation of one menu.
+ *
+ * This API is intentionally consumer-facing. It MUST NOT expose menus or
+ * elements that are unavailable to the current Geeklog visitor. Consumers
+ * must use the returned tree instead of bypassing Menu permissions through
+ * direct table access.
+ *
+ * @param string $name Canonical menu name
+ * @return array
+ */
 function MENU_getResolvedTree($name = 'navigation')
 {
     global $Menus;
