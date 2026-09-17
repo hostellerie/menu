@@ -25,7 +25,7 @@ $required = array(
     'function menu_update_ConfValues_1_4_0()',
     "group_name = 'menu'",
     "name IN ('samplesetting1', 'samplesetting2')",
-    "version_compare($installedVersion, '1.4.0', '<')",
+    'version_compare($installedVersion, \'1.4.0\', \'<\')',
     'menu_update_ConfValues_1_4_0()',
 );
 
