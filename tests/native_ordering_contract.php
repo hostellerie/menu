@@ -43,7 +43,7 @@ $requiredEndpoint = array(
     "HTTP_X_REQUESTED_WITH",
     "xmlhttprequest",
     "HTTP_ORIGIN",
-    "MENU_adminPostMutationError('', $_POST)",
+    'MENU_adminPostMutationError(\'\', $_POST)',
     'MENU_saveElementOrder',
     "'ok' => true",
 );
