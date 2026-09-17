@@ -12,7 +12,8 @@ $checks = array(
     'MENU_coreStatsActionAllowed' => 'missing core Stats access helper',
     'statsloginrequired' => 'Stats action must honor statsloginrequired',
     'loginrequired' => 'Stats action must honor global loginrequired',
-    "element_subtype'] === 5" => 'Stats Geeklog action subtype is not normalized',
+    '$elementType === 2 && $elementSubtype === 5' => 'Stats Geeklog action subtype is not normalized',
+    "$row['element_type'] = 6;" => 'Stats action type is not converted to URL mode',
     "'/stats.php'" => 'Stats action URL is missing',
 );
 
@@ -25,6 +26,12 @@ foreach ($checks as $needle => $message) {
 
 if (strpos($source, 'if (!COM_isAnonUser())') === false) {
     fwrite(STDERR, "FAIL: registered users must be allowed to access core Stats\n");
+    exit(1);
+}
+
+if (strpos($source, "isset($row['element_type'])") === false
+    || strpos($source, "isset($row['element_subtype'])") === false) {
+    fwrite(STDERR, "FAIL: Stats normalization must tolerate incomplete legacy rows\n");
     exit(1);
 }
 
