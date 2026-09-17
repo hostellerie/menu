@@ -8,12 +8,13 @@
         var $ = window.jQuery;
         var $table;
         var $token;
-        var tableNode;
         var menuId;
-        var postUrl;
+        var actionUrl;
         var tokenName;
         var tokenValue;
-        var submitting = false;
+        var requestActive = false;
+        var queue = [];
+        var pendingOrder = null;
 
         if (!$) {
             retry();
@@ -27,7 +28,7 @@
             return;
         }
 
-        /* Prevent the legacy/cached menu-order-handle.js from taking control. */
+        /* Prevent the legacy menu-order-handle.js from taking control. */
         $table.data('menu-order-handle-ready', true);
 
         if (typeof $.fn.tableDnD !== 'function') {
@@ -40,54 +41,13 @@
         }
         $table.data('menu-tree-actions-ready', true);
 
-        tableNode = $table.get(0);
         menuId = parseInt($table.attr('data-menuid'), 10) || 0;
-        postUrl = $table.attr('data-post-url') || window.location.href;
+        actionUrl = String($table.attr('data-tree-action-url') || '');
         tokenName = $token.attr('name');
         tokenValue = $token.val();
 
-        function lockPage() {
-            if (submitting) {
-                return false;
-            }
-            submitting = true;
-            $table.css('pointer-events', 'none');
-            $('body').css('cursor', 'wait');
-            return true;
-        }
-
-        function submitPost(fields) {
-            var form;
-            var name;
-            var input;
-
-            if (!lockPage()) {
-                return;
-            }
-
-            form = document.createElement('form');
-            form.method = 'post';
-            form.action = postUrl;
-            form.style.display = 'none';
-
-            for (name in fields) {
-                if (Object.prototype.hasOwnProperty.call(fields, name)) {
-                    input = document.createElement('input');
-                    input.type = 'hidden';
-                    input.name = name;
-                    input.value = fields[name];
-                    form.appendChild(input);
-                }
-            }
-
-            input = document.createElement('input');
-            input.type = 'hidden';
-            input.name = tokenName;
-            input.value = tokenValue;
-            form.appendChild(input);
-
-            document.body.appendChild(form);
-            form.submit();
+        if (!menuId || !actionUrl || !tokenName || !tokenValue) {
+            return;
         }
 
         function currentOrder() {
@@ -101,6 +61,95 @@
             });
 
             return parts.join('&');
+        }
+
+        function refreshToken(response) {
+            var previousName = tokenName;
+
+            if (!response || !response.tokenName || !response.tokenValue) {
+                return false;
+            }
+
+            tokenName = response.tokenName;
+            tokenValue = response.tokenValue;
+
+            $('input[type="hidden"][name="' + previousName + '"]').each(function () {
+                this.name = tokenName;
+                this.value = tokenValue;
+            });
+
+            return true;
+        }
+
+        function pumpQueue() {
+            var fields;
+            var data;
+
+            if (requestActive) {
+                return;
+            }
+
+            if (queue.length) {
+                fields = queue.shift();
+            } else if (pendingOrder !== null) {
+                fields = pendingOrder;
+                pendingOrder = null;
+            } else {
+                $table.removeClass('menu-tree-saving');
+                return;
+            }
+
+            requestActive = true;
+            $table.addClass('menu-tree-saving');
+
+            data = $.extend({}, fields);
+            data[tokenName] = tokenValue;
+
+            $.ajax({
+                type: 'POST',
+                url: actionUrl,
+                data: data,
+                dataType: 'json',
+                cache: false
+            }).done(function (response) {
+                if (!response || response.ok !== true || !refreshToken(response)) {
+                    window.location.reload();
+                }
+            }).fail(function (xhr) {
+                var response = xhr && xhr.responseJSON ? xhr.responseJSON : null;
+                if (!response || response.reload !== false) {
+                    window.location.reload();
+                    return;
+                }
+                window.location.reload();
+            }).always(function () {
+                requestActive = false;
+                pumpQueue();
+            });
+        }
+
+        function enqueue(fields) {
+            if (fields.tree_action === 'order') {
+                /* Only the newest unsaved DOM order matters. */
+                pendingOrder = fields;
+            } else {
+                queue.push(fields);
+            }
+            pumpQueue();
+        }
+
+        function saveCurrentOrder() {
+            var orders = currentOrder();
+
+            if (!orders) {
+                return;
+            }
+
+            enqueue({
+                tree_action: 'order',
+                orders: orders,
+                menu_id: menuId
+            });
         }
 
         $table.find('tbody tr').each(function () {
@@ -138,89 +187,68 @@
         $table.tableDnD({
             dragHandle: 'menu-drag-handle',
             onDrop: function () {
-                var orders = currentOrder();
-
-                if (!orders || menuId <= 0) {
-                    window.location.reload();
-                    return;
-                }
-
-                submitPost({
-                    orders: orders,
-                    menu_id: menuId
-                });
+                saveCurrentOrder();
             }
         });
 
         /*
-         * Capture activation clicks before the legacy inline onclick handler
-         * can call this.form.submit(). This guarantees that drag and activation
-         * use the exact same native POST + redirect path and the same page lock.
+         * The server-rendered onclick remains the no-JavaScript fallback.
+         * Remove it once this enhanced handler is ready, then let the checkbox
+         * change normally and persist its resulting state through AJAX.
          */
-        tableNode.addEventListener('click', function (event) {
-            var target = event.target || event.srcElement;
-            var form;
+        $table.find('input[type="checkbox"]').each(function () {
+            this.onclick = null;
+            $(this).removeAttr('onclick');
+        }).on('change.menuTreeActions', function () {
+            var form = this.form;
             var midInput;
-            var activeInput;
             var mid;
-            var active;
 
-            if (!target || target.tagName !== 'INPUT' || target.type !== 'checkbox') {
-                return;
-            }
-
-            form = target.form;
             if (!form) {
-                return;
-            }
-
-            event.preventDefault();
-            if (event.stopImmediatePropagation) {
-                event.stopImmediatePropagation();
-            }
-            event.stopPropagation();
-
-            midInput = form.querySelector('input[name="mid"]');
-            activeInput = form.querySelector('input[name="active"]');
-            mid = midInput ? parseInt(midInput.value, 10) || 0 : 0;
-            active = activeInput ? parseInt(activeInput.value, 10) || 0 : 0;
-
-            if (!mid || !menuId) {
                 window.location.reload();
                 return;
             }
 
-            submitPost({
-                mode: 'activate',
-                menu: menuId,
-                mid: mid,
-                active: active
-            });
-        }, true);
+            midInput = form.querySelector('input[name="mid"]');
+            mid = midInput ? parseInt(midInput.value, 10) || 0 : 0;
 
-        $table.on('keydown.menuTreeActions', 'td.menu-drag-handle', function (event) {
-            var direction = null;
-            var key = event.key || '';
-            var keyCode = event.which || event.keyCode;
-
-            if (key === 'ArrowUp' || keyCode === 38) {
-                direction = 'up';
-            } else if (key === 'ArrowDown' || keyCode === 40) {
-                direction = 'down';
-            }
-
-            if (direction === null) {
+            if (!mid) {
+                window.location.reload();
                 return;
             }
 
-            event.preventDefault();
-
-            submitPost({
-                mode: 'move',
-                where: direction,
-                mid: parseInt($(this).attr('data-mid'), 10) || 0,
-                menu: menuId
+            enqueue({
+                tree_action: 'activate',
+                mode: 'activate',
+                menu: menuId,
+                mid: mid,
+                active: this.checked ? 1 : 0
             });
+        });
+
+        $table.on('keydown.menuTreeActions', 'td.menu-drag-handle', function (event) {
+            var key = event.key || '';
+            var keyCode = event.which || event.keyCode;
+            var $row = $(this).closest('tr');
+            var $target;
+
+            if (key === 'ArrowUp' || keyCode === 38) {
+                $target = $row.prevAll('tr[id^="mid_"]').first();
+                if ($target.length) {
+                    event.preventDefault();
+                    $row.insertBefore($target);
+                    saveCurrentOrder();
+                    $(this).focus();
+                }
+            } else if (key === 'ArrowDown' || keyCode === 40) {
+                $target = $row.nextAll('tr[id^="mid_"]').first();
+                if ($target.length) {
+                    event.preventDefault();
+                    $row.insertAfter($target);
+                    saveCurrentOrder();
+                    $(this).focus();
+                }
+            }
         });
     }
 
