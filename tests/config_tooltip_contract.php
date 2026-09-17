@@ -13,8 +13,8 @@ $required = array(
     "'load_legacy_css' =>",
     "'load_legacy_js' =>",
     "'debug' =>",
-    "french_france_utf-8",
-    "return isset($tooltips[$id]) ? $tooltips[$id] : '';",
+    'french_france_utf-8',
+    'return isset($tooltips[$id]) ? $tooltips[$id] : \'\';',
 );
 
 foreach ($required as $needle) {
