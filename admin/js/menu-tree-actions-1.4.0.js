@@ -8,6 +8,7 @@
         var $ = window.jQuery;
         var $table;
         var $token;
+        var tableNode;
         var menuId;
         var postUrl;
         var tokenName;
@@ -39,6 +40,7 @@
         }
         $table.data('menu-tree-actions-ready', true);
 
+        tableNode = $table.get(0);
         menuId = parseInt($table.attr('data-menuid'), 10) || 0;
         postUrl = $table.attr('data-post-url') || window.location.href;
         tokenName = $token.attr('name');
@@ -150,21 +152,38 @@
             }
         });
 
-        /* Replace inline checkbox submission with the same controlled POST path. */
-        $table.on('click.menuTreeActions', 'input[type="checkbox"]', function (event) {
-            var form = this.form;
+        /*
+         * Capture activation clicks before the legacy inline onclick handler
+         * can call this.form.submit(). This guarantees that drag and activation
+         * use the exact same native POST + redirect path and the same page lock.
+         */
+        tableNode.addEventListener('click', function (event) {
+            var target = event.target || event.srcElement;
+            var form;
+            var midInput;
+            var activeInput;
             var mid;
             var active;
 
+            if (!target || target.tagName !== 'INPUT' || target.type !== 'checkbox') {
+                return;
+            }
+
+            form = target.form;
             if (!form) {
                 return;
             }
 
             event.preventDefault();
+            if (event.stopImmediatePropagation) {
+                event.stopImmediatePropagation();
+            }
             event.stopPropagation();
 
-            mid = parseInt($(form).find('input[name="mid"]').val(), 10) || 0;
-            active = parseInt($(form).find('input[name="active"]').val(), 10) || 0;
+            midInput = form.querySelector('input[name="mid"]');
+            activeInput = form.querySelector('input[name="active"]');
+            mid = midInput ? parseInt(midInput.value, 10) || 0 : 0;
+            active = activeInput ? parseInt(activeInput.value, 10) || 0 : 0;
 
             if (!mid || !menuId) {
                 window.location.reload();
@@ -177,7 +196,7 @@
                 mid: mid,
                 active: active
             });
-        });
+        }, true);
 
         $table.on('keydown.menuTreeActions', 'td.menu-drag-handle', function (event) {
             var direction = null;
