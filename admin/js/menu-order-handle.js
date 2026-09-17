@@ -27,11 +27,7 @@
         var postUrl = $table.attr('data-post-url') || window.location.href;
         var tokenName = $token.attr('name');
         var tokenValue = $token.val();
-
-        function addToken(data) {
-            data[tokenName] = tokenValue;
-            return data;
-        }
+        var submitting = false;
 
         function currentOrder() {
             var parts = [];
@@ -46,11 +42,35 @@
             return parts.join('&');
         }
 
-        function reloadAfterRequest(request) {
-            request.always(function () {
-                window.location.reload();
+        function submitPost(fields) {
+            var $form;
+
+            if (submitting) {
+                return;
+            }
+            submitting = true;
+
+            $form = $('<form>', {
+                method: 'post',
+                action: postUrl
+            }).css('display', 'none');
+
+            $.each(fields, function (name, value) {
+                $('<input>', {
+                    type: 'hidden',
+                    name: name,
+                    value: value
+                }).appendTo($form);
             });
-            return request;
+
+            $('<input>', {
+                type: 'hidden',
+                name: tokenName,
+                value: tokenValue
+            }).appendTo($form);
+
+            $('body').append($form);
+            $form.trigger('submit');
         }
 
         $table.find('tbody tr').each(function () {
@@ -95,14 +115,10 @@
                     return;
                 }
 
-                reloadAfterRequest($.ajax({
-                    type: 'POST',
-                    url: postUrl,
-                    data: addToken({
-                        orders: orders,
-                        menu_id: menuId
-                    })
-                }));
+                submitPost({
+                    orders: orders,
+                    menu_id: menuId
+                });
             }
         });
 
@@ -123,16 +139,12 @@
 
             event.preventDefault();
 
-            reloadAfterRequest($.ajax({
-                type: 'POST',
-                url: postUrl,
-                data: addToken({
-                    mode: 'move',
-                    where: direction,
-                    mid: parseInt($(this).attr('data-mid'), 10) || 0,
-                    menu: menuId
-                })
-            }));
+            submitPost({
+                mode: 'move',
+                where: direction,
+                mid: parseInt($(this).attr('data-mid'), 10) || 0,
+                menu: menuId
+            });
         });
     }
 
