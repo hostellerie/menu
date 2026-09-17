@@ -13,7 +13,7 @@
 // | Authors: Ben - ben AT geeklog DOT fr                                      |
 // |                                                                           |
 // | Based on the original Sitetailor Plugin                                   |
-// | Copyright (C) 2008-2009 by the following authors:                         |
+// | Copyright (C) 2008-2009 by the following authors:                        |
 // |                                                                           |
 // | Mark R. Evans - mark AT glfusion DOT org                                  | 
 // +---------------------------------------------------------------------------+
@@ -95,7 +95,7 @@ if ( (isset($_POST['execute']) || $mode != '') && !isset($_POST['cancel']) && !i
             $mid       = (int) Geeklog\Input::fPost('mid');
             $menu_id   = (int) Geeklog\Input::fPost('menu');
             MENU_moveElement( $menu_id, $mid, $direction );
-            COM_redirect($_CONF['site_admin_url'] . '/plugins/menu/index.php?mode=menu&amp;menu=' . $menu_id);
+            COM_redirect($_CONF['site_admin_url'] . '/plugins/menu/index.php?mode=menu&menu=' . $menu_id);
             break;
         case 'edit' :
             // call the editor
@@ -106,7 +106,7 @@ if ( (isset($_POST['execute']) || $mode != '') && !isset($_POST['cancel']) && !i
             break;
         case 'saveedit' :
             MENU_saveEditMenuElement();
-            COM_redirect($_CONF['site_admin_url'] . '/plugins/menu/index.php?mode=menu&amp;menu=' . $menu_id);
+            COM_redirect($_CONF['site_admin_url'] . '/plugins/menu/index.php?mode=menu&menu=' . $menu_id);
             break;
         case 'savenewmenu' :
             MENU_saveNewMenu();
@@ -122,8 +122,7 @@ if ( (isset($_POST['execute']) || $mode != '') && !isset($_POST['cancel']) && !i
             break;
         case 'activate' :
             MENU_changeActiveStatusElement();
-            $content = MENU_displayTree( $menu_id );
-            $currentSelect = $LANG_MENU01['menu_builder'];
+            COM_redirect($_CONF['site_admin_url'] . '/plugins/menu/index.php?mode=menu&menu=' . $menu_id);
             break;
         case 'menuactivate' :
             MENU_changeActiveStatusMenu();
@@ -150,7 +149,7 @@ if ( (isset($_POST['execute']) || $mode != '') && !isset($_POST['cancel']) && !i
             $action = (int) Geeklog\Input::fPost('menuactive');
             $mid    = (int) Geeklog\Input::fPost('menutodisable');
             MENU_setMenuConfigEnabled($mid, $action);
-            COM_redirect($_CONF['site_admin_url'] . '/plugins/menu/index.php?mode=menu&amp;mid=' . $mid);
+            COM_redirect($_CONF['site_admin_url'] . '/plugins/menu/index.php?mode=menu&mid=' . $mid);
             break;
         case 'menucolor' :
             $content = MENU_menuConfig($menu_id);
@@ -179,7 +178,7 @@ if ( (isset($_POST['execute']) || $mode != '') && !isset($_POST['cancel']) && !i
 } else if ( isset($_POST['orders']) && isset($_POST['menu_id']) ) {
     $menu_id = (int) Geeklog\Input::fPost('menu_id');
     MENU_saveElementOrder($menu_id, Geeklog\Input::post('orders', ''));
-    exit;
+    COM_redirect($_CONF['site_admin_url'] . '/plugins/menu/index.php?mode=menu&menu=' . $menu_id);
 
 } else {
     // display the tree
