@@ -44,11 +44,16 @@
 
         function submitPost(fields) {
             var $form;
+            var form;
 
             if (submitting) {
                 return;
             }
             submitting = true;
+
+            // Prevent a second tree action from being started while the browser
+            // is navigating away. Geeklog CSRF tokens are one-time tokens.
+            $table.css('pointer-events', 'none');
 
             $form = $('<form>', {
                 method: 'post',
@@ -70,7 +75,12 @@
             }).appendTo($form);
 
             $('body').append($form);
-            $form.trigger('submit');
+            form = $form.get(0);
+
+            // Use the native DOM submit method deliberately. jQuery .trigger('submit')
+            // can be intercepted by page-level submit handlers and leave the old
+            // menu tree visible with an already-consumed CSRF token.
+            form.submit();
         }
 
         $table.find('tbody tr').each(function () {
