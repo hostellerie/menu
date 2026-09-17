@@ -2,7 +2,7 @@
 
 /* Reminder: always indent with 4 spaces (no tabs). */
 // +---------------------------------------------------------------------------+
-// | Menu Plugin 1.3.0                                                         |
+// | Menu Plugin 1.4.0                                                         |
 // +---------------------------------------------------------------------------+
 // | install_updates.php                                                       |
 // |                                                                           |
@@ -68,6 +68,31 @@ function menu_update_Database_1_3_0()
 }
 
 /**
+ * Remove obsolete sample configuration values left by historical Menu builds.
+ *
+ * The operation is intentionally idempotent and safe to run on every upgrade.
+ * Fresh 1.4.0 installations never create these values.
+ *
+ * @return bool
+ */
+function menu_update_ConfValues_1_4_0()
+{
+    global $_TABLES;
+
+    if (!isset($_TABLES['conf_values']) || $_TABLES['conf_values'] === '') {
+        return true;
+    }
+
+    DB_query(
+        "DELETE FROM {$_TABLES['conf_values']} "
+        . "WHERE group_name = 'menu' "
+        . "AND name IN ('samplesetting1', 'samplesetting2')"
+    );
+
+    return true;
+}
+
+/**
  * Update Geeklog configuration values for Menu 1.3.0.
  *
  * Existing values are preserved. The operation is idempotent and can safely
@@ -96,12 +121,8 @@ function menu_update_ConfValues_1_3_0()
         return false;
     }
 
-    if (isset($_TABLES['conf_values'])) {
-        DB_query(
-            "DELETE FROM {$_TABLES['conf_values']} "
-            . "WHERE group_name = 'menu' "
-            . "AND name IN ('samplesetting1', 'samplesetting2')"
-        );
+    if (!menu_update_ConfValues_1_4_0()) {
+        return false;
     }
 
     $menuConfig = config::get_instance();
