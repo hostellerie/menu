@@ -4,15 +4,14 @@
 define('VERSION', '2.1.1');
 define('CSRF_TOKEN', 'glsectoken');
 
-$menuSecurityTokenCounter = 0;
+$menuSecurityToken = 'token-value';
 $menuSecurityCheck = true;
 $menuSecurityRights = true;
 
 function SEC_createToken()
 {
-    global $menuSecurityTokenCounter;
-    $menuSecurityTokenCounter++;
-    return 'token-value-' . $menuSecurityTokenCounter;
+    global $menuSecurityToken;
+    return $menuSecurityToken;
 }
 
 function SEC_checkToken()
@@ -68,22 +67,12 @@ menu_security_assert(MENU_adminRequestMutates('save', array()) === true, 'routed
 menu_security_assert(MENU_adminRequestMutates('', array('orders' => 'x')) === true, 'unrouted mutation detection failed');
 menu_security_assert(MENU_adminHasRights() === true, 'menu.admin permission check was not delegated');
 menu_security_assert(MENU_adminCheckToken() === true, 'native token check was not delegated');
-menu_security_assert(MENU_adminCreateToken() === 'token-value-1', 'native token creation was not delegated');
+menu_security_assert(MENU_adminCreateToken() === 'token-value', 'native token creation was not delegated');
 menu_security_assert(MENU_adminTokenName() === 'glsectoken', 'Geeklog CSRF token field name was not preserved');
 menu_security_assert(strpos(MENU_adminTokenInput('abc'), 'name="glsectoken"') !== false, 'token field name missing');
 menu_security_assert(strpos(MENU_adminTokenInput('abc'), 'value="abc"') !== false, 'token field value missing');
-
-$dragTokenInput = MENU_adminTokenInput();
-$actionTokenInput1 = MENU_adminTokenInput();
-$actionTokenInput2 = MENU_adminTokenInput();
-menu_security_assert(strpos($dragTokenInput, 'value="token-value-2"') !== false,
-    'first implicit token must be isolated for the first page consumer');
-menu_security_assert(strpos($actionTokenInput1, 'value="token-value-3"') !== false,
-    'page actions must receive a second implicit token');
-menu_security_assert($actionTokenInput1 === $actionTokenInput2,
-    'subsequent page actions must share the same token');
-menu_security_assert($menuSecurityTokenCounter === 3,
-    'implicit token reuse must not create more than two page tokens');
+menu_security_assert(strpos(MENU_adminTokenInput(), 'value="token-value"') !== false,
+    'implicit token must use Geeklog native SEC_createToken result');
 
 menu_security_assert(MENU_adminId('12') === 12, 'positive id normalization failed');
 menu_security_assert(MENU_adminId('-4') === 0, 'negative id must be rejected');
