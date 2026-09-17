@@ -90,32 +90,10 @@ function MENU_adminTokenName()
     return defined('CSRF_TOKEN') ? CSRF_TOKEN : 'token';
 }
 
-/**
- * Build a CSRF token input while keeping the first token generated in a page
- * isolated from the shared token used by the remaining page actions.
- *
- * The menu tree renders its hidden drag-and-drop token before it renders the
- * row action forms. Geeklog tokens are consumable, so sharing that first token
- * with activation/delete forms makes a drag invalidate controls that are still
- * visible in the DOM. The first implicit token is therefore dedicated to the
- * first consumer (the drag-and-drop channel on the menu tree), while all later
- * implicit calls share one page-action token. Explicit tokens are unchanged.
- */
 function MENU_adminTokenInput($token = null)
 {
-    static $firstImplicitIssued = false;
-    static $sharedRequestToken = null;
-
     if ($token === null) {
-        if (!$firstImplicitIssued) {
-            $firstImplicitIssued = true;
-            $token = MENU_adminCreateToken();
-        } else {
-            if ($sharedRequestToken === null) {
-                $sharedRequestToken = MENU_adminCreateToken();
-            }
-            $token = $sharedRequestToken;
-        }
+        $token = MENU_adminCreateToken();
     }
     if ($token === '') {
         return '';
