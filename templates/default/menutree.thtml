@@ -66,6 +66,7 @@
   </table>
 </div>
 
+<script type="text/javascript" src="{site_admin_url}/plugins/menu/js/menu-tree-actions-1.4.0.js?v=20260917-1"></script>
 
 <div class="menu-preview" style="margin:25px 0 5px 0;clear:both;">
   <div style="font-weight:bold;margin-bottom:8px;">Preview</div>
