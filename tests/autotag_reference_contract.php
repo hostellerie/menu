@@ -7,9 +7,9 @@ $required = array(
     'function MENU_resolveAutotagReference',
     "DB_getItem(\$_TABLES['menu'], 'id', 'menu_name=\"'",
     'ctype_digit($reference)',
-    "DB_getItem(\$_TABLES['menu'], 'menu_name', 'id=' . $id)",
+    'DB_getItem($_TABLES[\'menu\'], \'menu_name\', \'id=\' . $id)',
     '$resolved = MENU_resolveAutotagReference($reference);',
-    "$menuName = \$resolved['name'];",
+    '$menuName = $resolved[\'name\'];',
     'MENU_getMenu($menuName',
     "phpblock_getMenu('',\$menuName)",
 );
