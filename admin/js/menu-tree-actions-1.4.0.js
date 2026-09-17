@@ -15,6 +15,7 @@
         var requestActive = false;
         var queue = [];
         var pendingOrder = null;
+        var retryTimer = null;
 
         if (!$) {
             retry();
@@ -81,9 +82,102 @@
             return true;
         }
 
+        function setSavingState(state) {
+            $table.removeClass('menu-tree-saving menu-tree-save-error');
+            if (state === 'saving') {
+                $table.addClass('menu-tree-saving');
+            } else if (state === 'error') {
+                $table.addClass('menu-tree-save-error');
+            }
+        }
+
+        function requeue(fields) {
+            if (fields.tree_action === 'order') {
+                /* Preserve the newest DOM order instead of an older failed snapshot. */
+                if (pendingOrder === null) {
+                    pendingOrder = {
+                        tree_action: 'order',
+                        orders: currentOrder(),
+                        menu_id: menuId
+                    };
+                }
+            } else {
+                queue.unshift(fields);
+            }
+        }
+
+        function scheduleRetry() {
+            if (retryTimer !== null) {
+                return;
+            }
+
+            retryTimer = window.setTimeout(function () {
+                retryTimer = null;
+                pumpQueue();
+            }, 1200);
+        }
+
+        function sendAction(fields, retryCount) {
+            var data = $.extend({}, fields);
+            data[tokenName] = tokenValue;
+
+            $.ajax({
+                type: 'POST',
+                url: actionUrl,
+                data: data,
+                dataType: 'json',
+                cache: false
+            }).done(function (response) {
+                if (response && response.ok === true && refreshToken(response)) {
+                    requestActive = false;
+                    setSavingState('idle');
+                    pumpQueue();
+                    return;
+                }
+
+                if (response) {
+                    refreshToken(response);
+                }
+
+                if (response && response.retry === true && retryCount < 3) {
+                    sendAction(fields, retryCount + 1);
+                    return;
+                }
+
+                requestActive = false;
+                requeue(fields);
+                setSavingState('error');
+                scheduleRetry();
+            }).fail(function (xhr) {
+                var response = xhr && xhr.responseJSON ? xhr.responseJSON : null;
+                var refreshed = response ? refreshToken(response) : false;
+
+                if (response && response.retry === true && refreshed && retryCount < 3) {
+                    sendAction(fields, retryCount + 1);
+                    return;
+                }
+
+                /*
+                 * Do not reload the page here. The request may have reached the
+                 * server even if its response was lost. Order and activation are
+                 * idempotent, so retaining and retrying the desired state is safe.
+                 */
+                if (retryCount < 3) {
+                    window.setTimeout(function () {
+                        sendAction(fields, retryCount + 1);
+                    }, 300 * (retryCount + 1));
+                    return;
+                }
+
+                requestActive = false;
+                requeue(fields);
+                setSavingState('error');
+                scheduleRetry();
+            });
+        }
+
         function pumpQueue() {
             var fields;
-            var data;
 
             if (requestActive) {
                 return;
@@ -95,37 +189,13 @@
                 fields = pendingOrder;
                 pendingOrder = null;
             } else {
-                $table.removeClass('menu-tree-saving');
+                setSavingState('idle');
                 return;
             }
 
             requestActive = true;
-            $table.addClass('menu-tree-saving');
-
-            data = $.extend({}, fields);
-            data[tokenName] = tokenValue;
-
-            $.ajax({
-                type: 'POST',
-                url: actionUrl,
-                data: data,
-                dataType: 'json',
-                cache: false
-            }).done(function (response) {
-                if (!response || response.ok !== true || !refreshToken(response)) {
-                    window.location.reload();
-                }
-            }).fail(function (xhr) {
-                var response = xhr && xhr.responseJSON ? xhr.responseJSON : null;
-                if (!response || response.reload !== false) {
-                    window.location.reload();
-                    return;
-                }
-                window.location.reload();
-            }).always(function () {
-                requestActive = false;
-                pumpQueue();
-            });
+            setSavingState('saving');
+            sendAction(fields, 0);
         }
 
         function enqueue(fields) {
@@ -205,7 +275,6 @@
             var mid;
 
             if (!form) {
-                window.location.reload();
                 return;
             }
 
@@ -213,7 +282,6 @@
             mid = midInput ? parseInt(midInput.value, 10) || 0 : 0;
 
             if (!mid) {
-                window.location.reload();
                 return;
             }
 
