@@ -64,10 +64,7 @@ assertRuntimeConfig($GLOBALS['menu_debug_messages'][0][0] === 'Menu: enabled', '
 assertRuntimeConfig($GLOBALS['menu_debug_messages'][0][1] === 1, 'debug logger uses Geeklog error log mode');
 
 $runtimeSource = file_get_contents(dirname(__DIR__) . '/runtime_config.php');
-assertRuntimeConfig(strpos($runtimeSource, 'Geeklog log channel: COM_errorLog=') !== false, 'debug logger reports Geeklog channel state');
-assertRuntimeConfig(strpos($runtimeSource, 'Geeklog log channel result:') !== false, 'debug logger reports Geeklog channel result');
-assertRuntimeConfig(strpos($runtimeSource, 'size_before=') !== false, 'debug logger measures Geeklog log size before write');
-assertRuntimeConfig(strpos($runtimeSource, 'size_after=') !== false, 'debug logger measures Geeklog log size after write');
-assertRuntimeConfig(strpos($runtimeSource, 'realpath=') !== false, 'debug logger reports resolved Geeklog error log path');
+assertRuntimeConfig(strpos($runtimeSource, 'menu-debug.log') === false, 'private menu-debug.log must not be used');
+assertRuntimeConfig(strpos($runtimeSource, 'COM_errorLog($line, 1)') !== false, 'debug logger uses Geeklog error.log when available');
 
 echo "runtime_config: OK\n";
