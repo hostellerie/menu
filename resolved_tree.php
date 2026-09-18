@@ -33,6 +33,45 @@ function MENU_getResolvedTreeContractVersion()
     return MENU_RESOLVED_TREE_CONTRACT_VERSION;
 }
 
+
+/**
+ * Return menus available to the current Geeklog request context.
+ *
+ * This is a discovery API, not an administration API. It exposes only active
+ * menus for which Menu already calculated full read access (menu_perm = 3).
+ * ACL internals and per-menu configuration are deliberately not exposed.
+ *
+ * @return array
+ */
+function MENU_getAvailableMenus()
+{
+    global $Menus;
+
+    $available = array();
+    if (!is_array($Menus)) {
+        return $available;
+    }
+
+    foreach ($Menus as $menu) {
+        if (!is_array($menu)
+            || empty($menu['active'])
+            || !isset($menu['menu_perm'])
+            || (int) $menu['menu_perm'] !== 3
+            || empty($menu['menu_id'])
+            || !isset($menu['menu_name'])) {
+            continue;
+        }
+
+        $available[] = array(
+            'id' => (int) $menu['menu_id'],
+            'name' => (string) $menu['menu_name'],
+            'type' => isset($menu['menu_type']) ? (int) $menu['menu_type'] : 0,
+        );
+    }
+
+    return $available;
+}
+
 function MENU_findMenuIdByName($name)
 {
     global $Menus;
