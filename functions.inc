@@ -242,7 +242,10 @@ function plugin_cclabel_menu()
 
     $retval = array();
     if (SEC_hasRights('menu.admin')) {
-        $retval = array($LANG_MENU_1['plugin_name'],
+        $label = (isset($LANG_MENU_1) && is_array($LANG_MENU_1)
+            && isset($LANG_MENU_1['plugin_name']))
+            ? $LANG_MENU_1['plugin_name'] : 'Menu';
+        $retval = array($label,
             $_CONF['site_admin_url'] . '/plugins/menu/index.php',
             plugin_geticon_menu());
     }
