@@ -139,11 +139,22 @@ function plugin_getconfigtooltip_menu($id)
  */
 function MENU_debugLog($message)
 {
-    if (!MENU_runtimeConfigEnabled('debug', false) || !function_exists('COM_errorLog')) {
+    if (!MENU_runtimeConfigEnabled('debug', false)) {
         return;
     }
 
-    COM_errorLog('Menu: ' . (string) $message, 1);
+    $line = 'Menu: ' . (string) $message;
+
+    if (function_exists('COM_errorLog')) {
+        COM_errorLog($line, 1);
+        return;
+    }
+
+    /*
+     * Extremely early/bootstrap contexts may not have COM_errorLog yet.
+     * Use PHP's configured error log only as a debug-only fallback.
+     */
+    error_log($line);
 }
 
 /**
