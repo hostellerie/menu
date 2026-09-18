@@ -93,47 +93,42 @@ function MENU_runtimeConfigEnabled($name, $fallback = null)
 }
 
 /**
- * Return contextual help for Geeklog's native configuration editor.
+ * Provide the documentation URL used by Geeklog configuration help.
  *
- * Geeklog calls plugin_getconfigtooltip_<plugin>() for the question-mark help
- * shown beside configuration options. English is the canonical fallback; the
- * small French overlay keeps the currently maintained translation localized.
- * Unknown and obsolete options deliberately return an empty string so Geeklog
- * does not add a meaningless tooltip.
+ * Returning a plugin-owned config document lets Geeklog render the same
+ * structured VARIABLE / DEFAULT VALUE / DESCRIPTION tooltip used by Core
+ * plugins such as Static Pages.
  *
- * @param string $id Configuration option name
- * @return string
+ * @param string $file Documentation file being requested
+ * @return mixed URL or false when not available
  */
-function plugin_getconfigtooltip_menu($id)
+function plugin_getdocumentationurl_menu($file)
 {
     global $_CONF;
 
-    $tooltips = array(
-        'enable_cache' => 'Caches generated Menu data to avoid rebuilding it on every request. Disable only while diagnosing cache-related behavior.',
-        'accessibility_markup' => 'Adds navigation and ARIA attributes to legacy Menu output to improve accessibility without changing the menu structure.',
-        'external_link_protection' => 'Adds rel="noopener noreferrer" to external links opened in a new window to prevent the opened page from controlling the original window.',
-        'allow_php_elements' => 'Allows menu items that call trusted PHP functions. Keep disabled unless the site explicitly relies on this advanced legacy feature.',
-        'legacy_rendering' => 'Uses Menu\'s historical HTML/CSS renderer. Disable only when the active theme or another consumer fully handles menu presentation.',
-        'load_legacy_css' => 'Loads Menu-generated legacy styles for menus whose presentation is not handled by the active theme.',
-        'load_legacy_js' => 'Loads legacy JavaScript when required by Menu, including responsive SlickNav behavior for compatible horizontal menus.',
-        'debug' => 'Writes additional Menu diagnostic messages to the Geeklog error log. Enable temporarily while troubleshooting.',
-    );
-
-    $language = isset($_CONF['language']) ? (string) $_CONF['language'] : 'english';
-    if ($language === 'french_france_utf-8' || $language === 'french_france') {
-        $tooltips = array_replace($tooltips, array(
-            'enable_cache' => 'Met en cache les données générées par Menu afin d’éviter de les reconstruire à chaque requête. À désactiver uniquement pour diagnostiquer un problème de cache.',
-            'accessibility_markup' => 'Ajoute les attributs de navigation et ARIA au rendu historique de Menu afin d’améliorer l’accessibilité sans modifier la structure du menu.',
-            'external_link_protection' => 'Ajoute rel="noopener noreferrer" aux liens externes ouverts dans une nouvelle fenêtre afin d’empêcher la page ouverte de contrôler la fenêtre d’origine.',
-            'allow_php_elements' => 'Autorise les éléments de menu qui appellent des fonctions PHP de confiance. À laisser désactivé sauf si le site utilise explicitement cette fonction historique avancée.',
-            'legacy_rendering' => 'Utilise le moteur HTML/CSS historique de Menu. À désactiver uniquement si le thème actif ou un autre composant prend entièrement en charge la présentation du menu.',
-            'load_legacy_css' => 'Charge les styles historiques générés par Menu pour les menus dont la présentation n’est pas prise en charge par le thème actif.',
-            'load_legacy_js' => 'Charge le JavaScript historique lorsque Menu en a besoin, notamment SlickNav pour certains menus horizontaux responsives.',
-            'debug' => 'Ajoute des messages de diagnostic Menu dans le journal d’erreurs de Geeklog. À activer temporairement pour le dépannage.',
-        ));
+    if ($file !== 'config' && $file !== 'index') {
+        return false;
     }
 
-    return isset($tooltips[$id]) ? $tooltips[$id] : '';
+    if (empty($_CONF['site_url'])) {
+        return false;
+    }
+
+    return rtrim((string) $_CONF['site_url'], '/') . '/menu/config.html';
+}
+
+/**
+ * Use Geeklog's documentation-backed configuration tooltip.
+ *
+ * NULL is intentional: config.class.php interprets it as a request to load
+ * the matching desc_<option> row from plugin_getdocumentationurl_menu().
+ *
+ * @param string $id Configuration option name
+ * @return null
+ */
+function plugin_getconfigtooltip_menu($id)
+{
+    return null;
 }
 
 /**
