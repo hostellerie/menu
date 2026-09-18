@@ -3,8 +3,9 @@
 $root = dirname(__DIR__);
 $config = file_get_contents($root . '/config.php');
 $defaults = file_get_contents($root . '/install_defaults.php');
+$functions = file_get_contents($root . '/functions.inc');
 
-if ($config === false || $defaults === false) {
+if ($config === false || $defaults === false || $functions === false) {
     fwrite(STDERR, "Unable to read Menu configuration sources\n");
     exit(1);
 }
@@ -19,6 +20,11 @@ $settings = array(
     'load_legacy_js',
     'debug',
 );
+
+if (strpos($functions, 'global $_CONF, $_DB_table_prefix, $_TABLES, $_MENU_CONF;') === false) {
+    fwrite(STDERR, "functions.inc must keep \$_MENU_CONF in global scope\n");
+    exit(1);
+}
 
 foreach ($settings as $setting) {
     if (strpos($config, "'" . $setting . "'") === false) {
