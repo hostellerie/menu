@@ -590,17 +590,33 @@ function MENU_menuConfig( $mid ) {
 
 
 
-    foreach ($menuAttributes AS $name => $display ) {
-        $menuConfig[$name] = '#000000';
-    }
+    /*
+     * Start from complete legacy-compatible defaults before overlaying stored
+     * per-menu configuration. Older, cloned or partially migrated menus may
+     * legitimately miss rows such as menu_alignment or use_images.
+     */
+    $defaultAlignment = ((int) $Menus[$mid]['menu_type'] === 2) ? 0 : 1;
+    $menuConfig = array(
+        'main_menu_bg_color' => '#000000',
+        'main_menu_hover_bg_color' => '#000000',
+        'main_menu_text_color' => '#000000',
+        'main_menu_hover_text_color' => '#000000',
+        'submenu_text_color' => '#000000',
+        'submenu_hover_text_color' => '#000000',
+        'submenu_background_color' => '#000000',
+        'submenu_hover_bg_color' => '#000000',
+        'submenu_highlight_color' => '#000000',
+        'submenu_shadow_color' => '#000000',
+        'menu_bg_filename' => '',
+        'menu_hover_filename' => '',
+        'menu_parent_filename' => '',
+        'menu_alignment' => $defaultAlignment,
+        'use_images' => 0,
+    );
 
-    if ( is_array($Menus[$mid]['config']) ) {
-        foreach ($Menus[$mid]['config'] AS $name => $value ) {
+    if (isset($Menus[$mid]['config']) && is_array($Menus[$mid]['config'])) {
+        foreach ($Menus[$mid]['config'] as $name => $value) {
             $menuConfig[$name] = $value;
-        }
-    } else {
-        foreach ($menuAttributes AS $name => $display ) {
-            $menuConfig[$name] = '#000000';
         }
     }
 
