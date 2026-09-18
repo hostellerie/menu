@@ -40,6 +40,12 @@ The following work is part of the 1.4.0 baseline and should not be re-planned as
 
 ## Runtime, themes and rendering
 
+- [x] Stabilize the presentation-neutral resolved-tree contract as version 1.
+- [x] Expose `MENU_getResolvedTreeContractVersion()` for consumer compatibility checks.
+- [x] Keep resolved trees permission-filtered for the current Geeklog request/user context.
+- [x] Keep raw ACL/group/permission internals out of the resolved-tree representation.
+- [x] Expose direct current-page state through the presentation-neutral `selected` node field.
+- [x] Document additive compatibility rules for resolved-tree contract v1.
 - [x] Maintain the legacy renderer for existing themes.
 - [x] Provide a presentation-neutral resolved-tree path for modern themes.
 - [x] Keep hierarchy, destination resolution, permissions and ordering in Menu.
@@ -47,6 +53,17 @@ The following work is part of the 1.4.0 baseline and should not be re-planned as
 - [x] Preserve Menu styling when a theme merely embeds `[menu:...]`.
 - [x] Preserve configured link/hover colors in highly specific theme/footer contexts.
 - [x] Support `[menu:name]` and `[menu:numeric-id]`, while keeping exact-name lookup first.
+
+## Structured navigation interoperability
+
+- [x] Expose permission-aware menu discovery through `MENU_getAvailableMenus()`.
+- [x] Return only active menus available to the current request context.
+- [x] Keep discovery output limited to presentation-neutral metadata (`id`, `name`, `type`).
+- [x] Expose Geeklog Plugin Services `getMenuList` and `getMenuTree` through `PLG_invokeService()`.
+- [x] Keep Menu's own functions as the authoritative business/permission layer behind those services.
+- [x] Allow themes and plugins such as Eclipse and Agent to discover/read navigation without direct Menu-table access.
+- [x] Preserve feature-detected direct-function fallback for compatible in-process consumers.
+- [x] Keep Menu modeled as navigation structure rather than forcing it into content-oriented `plugin_getiteminfo_*` contracts.
 
 ## Frontend assets and generated CSS
 
@@ -80,11 +97,13 @@ The following work is part of the 1.4.0 baseline and should not be re-planned as
 - [x] Load English first and overlay the selected translation.
 - [x] Extend French localization for the modernized administration interface.
 - [x] Add language-contract tests for PHP/INC references.
-- [x] Add native Geeklog configuration tooltips through `plugin_getconfigtooltip_menu()`.
-- [x] Provide French configuration help with English fallback.
+- [x] Use Geeklog's native documentation-backed configuration tooltip mechanism.
+- [x] Expose `plugin_getdocumentationurl_menu()` and let `plugin_getconfigtooltip_menu()` defer to Geeklog's standard `config.html` help rendering.
+- [x] Provide configuration documentation anchors for all current global Menu settings.
 - [x] Remove obsolete `samplesetting1` / `samplesetting2` configuration labels.
 - [x] Remove obsolete `samplesetting1` / `samplesetting2` rows during 1.4.0 upgrade.
 - [x] Preserve historical color values safely (`#RRGGBB`, `RRGGBB`, `#RGB`, `RGB`, empty, `none`, malformed values).
+- [x] Tolerate incomplete legacy/cloned per-menu configuration rows and restore safe historical defaults for missing `menu_alignment`, `use_images`, filenames and colors.
 - [x] Use Geeklog's native Configuration API for global Menu settings.
 - [x] Keep intentional select controls matched to `$LANG_configselects['menu']`.
 
@@ -124,7 +143,11 @@ No large feature should be added before the stable 1.4.0 release. Remaining work
 - [ ] Verify interrupted/retried upgrade remains idempotent where practical.
 - [ ] Verify `[menu:name]`, `[menu:id]`, invalid ID, and numeric-name edge cases.
 - [ ] Verify the administration menu count reflects the actual number of menus.
-- [ ] Verify configuration tooltips in English and French.
+- [ ] Verify `MENU_getAvailableMenus()` under anonymous, authenticated, group-restricted and Menu Admin/Root contexts.
+- [ ] Verify `getMenuList` and `getMenuTree` through `PLG_invokeService()` on Geeklog 2.1.1 and 2.2.2.
+- [ ] Verify Eclipse can consume the Menu service facade and that direct-function fallback remains functional.
+- [ ] Verify menus with missing legacy `menu_alignment` / `use_images` rows render and open in administration without warnings.
+- [ ] Verify documentation-backed configuration tooltips with the active theme on Geeklog 2.1.1 and 2.2.2.
 - [ ] Verify upgrade removes obsolete `samplesetting1/2` rows without touching valid configuration.
 - [ ] Confirm `plugin.json` remains consistent with `autoinstall.php` and `config.php` compatibility declarations.
 - [ ] Confirm no temporary debugging workflow or trace remains.
@@ -165,9 +188,10 @@ The 1.4.x line should prefer fixes, diagnostics and compatibility improvements o
 
 ### Active/current navigation state
 
-- [ ] Extend the resolved-tree contract with presentation-neutral current-state metadata.
-- [ ] Detect direct destination matches.
-- [ ] Mark ancestors of the active node.
+- [x] Expose direct destination selection through `node['selected']` in resolved-tree contract v1.
+- [x] Detect direct destination matches for resolved URLs.
+- [ ] Decide whether ancestor active-trail state belongs in Menu's neutral contract or should remain a consumer concern.
+- [ ] If standardized in Menu, mark ancestors of the active node additively without changing existing v1 field semantics.
 - [ ] Expose data suitable for `aria-current` and theme highlighting.
 - [ ] Validate topic, static-page, plugin and URL matching.
 
@@ -259,7 +283,8 @@ Menu is a navigation/structure plugin, not an addressable content plugin. It sho
 - [ ] Define a narrow inter-plugin contract for advertising safe destinations or navigation blocks.
 - [ ] Prefer existing Geeklog plugin/service APIs where they fit.
 - [ ] Avoid hard dependencies on individual plugins.
-- [ ] Document capability discovery so consumers can detect optional Menu integration without loading implementation-specific internals.
+- [x] Provide service-based discovery so consumers can detect/read available Menu navigation without loading implementation-specific internals.
+- [ ] Generalize capability metadata further if multiple navigation-service families need explicit capability negotiation beyond `getMenuList` / `getMenuTree`.
 
 This phase is the appropriate place to revisit the earlier idea of a more dynamic Navigation block once its concrete use case is defined.
 
@@ -291,7 +316,10 @@ This phase is the appropriate place to revisit the earlier idea of a more dynami
 
 ## External/headless API
 
-- [ ] Expose JSON only after the internal resolved-tree contract is stable and versioned.
+The internal/inter-plugin service facade is implemented in 1.4.0. Public remote/headless transport remains future work.
+
+- [x] Stabilize and version the internal resolved-tree contract used by service consumers.
+- [ ] Expose public remote JSON only after authentication/request-context rules are defined.
 - [ ] Reuse the same permission-aware resolver used by themes.
 - [ ] Define authentication and request context explicitly.
 - [ ] Document use by decoupled frontends, applications and agent tooling.
@@ -335,7 +363,7 @@ Every stable release must validate the surface it claims to support.
 
 **Localization:** English is the canonical interface contract; translations overlay it and may fall back safely.
 
-**Architecture:** `MENU_getResolvedTree()` remains the central presentation-neutral structural contract for modern consumers. New functionality should extend that model rather than duplicate menu-resolution logic.
+**Architecture:** `MENU_getAvailableMenus()` provides permission-aware discovery, while `MENU_getResolvedTree()` remains the central presentation-neutral structural contract. Geeklog Plugin Services are thin inter-plugin facades over those authoritative Menu functions; new functionality should extend that model rather than duplicate menu-resolution logic.
 
 **Presentation ownership:** Menu owns structure; themes may own presentation only through an explicit contract.
 
