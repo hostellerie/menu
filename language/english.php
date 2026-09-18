@@ -192,11 +192,14 @@ $LANG_VC = array(
     'submenu_text_color'         => 'Sub Menu Text',
     'submenu_hover_text_color'   => 'Sub Menu Text Hover',
     'submenu_highlight_color'    => 'Border',
+    'menu_parent_filename'       => 'Sub Menu Parent Indicator',
+    'menu_alignment'             => 'Menu Alignment',
 );
 
 $LANG_VS = array(
     'main_menu_text_color'       => 'Menu Text',
     'main_menu_hover_text_color' => 'Menu Text Hover',
+    'menu_alignment'             => 'Menu Alignment',
 );
 
 $LANG_MENU_MENU_TYPES = array(
