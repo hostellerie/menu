@@ -153,25 +153,6 @@ if (MENU_runtimeConfigEnabled('debug', false)) {
         . ' (legacy_rendering=' . (MENU_runtimeConfigEnabled('legacy_rendering', true) ? '1' : '0')
         . ', cache=' . (MENU_runtimeConfigEnabled('enable_cache', true) ? '1' : '0') . ').'
     );
-
-    $menuTheme = isset($_CONF['theme']) ? (string) $_CONF['theme'] : '[unset]';
-    $menuLayout = isset($_CONF['path_layout']) ? (string) $_CONF['path_layout'] : '';
-    $menuHeader = $menuLayout !== '' ? rtrim($menuLayout, "/\\") . DIRECTORY_SEPARATOR . 'header.thtml' : '';
-    $menuFunctions = $menuLayout !== '' ? rtrim($menuLayout, "/\\") . DIRECTORY_SEPARATOR . 'functions.php' : '';
-    $menuHeaderContents = ($menuHeader !== '' && is_file($menuHeader)) ? @file_get_contents($menuHeader) : false;
-    $menuFunctionsContents = ($menuFunctions !== '' && is_file($menuFunctions)) ? @file_get_contents($menuFunctions) : false;
-
-    MENU_debugLog(
-        'Theme runtime: theme=' . $menuTheme
-        . ', path_layout=' . ($menuLayout !== '' ? $menuLayout : '[unset]')
-        . ', header_exists=' . ($menuHeaderContents !== false ? 'yes' : 'no')
-        . ', header_eclipse_trace=' . ($menuHeaderContents !== false && strpos($menuHeaderContents, 'Eclipse header template reached; layout=') !== false ? 'yes' : 'no')
-        . ', header_sha256=' . ($menuHeaderContents !== false ? hash('sha256', $menuHeaderContents) : '[unavailable]')
-        . ', functions_exists=' . ($menuFunctionsContents !== false ? 'yes' : 'no')
-        . ', functions_eclipse_trace=' . ($menuFunctionsContents !== false && strpos($menuFunctionsContents, 'Eclipse functions.php loaded; file=') !== false ? 'yes' : 'no')
-        . ', functions_sha256=' . ($menuFunctionsContents !== false ? hash('sha256', $menuFunctionsContents) : '[unavailable]')
-        . '.'
-    );
 }
 
 /**
