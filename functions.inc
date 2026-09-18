@@ -135,6 +135,14 @@ require_once $_CONF['path'] . 'plugins/menu/classes/classMenuElement.php';
 require_once $_CONF['path'] . 'plugins/menu/runtime_loader.php';
 require_once $_CONF['path'] . 'plugins/menu/services.inc.php';
 
+if (MENU_runtimeConfigEnabled('debug', false)) {
+    MENU_debugLog(
+        'Debug logging enabled; runtime configuration loaded'
+        . ' (legacy_rendering=' . (MENU_runtimeConfigEnabled('legacy_rendering', true) ? '1' : '0')
+        . ', cache=' . (MENU_runtimeConfigEnabled('enable_cache', true) ? '1' : '0') . ').'
+    );
+}
+
 /**
  * Declare Menu's read-only Geeklog Plugin Services as available.
  *
