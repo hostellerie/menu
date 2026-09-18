@@ -135,6 +135,19 @@ require_once $_CONF['path'] . 'plugins/menu/classes/classMenuElement.php';
 require_once $_CONF['path'] . 'plugins/menu/runtime_loader.php';
 require_once $_CONF['path'] . 'plugins/menu/services.inc.php';
 
+/**
+ * Declare Menu's read-only Geeklog Plugin Services as available.
+ *
+ * PLG_invokeService() requires this plugin API hook before dispatching
+ * service_getMenuList_menu() or service_getMenuTree_menu().
+ *
+ * @return bool
+ */
+function plugin_wsEnabled_menu()
+{
+    return true;
+}
+
 // +---------------------------------------------------------------------------+
 // | Geeklog Plugin API Implementation                                         |
 // +---------------------------------------------------------------------------+
