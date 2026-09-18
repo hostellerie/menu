@@ -139,11 +139,41 @@ function plugin_getconfigtooltip_menu($id)
  */
 function MENU_debugLog($message)
 {
+    global $_CONF;
+
     if (!MENU_runtimeConfigEnabled('debug', false)) {
         return;
     }
 
     $line = 'Menu: ' . (string) $message;
+    $debugLines = array($line);
+
+    $geeklogLoggerAvailable = function_exists('COM_errorLog');
+    $pathLog = isset($_CONF['path_log']) ? (string) $_CONF['path_log'] : '';
+    $errorLog = $pathLog !== ''
+        ? rtrim($pathLog, "/\\") . DIRECTORY_SEPARATOR . 'error.log'
+        : '';
+
+    $debugLines[] = 'Geeklog log channel: COM_errorLog='
+        . ($geeklogLoggerAvailable ? 'yes' : 'no')
+        . ', path_log=' . ($pathLog !== '' ? $pathLog : '[unset]')
+        . ', path_exists=' . ($pathLog !== '' && is_dir($pathLog) ? 'yes' : 'no')
+        . ', path_writable=' . ($pathLog !== '' && is_writable($pathLog) ? 'yes' : 'no')
+        . ', error_log_exists=' . ($errorLog !== '' && file_exists($errorLog) ? 'yes' : 'no')
+        . ', error_log_writable=' . ($errorLog !== '' && file_exists($errorLog) && is_writable($errorLog) ? 'yes' : 'no')
+        . '.';
+
+    $geeklogResult = null;
+    if ($geeklogLoggerAvailable) {
+        $geeklogResult = COM_errorLog($line, 1);
+        $debugLines[] = 'Geeklog log channel result: '
+            . ($geeklogResult === '' || $geeklogResult === null
+                ? '[empty]'
+                : trim(strip_tags((string) $geeklogResult)));
+    } else {
+        error_log($line);
+        $debugLines[] = 'Geeklog log channel result: COM_errorLog unavailable; PHP error_log fallback used.';
+    }
 
     /*
      * Keep a plugin-owned private debug log so diagnostics do not depend on
@@ -157,25 +187,18 @@ function MENU_debugLog($message)
                 @mkdir($dataDir, 0755, true);
             }
             if (is_dir($dataDir) && is_writable($dataDir)) {
+                $payload = '';
+                foreach ($debugLines as $debugLine) {
+                    $payload .= '[' . date('Y-m-d H:i:s') . '] ' . $debugLine . PHP_EOL;
+                }
                 @file_put_contents(
                     rtrim($dataDir, "/\\") . DIRECTORY_SEPARATOR . 'menu-debug.log',
-                    '[' . date('Y-m-d H:i:s') . '] ' . $line . PHP_EOL,
+                    $payload,
                     FILE_APPEND | LOCK_EX
                 );
             }
         }
     }
-
-    if (function_exists('COM_errorLog')) {
-        COM_errorLog($line, 1);
-        return;
-    }
-
-    /*
-     * Extremely early/bootstrap contexts may not have COM_errorLog yet.
-     * Use PHP's configured error log only as a final debug-only fallback.
-     */
-    error_log($line);
 }
 
 /**
