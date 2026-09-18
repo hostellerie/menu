@@ -34,16 +34,16 @@ if (strpos($module, 'MENU_adminTokenInput()') === false) {
     exit(1);
 }
 
-if (strpos($module, "'menu_alignment' => $defaultAlignment") === false
+if (strpos($module, "'menu_alignment' => \$defaultAlignment") === false
     || strpos($module, "'use_images' => 0") === false
-    || strpos($module, "isset($Menus[$mid]['config'])") === false) {
+    || strpos($module, "isset(\$Menus[\$mid]['config'])") === false) {
     fwrite(STDERR, "Admin menu configuration must tolerate missing legacy config rows\n");
     exit(1);
 }
 
-if (strpos($module, "isset($LANG_VS[$name]) ? $LANG_VS[$name]") === false
-    || strpos($module, "isset($LANG_VC[$name]) ? $LANG_VC[$name]") === false
-    || strpos($module, "isset($LANG_MENU01[$name]) ? $LANG_MENU01[$name] : $name") === false) {
+if (strpos($module, "isset(\$LANG_VS[\$name]) ? \$LANG_VS[\$name]") === false
+    || strpos($module, "isset(\$LANG_VC[\$name]) ? \$LANG_VC[\$name]") === false
+    || strpos($module, "isset(\$LANG_MENU01[\$name]) ? \$LANG_MENU01[\$name] : \$name") === false) {
     fwrite(STDERR, "Per-type menu labels must fall back safely when translations are incomplete\n");
     exit(1);
 }
