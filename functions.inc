@@ -37,7 +37,7 @@
 // |                                                                           |
 // +---------------------------------------------------------------------------+
 
-global $_DB_table_prefix, $_TABLES;
+global $_CONF, $_DB_table_prefix, $_TABLES, $_MENU_CONF;
 
 /**
 * @package Menu
