@@ -186,6 +186,21 @@ $Menus[1] = array(
 
 $tree = MENU_getResolvedTree('navigation');
 menu_test_assert(count($tree) === 8, 'unexpected top-level node count');
+
+// Runtime access is authoritative. A consumer-facing resolved tree must not
+// perform a second SEC_inGroup() check that can contradict Root/Menu Admin
+// access already granted by MENU_loadRuntimeMenus().
+$rootGranted = new MenuResolvedTestElement(10, 0, 'Root granted', 6, '', 90, 'https://example.test/root-granted');
+$rootGranted->group_id = 999;
+$rootGranted->access = 3;
+$root->addChild(10);
+$Menus[1]['elements'][10] = $rootGranted;
+$treeWithRuntimeGrant = MENU_getResolvedTree('navigation');
+$labelsWithRuntimeGrant = array();
+foreach ($treeWithRuntimeGrant as $node) {
+    $labelsWithRuntimeGrant[] = $node['label'];
+}
+menu_test_assert(in_array('Root granted', $labelsWithRuntimeGrant, true), 'resolved tree must trust runtime access grants');
 menu_test_assert($tree[0]['label'] === 'Home', 'Home must remain first');
 menu_test_assert($tree[0]['type'] === 2, 'Home must remain Geeklog Action type 2');
 menu_test_assert($tree[0]['url'] === 'https://example.test/', 'Home URL was not resolved');
