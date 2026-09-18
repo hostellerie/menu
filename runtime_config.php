@@ -139,81 +139,18 @@ function plugin_getconfigtooltip_menu($id)
  */
 function MENU_debugLog($message)
 {
-    global $_CONF;
-
     if (!MENU_runtimeConfigEnabled('debug', false)) {
         return;
     }
 
     $line = 'Menu: ' . (string) $message;
-    $debugLines = array($line);
 
-    $geeklogLoggerAvailable = function_exists('COM_errorLog');
-    $pathLog = isset($_CONF['path_log']) ? (string) $_CONF['path_log'] : '';
-    $errorLog = $pathLog !== ''
-        ? rtrim($pathLog, "/\\") . DIRECTORY_SEPARATOR . 'error.log'
-        : '';
-
-    $debugLines[] = 'Geeklog log channel: COM_errorLog='
-        . ($geeklogLoggerAvailable ? 'yes' : 'no')
-        . ', path_log=' . ($pathLog !== '' ? $pathLog : '[unset]')
-        . ', path_exists=' . ($pathLog !== '' && is_dir($pathLog) ? 'yes' : 'no')
-        . ', path_writable=' . ($pathLog !== '' && is_writable($pathLog) ? 'yes' : 'no')
-        . ', error_log_exists=' . ($errorLog !== '' && file_exists($errorLog) ? 'yes' : 'no')
-        . ', error_log_writable=' . ($errorLog !== '' && file_exists($errorLog) && is_writable($errorLog) ? 'yes' : 'no')
-        . '.';
-
-    $geeklogResult = null;
-    if ($geeklogLoggerAvailable) {
-        clearstatcache(true, $errorLog);
-        $sizeBefore = ($errorLog !== '' && is_file($errorLog)) ? @filesize($errorLog) : false;
-
-        $geeklogResult = COM_errorLog($line, 1);
-
-        clearstatcache(true, $errorLog);
-        $sizeAfter = ($errorLog !== '' && is_file($errorLog)) ? @filesize($errorLog) : false;
-        $delta = ($sizeBefore !== false && $sizeAfter !== false)
-            ? ((int) $sizeAfter - (int) $sizeBefore)
-            : null;
-
-        $debugLines[] = 'Geeklog log channel result: '
-            . ($geeklogResult === '' || $geeklogResult === null
-                ? '[empty]'
-                : trim(strip_tags((string) $geeklogResult)))
-            . ', size_before=' . ($sizeBefore === false ? '[unknown]' : (string) $sizeBefore)
-            . ', size_after=' . ($sizeAfter === false ? '[unknown]' : (string) $sizeAfter)
-            . ', delta=' . ($delta === null ? '[unknown]' : (string) $delta)
-            . ', realpath=' . ($errorLog !== '' && realpath($errorLog) !== false ? realpath($errorLog) : '[unresolved]')
-            . '.';
-    } else {
-        error_log($line);
-        $debugLines[] = 'Geeklog log channel result: COM_errorLog unavailable; PHP error_log fallback used.';
+    if (function_exists('COM_errorLog')) {
+        COM_errorLog($line, 1);
+        return;
     }
 
-    /*
-     * Keep a plugin-owned private debug log so diagnostics do not depend on
-     * Geeklog/PHP logging configuration. MENU_dataDir() may not yet be loaded
-     * in very early bootstrap contexts, so detect it conservatively.
-     */
-    if (function_exists('MENU_dataDir')) {
-        $dataDir = MENU_dataDir();
-        if ($dataDir !== '') {
-            if (!is_dir($dataDir)) {
-                @mkdir($dataDir, 0755, true);
-            }
-            if (is_dir($dataDir) && is_writable($dataDir)) {
-                $payload = '';
-                foreach ($debugLines as $debugLine) {
-                    $payload .= '[' . date('Y-m-d H:i:s') . '] ' . $debugLine . PHP_EOL;
-                }
-                @file_put_contents(
-                    rtrim($dataDir, "/\\") . DIRECTORY_SEPARATOR . 'menu-debug.log',
-                    $payload,
-                    FILE_APPEND | LOCK_EX
-                );
-            }
-        }
-    }
+    error_log($line);
 }
 
 /**
