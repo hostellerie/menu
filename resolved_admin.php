@@ -4,13 +4,61 @@
 // +---------------------------------------------------------------------------+
 // | Menu Plugin 1.3.0                                                        |
 // +---------------------------------------------------------------------------+
-// | resolved_admin.php                                                        |
+// | resolved_admin.php                                                         |
 // |                                                                           |
 // | Structured provider for the legacy Geeklog Core / Admin menu.             |
 // +---------------------------------------------------------------------------+
 
 if (!defined('VERSION')) {
     die('This file can not be used on its own.');
+}
+
+/**
+ * Convert a Geeklog-rendered administrative label into presentation-neutral
+ * metadata. Some core/plugin callbacks use COM_createControl() and therefore
+ * return small HTML wrappers (for example display-text-warning renders as
+ * <span class="uk-text-danger">...</span> in Denim). The resolved-tree API
+ * must not leak that theme HTML, but it should preserve the semantic intent.
+ *
+ * Geeklog/plugin option collection may HTML-encode that wrapper before Menu
+ * receives it. Decode a bounded number of times before inspecting or stripping
+ * markup so both raw and encoded controls are normalized consistently.
+ *
+ * @param string $label
+ * @return array Array with plain-text label and optional semantic status
+ */
+function MENU_resolvedAdminLabelMetadata($label)
+{
+    $decoded = (string) $label;
+
+    for ($i = 0; $i < 2; $i++) {
+        $next = html_entity_decode($decoded, ENT_QUOTES, 'UTF-8');
+        if ($next === $decoded) {
+            break;
+        }
+        $decoded = $next;
+    }
+
+    $status = '';
+
+    // Geeklog 2.2.x Denim renders COM_createControl('display-text-warning')
+    // with uk-text-danger. Accept uk-text-warning as well for theme variants.
+    if (preg_match('/class\s*=\s*(["\'])[^"\']*\buk-text-(?:danger|warning)\b[^"\']*\1/i', $decoded)) {
+        $status = 'warning';
+    } elseif (preg_match('/class\s*=\s*(["\'])[^"\']*\buk-text-success\b[^"\']*\1/i', $decoded)) {
+        $status = 'success';
+    } elseif (preg_match('/class\s*=\s*(["\'])[^"\']*\buk-text-(?:primary|muted)\b[^"\']*\1/i', $decoded)) {
+        $status = 'info';
+    }
+
+    $plain = strip_tags($decoded);
+    $plain = preg_replace('/\s+/u', ' ', $plain);
+    $plain = trim((string) $plain);
+
+    return array(
+        'label' => $plain,
+        'status' => $status,
+    );
 }
 
 /**
@@ -116,11 +164,21 @@ function MENU_resolveGeeklogAdminChildren()
         if (!isset($option->adminurl) || !isset($option->adminlabel)) {
             continue;
         }
-        $label = (string) $option->adminlabel;
+
+        $metadata = MENU_resolvedAdminLabelMetadata($option->adminlabel);
+        $label = $metadata['label'];
         if (isset($option->numsubmissions)) {
             $label .= ' (' . MENU_resolvedFormatCount((int) $option->numsubmissions) . ')';
         }
-        $children[] = MENU_resolvedSyntheticNode($label, (string) $option->adminurl, 4, (string) $option->adminlabel);
+
+        $node = MENU_resolvedSyntheticNode(
+            $label,
+            (string) $option->adminurl,
+            4,
+            $metadata['label']
+        );
+        $node['status'] = $metadata['status'];
+        $children[] = $node;
     }
 
     if (!empty($_CONF['sort_admin']) && count($children) > 1) {

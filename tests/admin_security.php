@@ -71,6 +71,9 @@ menu_security_assert(MENU_adminCreateToken() === 'token-value', 'native token cr
 menu_security_assert(MENU_adminTokenName() === 'glsectoken', 'Geeklog CSRF token field name was not preserved');
 menu_security_assert(strpos(MENU_adminTokenInput('abc'), 'name="glsectoken"') !== false, 'token field name missing');
 menu_security_assert(strpos(MENU_adminTokenInput('abc'), 'value="abc"') !== false, 'token field value missing');
+menu_security_assert(strpos(MENU_adminTokenInput(), 'value="token-value"') !== false,
+    'implicit token must use Geeklog native SEC_createToken result');
+
 menu_security_assert(MENU_adminId('12') === 12, 'positive id normalization failed');
 menu_security_assert(MENU_adminId('-4') === 0, 'negative id must be rejected');
 menu_security_assert(MENU_adminId('abc') === 0, 'non numeric id must be rejected');

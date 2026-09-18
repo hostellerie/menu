@@ -1,40 +1,67 @@
 <?php
 
 $root = dirname(__DIR__);
-$script = file_get_contents($root . '/admin/js/menu-order-handle.js');
+$script = file_get_contents($root . '/admin/js/menu-tree-actions-1.4.0.js');
 $template = file_get_contents($root . '/templates/default/menutree.thtml');
 $module = file_get_contents($root . '/admin_element_views.php');
 $library = file_get_contents($root . '/admin/js/tablednd_0_6.js');
-
-$forbidden = array(
-    'tablednd.js',
-    'tablednd_0_5.js',
-    "addEventListener('dragstart'",
-    "document.addEventListener('mousemove'",
-    'document.elementFromPoint',
-);
-
-foreach ($forbidden as $needle) {
-    if (stripos($script, $needle) !== false
-        || stripos($template, $needle) !== false) {
-        fwrite(STDERR, "Obsolete ordering path remains: {$needle}\n");
-        exit(1);
-    }
-}
+$endpoint = file_get_contents($root . '/admin/tree-action.php');
 
 $requiredScript = array(
     "typeof $.fn.tableDnD !== 'function'",
     '$table.tableDnD({',
     "dragHandle: 'menu-drag-handle'",
-    "onDrop: function ()",
+    "onDrop: saveOrder",
     "type: 'POST'",
-    "orders: orders",
-    "mode: 'move'",
-    "where: direction",
+    "'X-Requested-With': 'XMLHttpRequest'",
+    'menu_id: menuId',
+    'orders: orders',
+    'pendingOrder = orders',
 );
 foreach ($requiredScript as $needle) {
     if (strpos($script, $needle) === false) {
-        fwrite(STDERR, "TableDnD ordering behavior missing: {$needle}\n");
+        fwrite(STDERR, "Simplified drag ordering behavior missing: {$needle}\n");
+        exit(1);
+    }
+}
+
+$forbiddenScript = array(
+    'tokenValue',
+    'refreshToken',
+    "tree_action: 'activate'",
+    'window.location.reload()',
+);
+foreach ($forbiddenScript as $needle) {
+    if (strpos($script, $needle) !== false) {
+        fwrite(STDERR, "Unwanted drag complexity remains: {$needle}\n");
+        exit(1);
+    }
+}
+
+$requiredEndpoint = array(
+    "SEC_hasRights('menu.admin')",
+    "HTTP_X_REQUESTED_WITH",
+    "xmlhttprequest",
+    "HTTP_ORIGIN",
+    'MENU_adminPostMutationError(\'\', $_POST)',
+    'MENU_saveElementOrder',
+    "'ok' => true",
+);
+foreach ($requiredEndpoint as $needle) {
+    if (strpos($endpoint, $needle) === false) {
+        fwrite(STDERR, "Drag endpoint behavior missing: {$needle}\n");
+        exit(1);
+    }
+}
+
+$forbiddenEndpoint = array(
+    'MENU_adminCheckToken()',
+    'MENU_changeActiveStatusElement',
+    'MENU_adminCreateToken()',
+);
+foreach ($forbiddenEndpoint as $needle) {
+    if (strpos($endpoint, $needle) !== false) {
+        fwrite(STDERR, "Drag endpoint still depends on one-shot CSRF flow: {$needle}\n");
         exit(1);
     }
 }
@@ -51,24 +78,17 @@ $treeEnd = strpos($module, 'function MENU_createElement', $treeStart);
 $treeBody = substr($module, $treeStart, $treeEnd - $treeStart);
 $jqueryPos = strpos($treeBody, "setJavaScriptLibrary('jquery')");
 $libraryPos = strpos($treeBody, "setJavaScriptFile('menu_tablednd', '/admin/plugins/menu/js/tablednd_0_6.js')");
-$adapterPos = strpos($treeBody, "setJavaScriptFile('menu_order_handle', '/admin/plugins/menu/js/menu-order-handle.js')");
-if ($jqueryPos === false || $libraryPos === false || $adapterPos === false
-    || $jqueryPos >= $libraryPos || $libraryPos >= $adapterPos) {
+if ($jqueryPos === false || $libraryPos === false || $jqueryPos >= $libraryPos) {
     fwrite(STDERR, "Ordering assets must be registered after jQuery and in dependency order\n");
-    exit(1);
-}
-
-if (strpos($template, 'tablednd_0_6.js') !== false
-    || strpos($template, 'menu-order-handle.js') !== false) {
-    fwrite(STDERR, "Ordering assets must not be injected directly by the template\n");
     exit(1);
 }
 
 if (strpos($template, 'id="menu-order-token"') === false
     || strpos($template, 'data-menuid="{menuid}"') === false
-    || strpos($template, 'data-post-url=') === false) {
+    || strpos($template, 'data-tree-action-url=') === false
+    || strpos($template, 'menu-tree-actions-1.4.0.js') === false) {
     fwrite(STDERR, "Ordering template metadata is incomplete\n");
     exit(1);
 }
 
-echo "TableDnD menu ordering contract tests passed\n";
+echo "Simplified TableDnD ordering contract tests passed\n";

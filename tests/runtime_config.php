@@ -46,4 +46,25 @@ assertRuntimeConfig(strpos(MENU_legacyNavigationAttributes('Primary'), 'role="na
 $_MENU_CONF['accessibility_markup'] = 0;
 assertRuntimeConfig(MENU_legacyNavigationAttributes('Primary') === '', 'navigation ARIA can be disabled');
 
+$GLOBALS['menu_debug_messages'] = array();
+if (!function_exists('COM_errorLog')) {
+    function COM_errorLog($message, $mode = 0)
+    {
+        $GLOBALS['menu_debug_messages'][] = array($message, $mode);
+    }
+}
+$_MENU_CONF['debug'] = 0;
+MENU_debugLog('disabled');
+assertRuntimeConfig(count($GLOBALS['menu_debug_messages']) === 0, 'debug logger stays silent when disabled');
+
+$_MENU_CONF['debug'] = 1;
+MENU_debugLog('enabled');
+assertRuntimeConfig(count($GLOBALS['menu_debug_messages']) === 1, 'debug logger writes when enabled');
+assertRuntimeConfig($GLOBALS['menu_debug_messages'][0][0] === 'Menu: enabled', 'debug logger prefixes Menu');
+assertRuntimeConfig($GLOBALS['menu_debug_messages'][0][1] === 1, 'debug logger uses Geeklog error log mode');
+
+$runtimeSource = file_get_contents(dirname(__DIR__) . '/runtime_config.php');
+assertRuntimeConfig(strpos($runtimeSource, 'menu-debug.log') === false, 'private menu-debug.log must not be used');
+assertRuntimeConfig(strpos($runtimeSource, 'COM_errorLog($line, 1)') !== false, 'debug logger uses Geeklog error.log when available');
+
 echo "runtime_config: OK\n";

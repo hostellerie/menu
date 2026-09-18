@@ -155,6 +155,10 @@ $LANG_MENU01 = array(
     'clone'                 => 'Copy',
     'clone_menu_label'      => 'Name for Cloned Menu',
     'topic'                 => 'Topics',
+    'go'                => 'Go',
+    'back_to'           => 'Back to',
+    'for'               => 'for',
+
 );
 
 $LANG_HC = array(
@@ -188,11 +192,14 @@ $LANG_VC = array(
     'submenu_text_color'         => 'Sub Menu Text',
     'submenu_hover_text_color'   => 'Sub Menu Text Hover',
     'submenu_highlight_color'    => 'Border',
+    'menu_parent_filename'       => 'Sub Menu Parent Indicator',
+    'menu_alignment'             => 'Menu Alignment',
 );
 
 $LANG_VS = array(
     'main_menu_text_color'       => 'Menu Text',
     'main_menu_hover_text_color' => 'Menu Text Hover',
+    'menu_alignment'             => 'Menu Alignment',
 );
 
 $LANG_MENU_MENU_TYPES = array(
@@ -244,6 +251,7 @@ $LANG_MENU_ADMIN = array(
     3 => 'Click on the icon under the Edit column to edit a menu item\'s properties. Arrange the items by moving them up or down with the arrows under the Order column.',
     4 => 'To create a new menu element, specify its details and permissions below.',
     5 => 'To edit a menu element, modify its details or permissions below.',
+    6 => 'Customize the selected menu appearance and layout options below.',
 );
 
 $LANG_MENU_GLTYPES_HELP = array(

@@ -42,12 +42,12 @@ function MENU_displayTree( $menu_id ) {
 
     $menu_select = '<form name="jumpbox" id="jumpbox" action="' . $_CONF['site_admin_url'] . '/plugins/menu/index.php" method="get" style="margin:0;padding:0"><div>';
     $menu_select .= '<input type="hidden" name="mode" id="mode" value="menu"'.XHTML.'>' . LB;
-    $menu_select .= '<strong>Menu</strong>' . ':&nbsp;<select name="menu" onchange="submit()">';
+    $menu_select .= '<strong>' . MENU_escapeHTML($LANG_MENU00['menulabel']) . '</strong>' . ':&nbsp;<select name="menu" onchange="submit()">';
     foreach ($Menus AS $menu) {
         $menu_select .= '<option value="' . $menu['menu_id'].'"' . ($menu['menu_id'] == $menu_id ? ' selected="selected"' : '') . '>' . MENU_escapeHTML($menu['menu_name']) .'</option>' . LB;
     }
     $menu_select .= '</select>';
-    $menu_select .= '&nbsp;<input type="submit" value="' . 'go' . '"' . XHTML . '>';
+    $menu_select .= '&nbsp;<input type="submit" value="' . MENU_escapeHTML($LANG_MENU01['go']) . '"' . XHTML . '>';
     $menu_select .= '</div></form>';
 
     $T->set_var(array(
@@ -93,7 +93,7 @@ function MENU_createElement ( $menu_id ) {
 
     $menu_arr = array(
             array('url'  => $_CONF['site_admin_url'] .'/plugins/menu/index.php?mode=menu&amp;menu='.$menu_id,
-                  'text' => 'Back to ' . $safeMenuName),
+                  'text' => MENU_escapeHTML($LANG_MENU01['back_to']) . ' ' . $safeMenuName),
             array('url'  => $_CONF['site_admin_url'] .'/plugins/menu/index.php',
                   'text' => $LANG_MENU01['menu_list']),
     );
@@ -208,6 +208,7 @@ function MENU_createElement ( $menu_id ) {
     }
     $order_select .= '</select>' . LB;
 
+
     // build group select
 
     $rootUser = DB_getItem($_TABLES['group_assignments'],'ug_uid','ug_main_grp_id=1');
@@ -289,11 +290,11 @@ function MENU_editElement( $menu_id, $mid ) {
 
     $menu_arr = array(
             array('url'  => $_CONF['site_admin_url'] .'/plugins/menu/index.php?mode=menu&amp;menu='.$menu_id,
-                  'text' => 'Back to ' . $safeMenuName),
+                  'text' => MENU_escapeHTML($LANG_MENU01['back_to']) . ' ' . $safeMenuName),
             array('url'  => $_CONF['site_admin_url'] .'/plugins/menu/index.php',
                   'text' => $LANG_MENU01['menu_list']),
     );
-    $retval  .= COM_startBlock($LANG_MENU01['menu_builder'].' :: '.$LANG_MENU01['edit_element'] .' for ' . $safeMenuName,'', COM_getBlockTemplate('_admin_block', 'header'));
+    $retval  .= COM_startBlock($LANG_MENU01['menu_builder'].' :: '.$LANG_MENU01['edit_element'] . ' ' . $LANG_MENU01['for'] . ' ' . $safeMenuName,'', COM_getBlockTemplate('_admin_block', 'header'));
     $retval  .= ADMIN_createMenu($menu_arr, $LANG_MENU_ADMIN[5],
                                 $_CONF['site_admin_url'] . '/plugins/menu/images/menu.png');
 
@@ -445,7 +446,7 @@ $parent_select = '<select id="pid" name="pid">' . LB;
         'site_admin_url'    => $_CONF['site_admin_url'],
         'site_url'          => $_CONF['site_url'],
         'form_action'       => $_CONF['site_admin_url'] . '/plugins/menu/index.php',
-        'birdseed'          => '<a href="' . MENU_escapeHTML($_CONF['site_admin_url']) . '/plugins/menu/index.php">Menu List</a> :: <a href="' . MENU_escapeHTML($_CONF['site_admin_url']) . '/plugins/menu/index.php?mode=menu&amp;menu=' . (int) $menu_id . '">' . $safeMenuName . '</a> :: Edit Element',
+        'birdseed'          => '<a href="' . MENU_escapeHTML($_CONF['site_admin_url']) . '/plugins/menu/index.php">' . MENU_escapeHTML($LANG_MENU01['menu_list']) . '</a> :: <a href="' . MENU_escapeHTML($_CONF['site_admin_url']) . '/plugins/menu/index.php?mode=menu&amp;menu=' . (int) $menu_id . '">' . $safeMenuName . '</a> :: ' . MENU_escapeHTML($LANG_MENU01['edit_element']),
         'menulabel'         => MENU_escapeHTML($Menus[$menu_id]['elements'][$mid]->label),
         'menuorder'         => $Menus[$menu_id]['elements'][$mid]->order,
         'order_select'      => $order_select,
@@ -497,6 +498,7 @@ function MENU_menuConfig( $mid ) {
     global $_CONF, $_TABLES, $_MENU_CONF, $Menus, $LANG_MENU00, $LANG_MENU01,
            $LANG_MENU_ADMIN, $LANG_MENU_TYPES, $LANG_MENU_GLTYPES, $LANG_MENU_GLFUNCTION,
            $_SCRIPTS, $LANG_MENU_MENU_TYPES, $LANG_VC, $LANG_HS, $LANG_HC, $LANG_VS;
+
 
     $js = '      jQuery(document).ready(
         function()
@@ -582,23 +584,39 @@ function MENU_menuConfig( $mid ) {
             array('url'  => $_CONF['site_admin_url'] .'/plugins/menu/index.php',
                   'text' => $LANG_MENU01['menu_list']),
     );
-    $retval  .= COM_startBlock($LANG_MENU01['menu_builder'].' :: '.$LANG_MENU01['menu_colors'] .' for ' . $safeMenuName,'', COM_getBlockTemplate('_admin_block', 'header'));
+    $retval  .= COM_startBlock($LANG_MENU01['menu_builder'].' :: '.$LANG_MENU01['menu_colors'] . ' ' . $LANG_MENU01['for'] . ' ' . $safeMenuName,'', COM_getBlockTemplate('_admin_block', 'header'));
     $retval  .= ADMIN_createMenu($menu_arr, $LANG_MENU_ADMIN[6],
                                 $_CONF['site_admin_url'] . '/plugins/menu/images/menu.png');
 
 
 
-    foreach ($menuAttributes AS $name => $display ) {
-        $menuConfig[$name] = '#000000';
-    }
+    /*
+     * Start from complete legacy-compatible defaults before overlaying stored
+     * per-menu configuration. Older, cloned or partially migrated menus may
+     * legitimately miss rows such as menu_alignment or use_images.
+     */
+    $defaultAlignment = ((int) $Menus[$mid]['menu_type'] === 2) ? 0 : 1;
+    $menuConfig = array(
+        'main_menu_bg_color' => '#000000',
+        'main_menu_hover_bg_color' => '#000000',
+        'main_menu_text_color' => '#000000',
+        'main_menu_hover_text_color' => '#000000',
+        'submenu_text_color' => '#000000',
+        'submenu_hover_text_color' => '#000000',
+        'submenu_background_color' => '#000000',
+        'submenu_hover_bg_color' => '#000000',
+        'submenu_highlight_color' => '#000000',
+        'submenu_shadow_color' => '#000000',
+        'menu_bg_filename' => '',
+        'menu_hover_filename' => '',
+        'menu_parent_filename' => '',
+        'menu_alignment' => $defaultAlignment,
+        'use_images' => 0,
+    );
 
-    if ( is_array($Menus[$mid]['config']) ) {
-        foreach ($Menus[$mid]['config'] AS $name => $value ) {
+    if (isset($Menus[$mid]['config']) && is_array($Menus[$mid]['config'])) {
+        foreach ($Menus[$mid]['config'] as $name => $value) {
             $menuConfig[$name] = $value;
-        }
-    } else {
-        foreach ($menuAttributes AS $name => $display ) {
-            $menuConfig[$name] = '#000000';
         }
     }
 
@@ -662,6 +680,7 @@ function MENU_menuConfig( $mid ) {
         $menuConfig[$colorKey] = MENU_cssColor($menuConfig[$colorKey]);
     }
 
+
     // build menu type select
 
     $menuTypeSelect = '<select id="menutype" name="menutype">' . LB;
@@ -704,7 +723,7 @@ function MENU_menuConfig( $mid ) {
         'site_admin_url'    => $_CONF['site_admin_url'],
         'site_url'          => $_CONF['site_url'],
         'form_action'       => $_CONF['site_admin_url'] . '/plugins/menu/index.php',
-        'birdseed'          => '<a href="' . MENU_escapeHTML($_CONF['site_admin_url']) . '/plugins/menu/index.php">Menu List</a> :: ' . $safeMenuName . ' :: Configuration',
+        'birdseed'          => '<a href="' . MENU_escapeHTML($_CONF['site_admin_url']) . '/plugins/menu/index.php">' . MENU_escapeHTML($LANG_MENU01['menu_list']) . '</a> :: ' . $safeMenuName . ' :: ' . MENU_escapeHTML($LANG_MENU01['configuration']),
         'menu_id'           => (int) $mid,
         'menu_name'         => $safeMenuName,
         'tmbgcolor'         => $menuConfig['main_menu_bg_color'],
@@ -760,6 +779,7 @@ function MENU_menuConfig( $mid ) {
         'LANG_MENU01[confirm_reset]' => $LANG_MENU01['confirm_reset']
     ));
 
+
     if ( $Menus[$menu_id]['menu_type'] == 1 ) {
         $T->set_var('show_warning','1');
     }
@@ -772,25 +792,25 @@ function MENU_menuConfig( $mid ) {
         case 1: // horizontal cascading...
             foreach ($HCattributes AS $name) {
                 $menuAttributes[$name] = 'show';
-                $T->set_var('lang_'.$name,$LANG_HC[$name]);
+                $T->set_var('lang_'.$name, isset($LANG_HC[$name]) ? $LANG_HC[$name] : (isset($LANG_MENU01[$name]) ? $LANG_MENU01[$name] : $name));
             }
             break;
         case 2: // horizontal simple
             foreach ($HSattributes AS $name) {
                 $menuAttributes[$name] = 'show';
-                $T->set_var('lang_'.$name,$LANG_HS[$name]);
+                $T->set_var('lang_'.$name, isset($LANG_HS[$name]) ? $LANG_HS[$name] : (isset($LANG_MENU01[$name]) ? $LANG_MENU01[$name] : $name));
             }
             break;
         case 3: // vertical cascading
             foreach ($VCattributes AS $name) {
                 $menuAttributes[$name] = 'show';
-                $T->set_var('lang_'.$name,$LANG_VC[$name]);
+                $T->set_var('lang_'.$name, isset($LANG_VC[$name]) ? $LANG_VC[$name] : (isset($LANG_MENU01[$name]) ? $LANG_MENU01[$name] : $name));
             }
             break;
         case 4: // vertical simple
             foreach ($VSattributes AS $name) {
                 $menuAttributes[$name] = 'show';
-                $T->set_var('lang_'.$name,$LANG_VS[$name]);
+                $T->set_var('lang_'.$name, isset($LANG_VS[$name]) ? $LANG_VS[$name] : (isset($LANG_MENU01[$name]) ? $LANG_MENU01[$name] : $name));
             }
             break;
     }

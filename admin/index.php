@@ -13,7 +13,7 @@
 // | Authors: Ben - ben AT geeklog DOT fr                                      |
 // |                                                                           |
 // | Based on the original Sitetailor Plugin                                   |
-// | Copyright (C) 2008-2009 by the following authors:                         |
+// | Copyright (C) 2008-2009 by the following authors:                        |
 // |                                                                           |
 // | Mark R. Evans - mark AT glfusion DOT org                                  | 
 // +---------------------------------------------------------------------------+
@@ -46,6 +46,7 @@ require_once $_CONF['path'].'system/lib-admin.php';
 require_once $_CONF['path'].'plugins/menu/image_upload.php';
 require_once $_CONF['path'].'plugins/menu/admin_menu_views.php';
 require_once $_CONF['path'].'plugins/menu/admin_menu_mutations.php';
+require_once $_CONF['path'].'plugins/menu/color_utils.php';
 require_once $_CONF['path'].'plugins/menu/admin_element_views.php';
 
 $display = '';
@@ -54,7 +55,7 @@ $display = '';
 MENU_adminEnforceCsrf();
 
 if (!SEC_hasRights('menu.admin')) {
-    // Someone is trying to illegally access this page
+    // Someone is trying to illegally access the Menu Administration page
     COM_errorLog("Someone has tried to illegally access the Menu Administration page.  User id: {$_USER['uid']}, Username: {$_USER['username']}, IP: " . $_SERVER['REMOTE_ADDR'],1);
 
     $display .= COM_startBlock($LANG_MENU00['access_denied']);
@@ -63,16 +64,6 @@ if (!SEC_hasRights('menu.admin')) {
     COM_output(COM_createHTMLDocument($display));
     exit;
 }
-
-
-
-
-
-
-
-
-
-
 
 /*
  * Main processing loop
@@ -104,7 +95,7 @@ if ( (isset($_POST['execute']) || $mode != '') && !isset($_POST['cancel']) && !i
             $mid       = (int) Geeklog\Input::fPost('mid');
             $menu_id   = (int) Geeklog\Input::fPost('menu');
             MENU_moveElement( $menu_id, $mid, $direction );
-            COM_redirect($_CONF['site_admin_url'] . '/plugins/menu/index.php?mode=menu&amp;menu=' . $menu_id);
+            COM_redirect($_CONF['site_admin_url'] . '/plugins/menu/index.php?mode=menu&menu=' . $menu_id);
             break;
         case 'edit' :
             // call the editor
@@ -115,7 +106,7 @@ if ( (isset($_POST['execute']) || $mode != '') && !isset($_POST['cancel']) && !i
             break;
         case 'saveedit' :
             MENU_saveEditMenuElement();
-            COM_redirect($_CONF['site_admin_url'] . '/plugins/menu/index.php?mode=menu&amp;menu=' . $menu_id);
+            COM_redirect($_CONF['site_admin_url'] . '/plugins/menu/index.php?mode=menu&menu=' . $menu_id);
             break;
         case 'savenewmenu' :
             MENU_saveNewMenu();
@@ -131,8 +122,7 @@ if ( (isset($_POST['execute']) || $mode != '') && !isset($_POST['cancel']) && !i
             break;
         case 'activate' :
             MENU_changeActiveStatusElement();
-            $content = MENU_displayTree( $menu_id );
-            $currentSelect = $LANG_MENU01['menu_builder'];
+            COM_redirect($_CONF['site_admin_url'] . '/plugins/menu/index.php?mode=menu&menu=' . $menu_id);
             break;
         case 'menuactivate' :
             MENU_changeActiveStatusMenu();
@@ -159,7 +149,7 @@ if ( (isset($_POST['execute']) || $mode != '') && !isset($_POST['cancel']) && !i
             $action = (int) Geeklog\Input::fPost('menuactive');
             $mid    = (int) Geeklog\Input::fPost('menutodisable');
             MENU_setMenuConfigEnabled($mid, $action);
-            COM_redirect($_CONF['site_admin_url'] . '/plugins/menu/index.php?mode=menu&amp;mid=' . $mid);
+            COM_redirect($_CONF['site_admin_url'] . '/plugins/menu/index.php?mode=menu&mid=' . $mid);
             break;
         case 'menucolor' :
             $content = MENU_menuConfig($menu_id);
@@ -188,7 +178,7 @@ if ( (isset($_POST['execute']) || $mode != '') && !isset($_POST['cancel']) && !i
 } else if ( isset($_POST['orders']) && isset($_POST['menu_id']) ) {
     $menu_id = (int) Geeklog\Input::fPost('menu_id');
     MENU_saveElementOrder($menu_id, Geeklog\Input::post('orders', ''));
-    exit;
+    COM_redirect($_CONF['site_admin_url'] . '/plugins/menu/index.php?mode=menu&menu=' . $menu_id);
 
 } else {
     // display the tree
@@ -200,7 +190,12 @@ $display .= '    <div class="pluginAlert aligncenter" style="border:1px dashed #
 $display .= '    <p>' . $LANG_MENU01['javascript_required'] . '</p>' . LB;
 $display .= '    </div>' . LB;
 $display .= '</noscript>' . LB;
-$display .= '<div id="menu" style="display:none;">' . LB;
+
+// Progressive enhancement: admin content must remain visible even when JavaScript
+// or an optional UI plugin fails to load.
+$display .= '<div id="menu">' . LB;
 $display .= $content;
 $display .= '</div>';
+
+
 COM_output( COM_createHTMLDocument($display) );

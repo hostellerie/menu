@@ -119,14 +119,45 @@ namespace {
     }
 
     /*
-     * Menu 1.2.x stored some element labels already HTML-encoded. Decode one
-     * legacy layer before escaping for output so upgrades remain visually
-     * compatible while raw database values can never become markup.
+     * Menu labels are text, not presentation markup. Older Menu data and some
+     * Geeklog/plugin callbacks may provide raw, encoded or even double-encoded
+     * HTML wrappers. Decode a bounded number of legacy layers, strip markup,
+     * then escape exactly once for output.
+     *
+     * When the resolved admin-label helper recognizes a semantic Geeklog
+     * control (warning/info/success), preserve only that meaning using a small
+     * Menu-owned class around already escaped text. This lets legacy Menu
+     * rendering and resolved-tree consumers carry the same semantic signal
+     * without exposing or depending on the original UIKit markup.
      */
     if (!function_exists('MENU_escapeStoredText')) {
         function MENU_escapeStoredText($value)
         {
-            return MENU_escapeHTML(htmlspecialchars_decode((string) $value, ENT_QUOTES));
+            if (function_exists('MENU_resolvedAdminLabelMetadata')) {
+                $metadata = MENU_resolvedAdminLabelMetadata($value);
+                $text = MENU_escapeHTML(isset($metadata['label']) ? $metadata['label'] : '');
+                $status = isset($metadata['status']) ? strtolower((string) $metadata['status']) : '';
+
+                if (in_array($status, array('info', 'success', 'warning', 'danger'), true)) {
+                    return '<span class="menu-status-' . $status . '">' . $text . '</span>';
+                }
+
+                return $text;
+            }
+
+            $text = (string) $value;
+
+            for ($i = 0; $i < 4; $i++) {
+                $decoded = html_entity_decode($text, ENT_QUOTES, 'UTF-8');
+                if ($decoded === $text) {
+                    break;
+                }
+                $text = $decoded;
+            }
+
+            $text = strip_tags($text);
+
+            return MENU_escapeHTML($text);
         }
     }
 

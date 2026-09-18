@@ -93,6 +93,45 @@ function MENU_runtimeConfigEnabled($name, $fallback = null)
 }
 
 /**
+ * Provide the documentation URL used by Geeklog configuration help.
+ *
+ * Returning a plugin-owned config document lets Geeklog render the same
+ * structured VARIABLE / DEFAULT VALUE / DESCRIPTION tooltip used by Core
+ * plugins such as Static Pages.
+ *
+ * @param string $file Documentation file being requested
+ * @return mixed URL or false when not available
+ */
+function plugin_getdocumentationurl_menu($file)
+{
+    global $_CONF;
+
+    if ($file !== 'config' && $file !== 'index') {
+        return false;
+    }
+
+    if (empty($_CONF['site_url'])) {
+        return false;
+    }
+
+    return rtrim((string) $_CONF['site_url'], '/') . '/menu/config.html';
+}
+
+/**
+ * Use Geeklog's documentation-backed configuration tooltip.
+ *
+ * NULL is intentional: config.class.php interprets it as a request to load
+ * the matching desc_<option> row from plugin_getdocumentationurl_menu().
+ *
+ * @param string $id Configuration option name
+ * @return null
+ */
+function plugin_getconfigtooltip_menu($id)
+{
+    return null;
+}
+
+/**
  * Write a diagnostic message only when Menu debug logging is enabled.
  *
  * @param string $message
@@ -100,11 +139,18 @@ function MENU_runtimeConfigEnabled($name, $fallback = null)
  */
 function MENU_debugLog($message)
 {
-    if (!MENU_runtimeConfigEnabled('debug', false) || !function_exists('COM_errorLog')) {
+    if (!MENU_runtimeConfigEnabled('debug', false)) {
         return;
     }
 
-    COM_errorLog('Menu: ' . (string) $message, 1);
+    $line = 'Menu: ' . (string) $message;
+
+    if (function_exists('COM_errorLog')) {
+        COM_errorLog($line, 1);
+        return;
+    }
+
+    error_log($line);
 }
 
 /**

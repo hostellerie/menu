@@ -12,6 +12,36 @@ if (!defined('VERSION')) {
     die('This file can not be used on its own.');
 }
 
+// functions.inc loads this runtime bootstrap on every active Menu request.
+// Publish the theme-facing structured API here so themes can simply feature-
+// detect MENU_getResolvedTree() without knowing Menu's internal file layout.
+require_once __DIR__ . '/resolved_tree.php';
+
+// Shared color helpers are kept in one dedicated module. Loading them here
+// makes MENU_hexrgb() available to all plugin paths while admin/index.php can
+// safely require the same file again via require_once.
+require_once __DIR__ . '/color_utils.php';
+
+/**
+ * Return whether the current visitor can access Geeklog's core statistics page.
+ *
+ * Geeklog core stats.php does not require a stats.view feature. Anonymous
+ * access is controlled by the global login requirement and statsloginrequired.
+ * Registered users can access the page when the site itself is available.
+ *
+ * @return bool
+ */
+function MENU_coreStatsActionAllowed()
+{
+    global $_CONF;
+
+    if (!COM_isAnonUser()) {
+        return true;
+    }
+
+    return empty($_CONF['loginrequired']) && empty($_CONF['statsloginrequired']);
+}
+
 /**
  * Load the complete Menu runtime structure using a fixed number of queries.
  *
@@ -22,7 +52,7 @@ if (!defined('VERSION')) {
  */
 function MENU_loadRuntimeMenus($mbadmin, $root, $groups)
 {
-    global $_TABLES;
+    global $_CONF, $_TABLES;
 
     $menus = array();
     $groups = is_array($groups) ? $groups : array();
@@ -94,6 +124,25 @@ function MENU_loadRuntimeMenus($mbadmin, $root, $groups)
         $menuId = (int) $row['menu_id'];
         if (!isset($menus[$menuId])) {
             continue;
+        }
+
+        // Older persisted rows and lightweight test fixtures may not expose
+        // every optional column. Normalize missing type information to zero so
+        // runtime loading stays warning-free until an explicit site upgrade has
+        // completed, which is important for shared-files multisite deployments.
+        $elementType = isset($row['element_type']) ? (int) $row['element_type'] : 0;
+        $elementSubtype = isset($row['element_subtype']) ? (int) $row['element_subtype'] : 0;
+
+        // Geeklog core action subtype 5 is the Site Statistics page. The
+        // historical renderer checks a non-core stats.view feature and can hide
+        // an otherwise public Stats link. Normalize this action to the resolved
+        // core URL after applying the same access rule as stats.php itself.
+        if ($elementType === 2 && $elementSubtype === 5) {
+            if (!MENU_coreStatsActionAllowed()) {
+                continue;
+            }
+            $row['element_type'] = 6;
+            $row['element_url'] = $_CONF['site_url'] . '/stats.php';
         }
 
         $element = new mbElement();

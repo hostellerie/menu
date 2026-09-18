@@ -79,3 +79,21 @@
   </div>
   </form>
 </div>
+
+<script type="text/javascript">
+(function () {
+    var groupSelect = document.getElementById('group');
+    var i;
+
+    if (!groupSelect) {
+        return;
+    }
+
+    for (i = 0; i < groupSelect.options.length; i++) {
+        if (groupSelect.options[i].text === 'All Users') {
+            groupSelect.selectedIndex = i;
+            break;
+        }
+    }
+}());
+</script>

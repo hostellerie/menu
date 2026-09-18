@@ -1,9 +1,5 @@
 
-<script type="text/javascript">
-    document.getElementById('menu').style.display=''
-</script>
-
-    <div class="glfform">
+<div class="glfform">
 
     <form method="post" action="{form_action}" id="mbconfig" enctype="multipart/form-data" >
     {security_token_input}

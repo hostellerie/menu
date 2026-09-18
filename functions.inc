@@ -14,7 +14,7 @@
 // | Authors: Ben - ben AT geeklog DOT fr                                      |
 // |                                                                           |
 // | Based on the original Sitetailor Plugin                                   |
-// | Copyright (C) 2008-2011 by the following authors:                         |
+// | Copyright (C) 2008-2011 by the following authors:                        |
 // |                                                                           |
 // | Mark R. Evans - mark AT glfusion DOT org                                  |
 // +---------------------------------------------------------------------------+
@@ -37,7 +37,7 @@
 // |                                                                           |
 // +---------------------------------------------------------------------------+
 
-global $_DB_table_prefix, $_TABLES;
+global $_CONF, $_DB_table_prefix, $_TABLES, $_MENU_CONF;
 
 /**
 * @package Menu
@@ -53,28 +53,88 @@ if (stripos($_SERVER['PHP_SELF'], basename(__FILE__)) !== false) {
 $plugin_path = $_CONF['path'] . 'plugins/menu/';
 require_once $plugin_path . 'storage.php';
 require_once $plugin_path . 'presentation.php';
+require_once $plugin_path . 'asset_usage.php';
 require_once $plugin_path . 'cache_filesystem.php';
 require_once $plugin_path . 'cache.php';
 $langfile = $plugin_path . 'language/' . $_CONF['language'] . '.php';
+$englishLangFile = $plugin_path . 'language/english.php';
 
-if (file_exists($langfile)) {
-    require_once $langfile;
-} else {
-    require_once $plugin_path . 'language/english.php';
+// English is the canonical language. Load it first and keep it as the
+// per-key fallback when a translation file is incomplete.
+require_once $englishLangFile;
+
+$menuEnglishLanguage = array(
+    'LANG_MENU_1' => $LANG_MENU_1,
+    'LANG_MENU00' => $LANG_MENU00,
+    'LANG_MENU01' => $LANG_MENU01,
+    'LANG_HC' => $LANG_HC,
+    'LANG_HS' => $LANG_HS,
+    'LANG_VC' => $LANG_VC,
+    'LANG_VS' => $LANG_VS,
+    'LANG_MENU_MENU_TYPES' => $LANG_MENU_MENU_TYPES,
+    'LANG_MENU_TYPES' => $LANG_MENU_TYPES,
+    'LANG_MENU_TARGET' => $LANG_MENU_TARGET,
+    'LANG_MENU_GLFUNCTION' => $LANG_MENU_GLFUNCTION,
+    'LANG_MENU_GLTYPES' => $LANG_MENU_GLTYPES,
+    'LANG_MENU_ADMIN' => $LANG_MENU_ADMIN,
+    'LANG_MENU_GLTYPES_HELP' => $LANG_MENU_GLTYPES_HELP,
+    'LANG_MENU_GLFUNCTION_HELP' => $LANG_MENU_GLFUNCTION_HELP,
+    'LANG_MENU_TYPES_HELP' => $LANG_MENU_TYPES_HELP,
+);
+
+$menuEnglishConfigLanguage = array(
+    'LANG_configsections' => isset($LANG_configsections['menu']) ? $LANG_configsections['menu'] : array(),
+    'LANG_confignames' => isset($LANG_confignames['menu']) ? $LANG_confignames['menu'] : array(),
+    'LANG_configsubgroups' => isset($LANG_configsubgroups['menu']) ? $LANG_configsubgroups['menu'] : array(),
+    'LANG_tab' => isset($LANG_tab['menu']) ? $LANG_tab['menu'] : array(),
+    'LANG_fs' => isset($LANG_fs['menu']) ? $LANG_fs['menu'] : array(),
+    'LANG_configselects' => isset($LANG_configselects['menu']) ? $LANG_configselects['menu'] : array(),
+);
+
+if ($langfile !== $englishLangFile && file_exists($langfile)) {
+    require $langfile;
+
+    foreach ($menuEnglishLanguage as $languageVariable => $englishValues) {
+        $translatedValues = isset(${$languageVariable}) && is_array(${$languageVariable})
+            ? ${$languageVariable}
+            : array();
+        ${$languageVariable} = array_replace($englishValues, $translatedValues);
+    }
+
+    foreach ($menuEnglishConfigLanguage as $languageVariable => $englishValues) {
+        $translatedValues = isset(${$languageVariable}['menu']) && is_array(${$languageVariable}['menu'])
+            ? ${$languageVariable}['menu']
+            : array();
+        ${$languageVariable}['menu'] = array_replace($englishValues, $translatedValues);
+    }
 }
+
+unset($menuEnglishLanguage, $menuEnglishConfigLanguage);
 /**
-* Check and see if we need to load the plugin configuration
-*/ 
-if (!isset($_MENU_CONF)) {
-    require_once $_CONF['path_system'] . 'classes/config.class.php';
+ * Load Menu configuration into a stable global runtime array.
+ *
+ * Do not rely on a pre-existing $_MENU_CONF. functions.inc can be included
+ * from different Geeklog scopes and older Menu versions may leave a partial
+ * array behind. Defaults are always loaded first, then persisted Geeklog
+ * configuration wins.
+ */
+require_once __DIR__ . '/config.php';
+require_once $_CONF['path_system'] . 'classes/config.class.php';
 
-    $menu_config = config::get_instance();
-    $_MENU_CONF = $menu_config->get_config('menu');
-    require_once __DIR__ . '/autoinstall.php';
-    $info = plugin_autoinstall_menu('menu');
-    $_MENU_CONF['pi_version'] = $info['info']['pi_version'];
-    unset($info);
+$menu_config = config::get_instance();
+$menuStoredConfig = $menu_config->get_config('menu');
+if (!is_array($menuStoredConfig)) {
+    $menuStoredConfig = array();
 }
+
+$_MENU_CONF = array_merge($_MENU_DEFAULT, $menuStoredConfig);
+
+require_once __DIR__ . '/autoinstall.php';
+$info = plugin_autoinstall_menu('menu');
+if (is_array($info) && isset($info['info']['pi_version'])) {
+    $_MENU_CONF['pi_version'] = $info['info']['pi_version'];
+}
+unset($info, $menuStoredConfig);
 /**
  * Menu plugin table(s)
  */
@@ -85,11 +145,69 @@ $_TABLES['menu_elements']= $_DB_table_prefix . 'menu_elements';
 
 require_once $_CONF['path'] . 'plugins/menu/classes/classMenuElement.php';
 require_once $_CONF['path'] . 'plugins/menu/runtime_loader.php';
+require_once $_CONF['path'] . 'plugins/menu/services.inc.php';
+
+if (MENU_runtimeConfigEnabled('debug', false)) {
+    MENU_debugLog(
+        'Debug logging enabled; runtime configuration loaded'
+        . ' (legacy_rendering=' . (MENU_runtimeConfigEnabled('legacy_rendering', true) ? '1' : '0')
+        . ', cache=' . (MENU_runtimeConfigEnabled('enable_cache', true) ? '1' : '0') . ').'
+    );
+}
+
+/**
+ * Declare Menu's read-only Geeklog Plugin Services as available.
+ *
+ * PLG_invokeService() requires this plugin API hook before dispatching
+ * service_getMenuList_menu() or service_getMenuTree_menu().
+ *
+ * @return bool
+ */
+function plugin_wsEnabled_menu()
+{
+    return true;
+}
 
 // +---------------------------------------------------------------------------+
 // | Geeklog Plugin API Implementation                                         |
 // +---------------------------------------------------------------------------+
 
+/**
+ * Resolve a [menu:] autotag argument to a menu ID and canonical menu name.
+ *
+ * Existing name-based behavior has priority. A strictly numeric argument is
+ * treated as an ID only when no menu with that exact name exists.
+ *
+ * @param string $reference
+ * @return array|null Array with id and name, or null when no menu exists.
+ */
+function MENU_resolveAutotagReference($reference)
+{
+    global $_TABLES;
+
+    $reference = trim((string) $reference);
+    if ($reference === '') {
+        return null;
+    }
+
+    $referenceSql = MENU_dbEscape($reference);
+    $id = (int) DB_getItem($_TABLES['menu'], 'id', 'menu_name="' . $referenceSql . '"');
+    if ($id > 0) {
+        return array('id' => $id, 'name' => $reference);
+    }
+
+    if (ctype_digit($reference)) {
+        $id = (int) $reference;
+        if ($id > 0) {
+            $name = DB_getItem($_TABLES['menu'], 'menu_name', 'id=' . $id);
+            if ($name !== '' && $name !== null && $name !== false) {
+                return array('id' => $id, 'name' => (string) $name);
+            }
+        }
+    }
+
+    return null;
+}
 
 /**
 * Implements a [menu:] autotag.
@@ -116,23 +234,22 @@ function plugin_autotags_menu($op,$content='',$autotag='') {
         switch( $autotag['tag'] ) {
             case 'menu' :
                 $menu = '';
-                $menuID = trim($autotag['parm1']);
-                $menuIDSql = MENU_dbEscape($menuID);
-                $id = DB_getItem($_TABLES['menu'], 'id', 'menu_name="' . $menuIDSql . '"');
-                if ( $id > 0 ) {
-                    if ( $Menus[$id]['menu_type'] == 1 ) {
-                        $menu = MENU_getMenu($menuID,"gl_menu","gl_menu",'',"parent");
-                    } else if ( $Menus[$id]['menu_type'] == 2 ) {
-                        $menu = MENU_getMenu($menuID,'st-fmenu','','','','st-f-last');
-                    } else if ( $Menus[$id]['menu_type'] == 3 ) {
-                        $menu = phpblock_getMenu('',trim($autotag['parm1']));
-                    } else if ( $Menus[$id]['menu_type'] == 4 ) {
-                        $menu = MENU_getMenu($menuID,'st-vmenu','','','');
+                $reference = trim($autotag['parm1']);
+                $resolved = MENU_resolveAutotagReference($reference);
+                if ($resolved !== null) {
+                    $id = $resolved['id'];
+                    $menuName = $resolved['name'];
+                    if (isset($Menus[$id]) && $Menus[$id]['menu_type'] == 1) {
+                        $menu = MENU_getMenu($menuName,"gl_menu","gl_menu",'',"parent");
+                    } else if (isset($Menus[$id]) && $Menus[$id]['menu_type'] == 2) {
+                        $menu = MENU_getMenu($menuName,'st-fmenu','','','','st-f-last');
+                    } else if (isset($Menus[$id]) && $Menus[$id]['menu_type'] == 3) {
+                        $menu = phpblock_getMenu('',$menuName);
+                    } else if (isset($Menus[$id]) && $Menus[$id]['menu_type'] == 4) {
+                        $menu = MENU_getMenu($menuName,'st-vmenu','','','');
                     }
-                    $content = str_replace($autotag['tagstr'],$menu,$content);
-                } else {
-                    $content = str_replace($autotag['tagstr'],$menu,$content);
                 }
+                $content = str_replace($autotag['tagstr'],$menu,$content);
                 break;
         }
         return $content;
@@ -145,7 +262,10 @@ function plugin_cclabel_menu()
 
     $retval = array();
     if (SEC_hasRights('menu.admin')) {
-        $retval = array($LANG_MENU_1['plugin_name'],
+        $label = (isset($LANG_MENU_1) && is_array($LANG_MENU_1)
+            && isset($LANG_MENU_1['plugin_name']))
+            ? $LANG_MENU_1['plugin_name'] : 'Menu';
+        $retval = array($label,
             $_CONF['site_admin_url'] . '/plugins/menu/index.php',
             plugin_geticon_menu());
     }
@@ -155,14 +275,15 @@ function plugin_cclabel_menu()
 
 function plugin_getadminoption_menu()
 {
-    global $_CONF, $LANG_MENU_1;
+    global $_CONF, $_TABLES, $LANG_MENU_1;
 
     if (SEC_hasRights('menu.admin')) {
         $label = (isset($LANG_MENU_1) && is_array($LANG_MENU_1)
             && isset($LANG_MENU_1['plugin_name']))
             ? $LANG_MENU_1['plugin_name'] : 'Menu';
+        $totalMenus = (int) DB_getItem($_TABLES['menu'], 'COUNT(*)');
         return array($label,
-            $_CONF['site_admin_url'] . '/plugins/menu/index.php', 0);
+            $_CONF['site_admin_url'] . '/plugins/menu/index.php', $totalMenus);
     }
 }
 
@@ -234,6 +355,72 @@ function plugin_autouninstall_menu()
     return $out;
 }
 
+/**
+ * Publish generated menu CSS to a cacheable public file.
+ *
+ * The filename contains a content fingerprint, so browsers may cache it for a
+ * long time without stale styles after a menu configuration change.
+ *
+ * @param int $menuId
+ * @param string $css
+ * @return string Public stylesheet URL, or an empty string when publishing fails.
+ */
+function MENU_publishCssAsset($menuId, $css)
+{
+    $menuId = (int) $menuId;
+    $css = (string) $css;
+
+    if ($menuId <= 0 || $css === '') {
+        return '';
+    }
+
+    $baseDir = rtrim(MENU_imageDir(), "/\\");
+    $baseUrl = rtrim(MENU_imageUrl(), '/');
+    if ($baseDir === '' || $baseUrl === '') {
+        return '';
+    }
+
+    $cssDir = $baseDir . DIRECTORY_SEPARATOR . 'css' . DIRECTORY_SEPARATOR;
+    if (!MENU_ensureDirectory($cssDir)) {
+        return '';
+    }
+
+    $fingerprint = substr(sha1($css), 0, 12);
+    $filename = 'menu-' . $menuId . '-' . $fingerprint . '.css';
+    $path = $cssDir . $filename;
+
+    if (!is_file($path)) {
+        $written = @file_put_contents($path, $css, LOCK_EX);
+        if ($written === false) {
+            return '';
+        }
+    }
+
+    return $baseUrl . '/css/' . $filename;
+}
+
+/**
+ * Return the HTML used to load generated menu CSS.
+ *
+ * A public fingerprinted stylesheet is preferred. Inline CSS is retained only
+ * as a compatibility fallback for installations where the public image path is
+ * not writable.
+ *
+ * @param int $menuId
+ * @param string $css
+ * @return string
+ */
+function MENU_cssAssetMarkup($menuId, $css)
+{
+    $url = MENU_publishCssAsset($menuId, $css);
+    if ($url !== '') {
+        return '<link rel="stylesheet" type="text/css" href="'
+            . htmlspecialchars($url, ENT_QUOTES, 'UTF-8') . '">' . LB;
+    }
+
+    return '<style type="text/css">' . $css . '</style>' . LB;
+}
+
 function plugin_getheadercode_menu() {
     global $_CONF, $Menus, $_SCRIPTS;
 
@@ -251,9 +438,7 @@ function plugin_getheadercode_menu() {
 
     if (is_array($Menus)) {
         foreach ($Menus as $menu) {
-            if (!empty($menu['active'])
-                && (int) $menu['menu_type'] === 1
-                && !MENU_themeHandlesPresentation(isset($menu['menu_name']) ? $menu['menu_name'] : '')) {
+            if (MENU_menuNeedsLegacyJs($menu['menu_id'])) {
                 $needsSlickNav = true;
                 break;
             }
@@ -275,12 +460,17 @@ function plugin_getheadercode_menu() {
 
     if (is_array($Menus)) {
         foreach ($Menus AS $menu) {
+            if (!MENU_isAssetUsageRegistered($menu['menu_id'])) {
+                continue;
+            }
+
             if ($menu['active'] == 1) {
                 if (MENU_themeHandlesPresentation(isset($menu['menu_name']) ? $menu['menu_name'] : '')) {
                     continue;
                 }
 
-                $cacheInstance = 'menu_css_' . $menu['menu_id'] . '__' . $_CONF['theme'];
+                $cacheInstance = 'menu_css_' . $menu['menu_id'] . '__' . $_CONF['theme']
+                    . '__' . MENU_presentationCacheFingerprint();
                 $retval = MENU_CACHE_check_instance($cacheInstance, 0);
 
                 $custom_css = MENU_dataDir() . 'css' . DIRECTORY_SEPARATOR
@@ -294,7 +484,7 @@ function plugin_getheadercode_menu() {
                 if ($retval) {
                     $css_minify = MENU_compress($retval . $custom_ccs_code);
                     if ($loadLegacyCss) {
-                        $menu_header .= LB . '<style type="text/css">' . $css_minify . '</style>' . LB;
+                        $menu_header .= LB . MENU_cssAssetMarkup($menu['menu_id'], $css_minify);
                     }
                 } else {
                     $ms = new Template($_CONF['path'].'plugins/menu/templates/');
@@ -365,7 +555,10 @@ function plugin_getheadercode_menu() {
                             ));
                         }
                     }
-                    if ($menu['config']['menu_alignment'] == 1) {
+                    $menuAlignment = isset($menu['config']['menu_alignment'])
+                        ? (int) $menu['config']['menu_alignment']
+                        : (((int) $menu['menu_type'] === 2) ? 0 : 1);
+                    if ($menuAlignment === 1) {
                         $ms->set_var('alignment','left');
                     } else {
                         $ms->set_var('alignment','right');
@@ -384,11 +577,11 @@ function plugin_getheadercode_menu() {
                     MENU_CACHE_create_instance($cacheInstance, $fCSS, 0);
                     $css_minify = MENU_compress($fCSS . $custom_ccs_code);
                     if ($loadLegacyCss) {
-                        $menu_header .= LB . '<style type="text/css">' . $css_minify . '</style>' . LB;
+                        $menu_header .= LB . MENU_cssAssetMarkup($menu['menu_id'], $css_minify);
                     }
                 }
 
-                if ((int) $menu['menu_type'] === 1 && $loadLegacyJs) {
+                if (MENU_menuNeedsLegacyJs($menu['menu_id'])) {
                     $siteName = json_encode((string) $_CONF['site_name']);
                     if ($siteName === false) {
                         $siteName = '"Menu"';
@@ -458,6 +651,8 @@ function MENU_getMenu($name='navigation',$wrapper='',$ulclass='',$liclass='',$pa
         }
     }
     if ($menuID != '' && $Menus[$menuID]['active'] == 1 && $Menus[$menuID]['menu_perm'] == 3) {
+        MENU_registerAssetUsage($menuID);
+
         if ($Menus[$menuID]['menu_type'] == 1) {
             $retval .= '<div id="gl_menu'.($noid == 0 ? $menuID : '').'"'
                 . MENU_legacyNavigationAttributes($name) . '>'. LB;
@@ -499,7 +694,10 @@ function phpblock_getMenu($arg1,$arg2) {
         $menu = MENU_getMenu($arg2,'st-vmenu','','','');
         return $menu != '' ? $menu : '';
     }
-    if ($Menus[$menuID]['config']['menu_alignment'] == 1) {
+    $menuAlignment = isset($Menus[$menuID]['config']['menu_alignment'])
+        ? (int) $Menus[$menuID]['config']['menu_alignment']
+        : (((int) $Menus[$menuID]['menu_type'] === 2) ? 0 : 1);
+    if ($menuAlignment === 1) {
         $parent = 'parent-l';
         $class  = 'gl_menu-vert-l';
     } else {
@@ -552,12 +750,36 @@ function plugin_templatesetvars_menu($templatename, &$template)
     if (!isset($_TABLES['menu']) || !DB_checkTableExists('menu')) {
         return;
     }
-    $menu = MENU_getMenu('navigation',"gl_menu","gl_menu",'',"parent");
-    $template->set_var('header_navigation',$menu);
-    $menu_footer = MENU_getMenu('footer',"st-fmenu","st-fmenu",'',"parent");
-    $template->set_var('menu_footer',$menu_footer);
+
+    if ($templatename === 'header') {
+        if (MENU_templateUsesVariable('header', $template, 'header_navigation')) {
+            $menu = MENU_getMenu('navigation',"gl_menu","gl_menu",'',"parent");
+            $template->set_var('header_navigation',$menu);
+        }
+
+        if (MENU_templateUsesVariable('footer', $template, 'menu_footer')) {
+            if (function_exists('COM_createHTMLDocument')) {
+                // Geeklog's modern document renderer uses one index.thtml for the
+                // complete page. Set the footer variable now so its assets are
+                // known before plugin_getheadercode_menu() runs.
+                $menu_footer = MENU_getMenu('footer',"st-fmenu","st-fmenu",'',"parent");
+                $template->set_var('menu_footer',$menu_footer);
+            } else {
+                // Geeklog 2.1.1 renders footer.thtml after the head is finalized.
+                // The source check above proves the legacy footer requests this
+                // variable, so pre-register only its assets; actual HTML remains
+                // rendered by the footer hook below.
+                MENU_registerNamedAssetUsage('footer');
+            }
+        }
+    } elseif ($templatename === 'footer'
+        && !function_exists('COM_createHTMLDocument')
+        && MENU_templateUsesVariable('footer', $template, 'menu_footer')) {
+        $menu_footer = MENU_getMenu('footer',"st-fmenu","st-fmenu",'',"parent");
+        $template->set_var('menu_footer',$menu_footer);
+    }
+
     $template->set_var('breadcrumbs', '');
 }
 
 MENU_ensureDataDirs();
-

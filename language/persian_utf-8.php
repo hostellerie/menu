@@ -280,3 +280,38 @@ $LANG_configselects['menu'] = array(
     0 => array('True' => 1, 'False' => 0),
     1 => array('True' => true, 'False' => false)
 );
+
+// English values for keys not yet translated to Persian.
+$LANG_MENU_1['hello'] = 'Hello, world!';
+$LANG_MENU01['go'] = 'Go';
+$LANG_MENU01['back_to'] = 'Back to';
+$LANG_MENU01['for'] = 'for';
+$LANG_MENU_GLTYPES_HELP[1] = 'Displays the standard Geeklog user menu.';
+$LANG_MENU_GLTYPES_HELP[2] = 'Displays the Geeklog administration menu.';
+$LANG_MENU_GLTYPES_HELP[3] = 'Displays the Geeklog topics menu.';
+$LANG_MENU_GLTYPES_HELP[4] = 'Displays Static Pages navigation.';
+$LANG_MENU_GLTYPES_HELP[5] = 'Displays plugin-provided menu items.';
+$LANG_MENU_GLTYPES_HELP[6] = 'Displays the Geeklog header menu.';
+$LANG_MENU_GLFUNCTION_HELP[0] = 'Link to the site home page.';
+$LANG_MENU_GLFUNCTION_HELP[1] = 'Link to the story submission page.';
+$LANG_MENU_GLFUNCTION_HELP[2] = 'Link to the article directory.';
+$LANG_MENU_GLFUNCTION_HELP[3] = 'Link to user preferences.';
+$LANG_MENU_GLFUNCTION_HELP[4] = 'Link to site search.';
+$LANG_MENU_GLFUNCTION_HELP[5] = 'Link to site statistics.';
+$LANG_MENU_TYPES_HELP[1] = 'Creates a container that may contain child items and can optionally have its own link.';
+$LANG_MENU_TYPES_HELP[2] = 'Creates a link to a standard Geeklog action such as Home, Search or Contribute.';
+$LANG_MENU_TYPES_HELP[3] = 'Inserts a dynamic Geeklog menu such as the User, Admin or Topics menu.';
+$LANG_MENU_TYPES_HELP[4] = 'Creates a link provided by an installed plugin.';
+$LANG_MENU_TYPES_HELP[5] = 'Creates a link to a published Static Page.';
+$LANG_MENU_TYPES_HELP[6] = 'Creates a link to a custom or external URL.';
+$LANG_MENU_TYPES_HELP[7] = 'Calls a PHP function. Use only for trusted, advanced integrations.';
+$LANG_MENU_TYPES_HELP[8] = 'Displays text without a built-in destination.';
+$LANG_MENU_TYPES_HELP[9] = 'Creates a link to a Geeklog topic.';
+$LANG_confignames['menu']['enable_cache'] = 'Enable menu cache';
+$LANG_confignames['menu']['accessibility_markup'] = 'Enable accessibility / ARIA markup';
+$LANG_confignames['menu']['external_link_protection'] = 'Protect external links opened in a new window';
+$LANG_confignames['menu']['allow_php_elements'] = 'Allow PHP function menu elements';
+$LANG_confignames['menu']['legacy_rendering'] = 'Enable legacy Menu rendering';
+$LANG_confignames['menu']['load_legacy_css'] = 'Load legacy Menu CSS';
+$LANG_confignames['menu']['load_legacy_js'] = 'Load legacy Menu JavaScript';
+$LANG_confignames['menu']['debug'] = 'Enable Menu debug logging';

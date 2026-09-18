@@ -2,7 +2,7 @@
 
 /* Reminder: always indent with 4 spaces (no tabs). */
 // +---------------------------------------------------------------------------+
-// | Menu Plugin 1.3.0                                                        |
+// | Menu Plugin 1.4.0                                                        |
 // +---------------------------------------------------------------------------+
 // | resolved_tree.php                                                         |
 // |                                                                           |
@@ -13,8 +13,64 @@ if (!defined('VERSION')) {
     die('This file can not be used on its own.');
 }
 
+if (!defined('MENU_RESOLVED_TREE_CONTRACT_VERSION')) {
+    define('MENU_RESOLVED_TREE_CONTRACT_VERSION', 1);
+}
+
 require_once __DIR__ . '/runtime_config.php';
 require_once __DIR__ . '/resolved_admin.php';
+
+/**
+ * Return the public resolved-tree contract version.
+ *
+ * Version 1 is additive: existing field meanings/types must remain stable and
+ * consumers must ignore fields they do not understand.
+ *
+ * @return int
+ */
+function MENU_getResolvedTreeContractVersion()
+{
+    return MENU_RESOLVED_TREE_CONTRACT_VERSION;
+}
+
+
+/**
+ * Return menus available to the current Geeklog request context.
+ *
+ * This is a discovery API, not an administration API. It exposes only active
+ * menus for which Menu already calculated full read access (menu_perm = 3).
+ * ACL internals and per-menu configuration are deliberately not exposed.
+ *
+ * @return array
+ */
+function MENU_getAvailableMenus()
+{
+    global $Menus;
+
+    $available = array();
+    if (!is_array($Menus)) {
+        return $available;
+    }
+
+    foreach ($Menus as $menu) {
+        if (!is_array($menu)
+            || empty($menu['active'])
+            || !isset($menu['menu_perm'])
+            || (int) $menu['menu_perm'] !== 3
+            || empty($menu['menu_id'])
+            || !isset($menu['menu_name'])) {
+            continue;
+        }
+
+        $available[] = array(
+            'id' => (int) $menu['menu_id'],
+            'name' => (string) $menu['menu_name'],
+            'type' => isset($menu['menu_type']) ? (int) $menu['menu_type'] : 0,
+        );
+    }
+
+    return $available;
+}
 
 function MENU_findMenuIdByName($name)
 {
@@ -41,26 +97,57 @@ function MENU_findMenuIdByName($name)
     return 0;
 }
 
+/**
+ * Return the permission-filtered public representation of one menu.
+ *
+ * This API is intentionally consumer-facing. It MUST NOT expose menus or
+ * elements that are unavailable to the current Geeklog visitor. Consumers
+ * must use the returned tree instead of bypassing Menu permissions through
+ * direct table access.
+ *
+ * @param string $name Canonical menu name
+ * @return array
+ */
 function MENU_getResolvedTree($name = 'navigation')
 {
     global $Menus;
 
     $menuId = MENU_findMenuIdByName($name);
     if ($menuId <= 0 || !isset($Menus[$menuId])) {
+        MENU_debugLog('Resolved tree: menu "' . (string) $name . '" was not found in runtime menus.');
         return array();
     }
 
     $menu = $Menus[$menuId];
-    if (empty($menu['active']) || (isset($menu['menu_perm']) && (int) $menu['menu_perm'] !== 3)) {
+    if (empty($menu['active'])) {
+        MENU_debugLog('Resolved tree: menu "' . (string) $name . '" is inactive.');
+        return array();
+    }
+    if (isset($menu['menu_perm']) && (int) $menu['menu_perm'] !== 3) {
+        MENU_debugLog(
+            'Resolved tree: menu "' . (string) $name
+            . '" denied by runtime menu permission ' . (int) $menu['menu_perm'] . '.'
+        );
         return array();
     }
     if (!isset($menu['elements'][0])) {
+        MENU_debugLog('Resolved tree: menu "' . (string) $name . '" has no runtime root element.');
+        return array();
+    }
+
+    $childIds = $menu['elements'][0]->getChildren();
+    if (empty($childIds)) {
+        MENU_debugLog('Resolved tree: menu "' . (string) $name . '" root has no children.');
         return array();
     }
 
     $tree = array();
-    foreach ($menu['elements'][0]->getChildren() as $childId) {
+    foreach ($childIds as $childId) {
         if (!isset($menu['elements'][$childId])) {
+            MENU_debugLog(
+                'Resolved tree: menu "' . (string) $name
+                . '" references missing child element ' . (int) $childId . '.'
+            );
             continue;
         }
         $node = MENU_resolveElementNode($menuId, $childId);
@@ -68,6 +155,12 @@ function MENU_getResolvedTree($name = 'navigation')
             $tree[] = $node;
         }
     }
+
+    MENU_debugLog(
+        'Resolved tree: menu "' . (string) $name
+        . '" produced ' . count($tree)
+        . ' top-level node(s) from ' . count($childIds) . ' runtime child(ren).'
+    );
 
     return $tree;
 }
@@ -81,13 +174,13 @@ function MENU_resolveElementNode($menuId, $elementId)
     }
 
     $element = $Menus[$menuId]['elements'][$elementId];
+    /*
+     * Runtime loading already resolves element visibility for the current
+     * visitor into ->access and excludes inaccessible rows from $Menus.
+     * Do not re-run SEC_inGroup() here: doing so can diverge from the
+     * authoritative runtime decision, especially for Root/Menu Admin contexts.
+     */
     if ((int) $element->active !== 1 || (int) $element->access <= 0) {
-        return null;
-    }
-    if ((int) $element->group_id === 998 && (SEC_inGroup('Root') || SEC_inGroup('menu Admin'))) {
-        return null;
-    }
-    if ((int) $element->group_id !== 998 && (int) $element->group_id !== 0 && !SEC_inGroup($element->group_id)) {
         return null;
     }
 

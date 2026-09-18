@@ -54,11 +54,26 @@ function MENU_PLG_getMenuItems() { return array('demo' => 'https://example.test/
 function PLG_getMenuItems() { return array('Demo' => 'https://example.test/demo/'); }
 function PLG_getUserOptions() { return array(); }
 function PLG_getAdminOptions() {
-    $item = new stdClass();
-    $item->adminlabel = 'Demo Admin';
-    $item->adminurl = 'https://example.test/admin/plugins/demo/';
-    $item->numsubmissions = 2;
-    return array($item);
+    $demo = new stdClass();
+    $demo->adminlabel = 'Demo Admin';
+    $demo->adminurl = 'https://example.test/admin/plugins/demo/';
+    $demo->numsubmissions = 2;
+
+    // This mirrors the real Geeklog 2.2.2 path where the control markup can
+    // reach Menu already HTML-encoded.
+    $recaptcha = new stdClass();
+    $recaptcha->adminlabel = '&lt;span class=&quot;uk-text-danger&quot;&gt;reCAPTCHA&lt;/span&gt;';
+    $recaptcha->adminurl = 'https://example.test/admin/plugins/recaptcha/';
+    $recaptcha->numsubmissions = 0;
+
+    // Generic encoded markup must also be removed even when it carries no
+    // semantic status understood by Menu.
+    $hello = new stdClass();
+    $hello->adminlabel = '&lt;strong&gt;Hello&lt;/strong&gt;';
+    $hello->adminurl = 'https://example.test/admin/plugins/hello/';
+    $hello->numsubmissions = 0;
+
+    return array($demo, $recaptcha, $hello);
 }
 function PLG_getSubmissionCount() { return 3; }
 function DB_count($table, $field = '', $value = '') {
@@ -72,7 +87,9 @@ function DB_count($table, $field = '', $value = '') {
     return 0;
 }
 
-require_once dirname(__DIR__) . '/resolved_tree.php';
+// functions.inc loads runtime_loader.php in production. Requiring the runtime
+// bootstrap here verifies that Menu itself publishes MENU_getResolvedTree().
+require_once dirname(__DIR__) . '/runtime_loader.php';
 
 function menu_test_fail($message)
 {
@@ -86,6 +103,8 @@ function menu_test_assert($condition, $message)
         menu_test_fail($message);
     }
 }
+
+menu_test_assert(function_exists('MENU_getResolvedTree'), 'Menu runtime must publish MENU_getResolvedTree');
 
 class MenuResolvedTestElement
 {
@@ -167,6 +186,21 @@ $Menus[1] = array(
 
 $tree = MENU_getResolvedTree('navigation');
 menu_test_assert(count($tree) === 8, 'unexpected top-level node count');
+
+// Runtime access is authoritative. A consumer-facing resolved tree must not
+// perform a second SEC_inGroup() check that can contradict Root/Menu Admin
+// access already granted by MENU_loadRuntimeMenus().
+$rootGranted = new MenuResolvedTestElement(10, 0, 'Root granted', 6, '', 90, 'https://example.test/root-granted');
+$rootGranted->group_id = 999;
+$rootGranted->access = 3;
+$root->addChild(10);
+$Menus[1]['elements'][10] = $rootGranted;
+$treeWithRuntimeGrant = MENU_getResolvedTree('navigation');
+$labelsWithRuntimeGrant = array();
+foreach ($treeWithRuntimeGrant as $node) {
+    $labelsWithRuntimeGrant[] = $node['label'];
+}
+menu_test_assert(in_array('Root granted', $labelsWithRuntimeGrant, true), 'resolved tree must trust runtime access grants');
 menu_test_assert($tree[0]['label'] === 'Home', 'Home must remain first');
 menu_test_assert($tree[0]['type'] === 2, 'Home must remain Geeklog Action type 2');
 menu_test_assert($tree[0]['url'] === 'https://example.test/', 'Home URL was not resolved');
@@ -178,18 +212,33 @@ menu_test_assert($tree[2]['url'] === 'https://example.test/demo/', 'plugin URL w
 menu_test_assert($tree[3]['url'] === 'https://example.test/staticpages/index.php?page=about', 'static page URL was not resolved');
 menu_test_assert($tree[4]['url'] === 'https://example.test/index.php?topic=news', 'topic URL was not resolved');
 menu_test_assert($tree[5]['type'] === 3 && $tree[5]['resolved'] === true, 'Geeklog Admin core node must be resolved');
-menu_test_assert(count($tree[5]['children']) >= 7, 'Geeklog Admin core menu should expose structured children');
+menu_test_assert(count($tree[5]['children']) >= 9, 'Geeklog Admin core menu should expose structured children');
 menu_test_assert($tree[5]['children'][0]['label'] === 'Command & Control', 'admin menu must begin with Command & Control');
 menu_test_assert($tree[5]['children'][0]['url'] === 'https://example.test/admin/index.php', 'control center URL was not resolved');
 $adminLabels = array();
+$recaptchaNode = null;
+$helloNode = null;
 foreach ($tree[5]['children'] as $adminNode) {
     $adminLabels[] = $adminNode['label'];
+    if (strpos($adminNode['label'], 'reCAPTCHA') === 0) {
+        $recaptchaNode = $adminNode;
+    }
+    if (strpos($adminNode['label'], 'Hello') === 0) {
+        $helloNode = $adminNode;
+    }
 }
 menu_test_assert(in_array('Stories (7)', $adminLabels), 'story admin count was not preserved');
 menu_test_assert(in_array('Blocks (4)', $adminLabels), 'block admin count was not preserved');
 menu_test_assert(in_array('Topics (3)', $adminLabels), 'topic admin count was not preserved');
 menu_test_assert(in_array('Users (4)', $adminLabels), 'user admin count was not preserved');
 menu_test_assert(in_array('Demo Admin (2)', $adminLabels), 'plugin admin option was not resolved');
+menu_test_assert(is_array($recaptchaNode), 'reCAPTCHA admin option was not resolved');
+menu_test_assert($recaptchaNode['label'] === 'reCAPTCHA (0)', 'encoded warning label HTML must be converted to plain text');
+menu_test_assert(isset($recaptchaNode['status']) && $recaptchaNode['status'] === 'warning', 'encoded warning semantic status was not preserved');
+menu_test_assert(strpos($recaptchaNode['label'], '<') === false && strpos($recaptchaNode['label'], '&lt;') === false, 'resolved warning label must not expose raw or encoded HTML');
+menu_test_assert(is_array($helloNode), 'Hello admin option was not resolved');
+menu_test_assert($helloNode['label'] === 'Hello (0)', 'generic encoded plugin label HTML must be converted to plain text');
+menu_test_assert(strpos($helloNode['label'], '<') === false && strpos($helloNode['label'], '&lt;') === false, 'generic resolved label must not expose raw or encoded HTML');
 menu_test_assert($tree[6]['type'] === 7 && $tree[6]['resolved'] === false, 'PHP callback must not be misrepresented as resolved data');
 menu_test_assert($tree[7]['type'] === 8 && $tree[7]['url'] === '', 'non-link item type 8 was not preserved');
 

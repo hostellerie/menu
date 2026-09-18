@@ -265,4 +265,3 @@ function MENU_adminEnforceCsrf()
         COM_redirect($_CONF['site_admin_url'] . '/plugins/menu/index.php');
     }
 }
-
