@@ -18,6 +18,8 @@ menu_preview_assert(strpos($preview, "\$mode === 'theme'") !== false, 'theme pre
 menu_preview_assert(strpos($preview, 'Theme preview') !== false, 'theme preview tab label missing');
 menu_preview_assert(strpos($preview, 'Menu preview') !== false, 'native preview tab label missing');
 menu_preview_assert(strpos($preview, 'theme_plugin_presentation_preview') !== false, 'generic theme preview callback missing');
+menu_preview_assert(strpos($preview, "strcasecmp($resource, 'navigation')") === false, 'theme preview must not be restricted to navigation');
+menu_preview_assert(strpos($preview, "'menu_type' => $menu_type") !== false, 'theme preview must receive menu type context');
 menu_preview_assert(strpos($preview, "strpos(\$relative, '..')") !== false, 'theme preview include must reject traversal');
 menu_preview_assert(strpos($preview, '&amp;amp;mode=') === false, 'preview query string must not be double escaped');
 
