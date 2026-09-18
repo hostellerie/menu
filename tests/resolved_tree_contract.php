@@ -40,7 +40,6 @@ $visibilityGuards = array(
     "(int) \$menu['menu_perm'] !== 3",
     "(int) \$element->active !== 1",
     "(int) \$element->access <= 0",
-    "!SEC_inGroup(\$element->group_id)",
     "draft_flag=0",
     "COM_getPermSQL('AND')",
     "COM_getPermSql('AND')",
