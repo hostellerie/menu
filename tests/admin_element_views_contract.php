@@ -41,6 +41,13 @@ if (strpos($module, "'menu_alignment' => $defaultAlignment") === false
     exit(1);
 }
 
+if (strpos($module, "isset($LANG_VS[$name]) ? $LANG_VS[$name]") === false
+    || strpos($module, "isset($LANG_VC[$name]) ? $LANG_VC[$name]") === false
+    || strpos($module, "isset($LANG_MENU01[$name]) ? $LANG_MENU01[$name] : $name") === false) {
+    fwrite(STDERR, "Per-type menu labels must fall back safely when translations are incomplete\n");
+    exit(1);
+}
+
 $treeStart = strpos($module, 'function MENU_displayTree');
 $treeEnd = strpos($module, 'function MENU_createElement', $treeStart);
 $treeBody = substr($module, $treeStart, $treeEnd - $treeStart);
