@@ -133,6 +133,7 @@ $_TABLES['menu_elements']= $_DB_table_prefix . 'menu_elements';
 
 require_once $_CONF['path'] . 'plugins/menu/classes/classMenuElement.php';
 require_once $_CONF['path'] . 'plugins/menu/runtime_loader.php';
+require_once $_CONF['path'] . 'plugins/menu/services.inc.php';
 
 // +---------------------------------------------------------------------------+
 // | Geeklog Plugin API Implementation                                         |
