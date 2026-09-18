@@ -148,13 +148,13 @@ function MENU_resolveElementNode($menuId, $elementId)
     }
 
     $element = $Menus[$menuId]['elements'][$elementId];
+    /*
+     * Runtime loading already resolves element visibility for the current
+     * visitor into ->access and excludes inaccessible rows from $Menus.
+     * Do not re-run SEC_inGroup() here: doing so can diverge from the
+     * authoritative runtime decision, especially for Root/Menu Admin contexts.
+     */
     if ((int) $element->active !== 1 || (int) $element->access <= 0) {
-        return null;
-    }
-    if ((int) $element->group_id === 998 && (SEC_inGroup('Root') || SEC_inGroup('menu Admin'))) {
-        return null;
-    }
-    if ((int) $element->group_id !== 998 && (int) $element->group_id !== 0 && !SEC_inGroup($element->group_id)) {
         return null;
     }
 
