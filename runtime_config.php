@@ -145,6 +145,27 @@ function MENU_debugLog($message)
 
     $line = 'Menu: ' . (string) $message;
 
+    /*
+     * Keep a plugin-owned private debug log so diagnostics do not depend on
+     * Geeklog/PHP logging configuration. MENU_dataDir() may not yet be loaded
+     * in very early bootstrap contexts, so detect it conservatively.
+     */
+    if (function_exists('MENU_dataDir')) {
+        $dataDir = MENU_dataDir();
+        if ($dataDir !== '') {
+            if (!is_dir($dataDir)) {
+                @mkdir($dataDir, 0755, true);
+            }
+            if (is_dir($dataDir) && is_writable($dataDir)) {
+                @file_put_contents(
+                    rtrim($dataDir, "/\\") . DIRECTORY_SEPARATOR . 'menu-debug.log',
+                    '[' . date('Y-m-d H:i:s') . '] ' . $line . PHP_EOL,
+                    FILE_APPEND | LOCK_EX
+                );
+            }
+        }
+    }
+
     if (function_exists('COM_errorLog')) {
         COM_errorLog($line, 1);
         return;
@@ -152,7 +173,7 @@ function MENU_debugLog($message)
 
     /*
      * Extremely early/bootstrap contexts may not have COM_errorLog yet.
-     * Use PHP's configured error log only as a debug-only fallback.
+     * Use PHP's configured error log only as a final debug-only fallback.
      */
     error_log($line);
 }
