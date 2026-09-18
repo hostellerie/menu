@@ -21,6 +21,13 @@ $settings = array(
     'debug',
 );
 
+if (strpos($functions, 'Theme runtime: theme=') === false
+    || strpos($functions, 'header_eclipse_trace=') === false
+    || strpos($functions, 'functions_eclipse_trace=') === false) {
+    fwrite(STDERR, "functions.inc must expose active theme runtime diagnostics in debug mode\n");
+    exit(1);
+}
+
 if (strpos($functions, 'global $_CONF, $_DB_table_prefix, $_TABLES, $_MENU_CONF;') === false) {
     fwrite(STDERR, "functions.inc must keep \$_MENU_CONF in global scope\n");
     exit(1);
