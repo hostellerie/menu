@@ -114,20 +114,40 @@ function MENU_getResolvedTree($name = 'navigation')
 
     $menuId = MENU_findMenuIdByName($name);
     if ($menuId <= 0 || !isset($Menus[$menuId])) {
+        MENU_debugLog('Resolved tree: menu "' . (string) $name . '" was not found in runtime menus.');
         return array();
     }
 
     $menu = $Menus[$menuId];
-    if (empty($menu['active']) || (isset($menu['menu_perm']) && (int) $menu['menu_perm'] !== 3)) {
+    if (empty($menu['active'])) {
+        MENU_debugLog('Resolved tree: menu "' . (string) $name . '" is inactive.');
+        return array();
+    }
+    if (isset($menu['menu_perm']) && (int) $menu['menu_perm'] !== 3) {
+        MENU_debugLog(
+            'Resolved tree: menu "' . (string) $name
+            . '" denied by runtime menu permission ' . (int) $menu['menu_perm'] . '.'
+        );
         return array();
     }
     if (!isset($menu['elements'][0])) {
+        MENU_debugLog('Resolved tree: menu "' . (string) $name . '" has no runtime root element.');
+        return array();
+    }
+
+    $childIds = $menu['elements'][0]->getChildren();
+    if (empty($childIds)) {
+        MENU_debugLog('Resolved tree: menu "' . (string) $name . '" root has no children.');
         return array();
     }
 
     $tree = array();
-    foreach ($menu['elements'][0]->getChildren() as $childId) {
+    foreach ($childIds as $childId) {
         if (!isset($menu['elements'][$childId])) {
+            MENU_debugLog(
+                'Resolved tree: menu "' . (string) $name
+                . '" references missing child element ' . (int) $childId . '.'
+            );
             continue;
         }
         $node = MENU_resolveElementNode($menuId, $childId);
@@ -135,6 +155,12 @@ function MENU_getResolvedTree($name = 'navigation')
             $tree[] = $node;
         }
     }
+
+    MENU_debugLog(
+        'Resolved tree: menu "' . (string) $name
+        . '" produced ' . count($tree)
+        . ' top-level node(s) from ' . count($childIds) . ' runtime child(ren).'
+    );
 
     return $tree;
 }
