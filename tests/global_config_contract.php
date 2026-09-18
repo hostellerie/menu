@@ -26,6 +26,15 @@ if (strpos($functions, 'global $_CONF, $_DB_table_prefix, $_TABLES, $_MENU_CONF;
     exit(1);
 }
 
+if (strpos($functions, "if (!isset(\$_MENU_CONF))") !== false) {
+    fwrite(STDERR, "functions.inc must not skip persisted config hydration based on isset(\$_MENU_CONF)\n");
+    exit(1);
+}
+if (strpos($functions, "\$_MENU_CONF = array_merge(\$_MENU_DEFAULT, \$menuStoredConfig);") === false) {
+    fwrite(STDERR, "functions.inc must merge Menu defaults with persisted Geeklog configuration\n");
+    exit(1);
+}
+
 foreach ($settings as $setting) {
     if (strpos($config, "'" . $setting . "'") === false) {
         fwrite(STDERR, 'Missing default for global setting: ' . $setting . "\n");
