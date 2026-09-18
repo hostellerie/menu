@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Menu plugin configuration</title>
+</head>
+<body>
+<h1>Menu plugin configuration</h1>
+<table>
+<thead>
+<tr><th>Variable</th><th>Default value</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr>
+<td><a name="desc_enable_cache">enable_cache</a></td>
+<td>true</td>
+<td>Caches generated Menu data to avoid rebuilding it on every request. Disable only while diagnosing cache-related behavior.</td>
+</tr>
+<tr>
+<td><a name="desc_load_legacy_css">load_legacy_css</a></td>
+<td>true</td>
+<td>Loads Menu-generated legacy styles for menus whose presentation is not handled by the active theme.</td>
+</tr>
+<tr>
+<td><a name="desc_load_legacy_js">load_legacy_js</a></td>
+<td>true</td>
+<td>Loads legacy JavaScript when required by Menu, including responsive SlickNav behavior for compatible horizontal menus.</td>
+</tr>
+<tr>
+<td><a name="desc_legacy_rendering">legacy_rendering</a></td>
+<td>true</td>
+<td>Uses Menu's historical HTML/CSS renderer. Disable only when the active theme or another consumer fully handles menu presentation.</td>
+</tr>
+<tr>
+<td><a name="desc_allow_php_elements">allow_php_elements</a></td>
+<td>false</td>
+<td>Allows menu items that call trusted PHP functions. Keep disabled unless the site explicitly relies on this advanced legacy feature.</td>
+</tr>
+<tr>
+<td><a name="desc_external_link_protection">external_link_protection</a></td>
+<td>true</td>
+<td>Adds rel="noopener noreferrer" to external links opened in a new window to prevent the opened page from controlling the original window.</td>
+</tr>
+<tr>
+<td><a name="desc_accessibility_markup">accessibility_markup</a></td>
+<td>true</td>
+<td>Adds navigation and ARIA attributes to legacy Menu output to improve accessibility without changing the menu structure.</td>
+</tr>
+<tr>
+<td><a name="desc_debug">debug</a></td>
+<td>false</td>
+<td>Writes additional Menu diagnostic messages to the Geeklog error log. Enable temporarily while troubleshooting.</td>
+</tr>
+</tbody>
+</table>
+</body>
+</html>
