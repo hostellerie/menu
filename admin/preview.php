@@ -61,13 +61,17 @@ function MENU_previewLoadThemeProvider()
 
 function MENU_previewThemeAvailable($menuName)
 {
-    $resource = function_exists('MENU_presentationBaseResource')
-        ? MENU_presentationBaseResource($menuName) : (string) $menuName;
+    if ((string) $menuName === '') {
+        return false;
+    }
 
-    return MENU_themeHandlesPresentation($menuName)
-        && MENU_previewLoadThemeProvider()
-        && function_exists('theme_plugin_presentation_preview')
-        && strcasecmp($resource, 'navigation') === 0;
+    /*
+     * Preview capability is intentionally broader than runtime presentation
+     * ownership. A theme may preview any Menu resource without claiming that
+     * resource for live rendering or suppressing Menu's native/autotag CSS.
+     */
+    return MENU_previewLoadThemeProvider()
+        && function_exists('theme_plugin_presentation_preview');
 }
 
 if ($mode === 'tabs') {
@@ -115,11 +119,10 @@ if ($mode === 'theme') {
         exit;
     }
 
-    $resource = function_exists('MENU_presentationBaseResource')
-        ? MENU_presentationBaseResource($menu_name) : $menu_name;
-    $document = theme_plugin_presentation_preview('menu', $resource, array(
+    $document = theme_plugin_presentation_preview('menu', $menu_name, array(
         'menu_id' => $menu_id,
         'menu_name' => $menu_name,
+        'menu_type' => $menu_type,
     ));
 
     header('Content-Type: text/html; charset=utf-8');
