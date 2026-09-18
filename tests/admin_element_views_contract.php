@@ -34,6 +34,13 @@ if (strpos($module, 'MENU_adminTokenInput()') === false) {
     exit(1);
 }
 
+if (strpos($module, "'menu_alignment' => $defaultAlignment") === false
+    || strpos($module, "'use_images' => 0") === false
+    || strpos($module, "isset($Menus[$mid]['config'])") === false) {
+    fwrite(STDERR, "Admin menu configuration must tolerate missing legacy config rows\n");
+    exit(1);
+}
+
 $treeStart = strpos($module, 'function MENU_displayTree');
 $treeEnd = strpos($module, 'function MENU_createElement', $treeStart);
 $treeBody = substr($module, $treeStart, $treeEnd - $treeStart);
