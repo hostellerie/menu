@@ -63,4 +63,8 @@ assertRuntimeConfig(count($GLOBALS['menu_debug_messages']) === 1, 'debug logger 
 assertRuntimeConfig($GLOBALS['menu_debug_messages'][0][0] === 'Menu: enabled', 'debug logger prefixes Menu');
 assertRuntimeConfig($GLOBALS['menu_debug_messages'][0][1] === 1, 'debug logger uses Geeklog error log mode');
 
+$runtimeSource = file_get_contents(dirname(__DIR__) . '/runtime_config.php');
+assertRuntimeConfig(strpos($runtimeSource, 'Geeklog log channel: COM_errorLog=') !== false, 'debug logger reports Geeklog channel state');
+assertRuntimeConfig(strpos($runtimeSource, 'Geeklog log channel result:') !== false, 'debug logger reports Geeklog channel result');
+
 echo "runtime_config: OK\n";
