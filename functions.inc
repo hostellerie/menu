@@ -519,7 +519,10 @@ function plugin_getheadercode_menu() {
                             ));
                         }
                     }
-                    if ($menu['config']['menu_alignment'] == 1) {
+                    $menuAlignment = isset($menu['config']['menu_alignment'])
+                        ? (int) $menu['config']['menu_alignment']
+                        : (((int) $menu['menu_type'] === 2) ? 0 : 1);
+                    if ($menuAlignment === 1) {
                         $ms->set_var('alignment','left');
                     } else {
                         $ms->set_var('alignment','right');
@@ -655,7 +658,10 @@ function phpblock_getMenu($arg1,$arg2) {
         $menu = MENU_getMenu($arg2,'st-vmenu','','','');
         return $menu != '' ? $menu : '';
     }
-    if ($Menus[$menuID]['config']['menu_alignment'] == 1) {
+    $menuAlignment = isset($Menus[$menuID]['config']['menu_alignment'])
+        ? (int) $Menus[$menuID]['config']['menu_alignment']
+        : (((int) $Menus[$menuID]['menu_type'] === 2) ? 0 : 1);
+    if ($menuAlignment === 1) {
         $parent = 'parent-l';
         $class  = 'gl_menu-vert-l';
     } else {
