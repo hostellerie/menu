@@ -59,7 +59,7 @@ $requiredDocs = array(
     'permission-filtered for the current Geeklog request context',
     'inactive menus return an empty tree',
     'group-restricted elements are omitted',
-    'consumers must ignore unknown fields',
+    'Consumers must ignore unknown fields',
     'must perform their own `menu.admin`',
     'must never bypass Menu by querying or mutating',
     'The callback itself is not exposed as an arbitrary executable capability',
