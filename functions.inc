@@ -111,18 +111,30 @@ if ($langfile !== $englishLangFile && file_exists($langfile)) {
 
 unset($menuEnglishLanguage, $menuEnglishConfigLanguage);
 /**
-* Check and see if we need to load the plugin configuration
-*/ 
-if (!isset($_MENU_CONF)) {
-    require_once $_CONF['path_system'] . 'classes/config.class.php';
+ * Load Menu configuration into a stable global runtime array.
+ *
+ * Do not rely on a pre-existing $_MENU_CONF. functions.inc can be included
+ * from different Geeklog scopes and older Menu versions may leave a partial
+ * array behind. Defaults are always loaded first, then persisted Geeklog
+ * configuration wins.
+ */
+require_once __DIR__ . '/config.php';
+require_once $_CONF['path_system'] . 'classes/config.class.php';
 
-    $menu_config = config::get_instance();
-    $_MENU_CONF = $menu_config->get_config('menu');
-    require_once __DIR__ . '/autoinstall.php';
-    $info = plugin_autoinstall_menu('menu');
-    $_MENU_CONF['pi_version'] = $info['info']['pi_version'];
-    unset($info);
+$menu_config = config::get_instance();
+$menuStoredConfig = $menu_config->get_config('menu');
+if (!is_array($menuStoredConfig)) {
+    $menuStoredConfig = array();
 }
+
+$_MENU_CONF = array_merge($_MENU_DEFAULT, $menuStoredConfig);
+
+require_once __DIR__ . '/autoinstall.php';
+$info = plugin_autoinstall_menu('menu');
+if (is_array($info) && isset($info['info']['pi_version'])) {
+    $_MENU_CONF['pi_version'] = $info['info']['pi_version'];
+}
+unset($info, $menuStoredConfig);
 /**
  * Menu plugin table(s)
  */
