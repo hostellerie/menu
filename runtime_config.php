@@ -165,11 +165,26 @@ function MENU_debugLog($message)
 
     $geeklogResult = null;
     if ($geeklogLoggerAvailable) {
+        clearstatcache(true, $errorLog);
+        $sizeBefore = ($errorLog !== '' && is_file($errorLog)) ? @filesize($errorLog) : false;
+
         $geeklogResult = COM_errorLog($line, 1);
+
+        clearstatcache(true, $errorLog);
+        $sizeAfter = ($errorLog !== '' && is_file($errorLog)) ? @filesize($errorLog) : false;
+        $delta = ($sizeBefore !== false && $sizeAfter !== false)
+            ? ((int) $sizeAfter - (int) $sizeBefore)
+            : null;
+
         $debugLines[] = 'Geeklog log channel result: '
             . ($geeklogResult === '' || $geeklogResult === null
                 ? '[empty]'
-                : trim(strip_tags((string) $geeklogResult)));
+                : trim(strip_tags((string) $geeklogResult)))
+            . ', size_before=' . ($sizeBefore === false ? '[unknown]' : (string) $sizeBefore)
+            . ', size_after=' . ($sizeAfter === false ? '[unknown]' : (string) $sizeAfter)
+            . ', delta=' . ($delta === null ? '[unknown]' : (string) $delta)
+            . ', realpath=' . ($errorLog !== '' && realpath($errorLog) !== false ? realpath($errorLog) : '[unresolved]')
+            . '.';
     } else {
         error_log($line);
         $debugLines[] = 'Geeklog log channel result: COM_errorLog unavailable; PHP error_log fallback used.';
