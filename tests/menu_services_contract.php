@@ -43,6 +43,11 @@ if (strpos($functions, "require_once \$_CONF['path'] . 'plugins/menu/services.in
     exit(1);
 }
 
+if (strpos($functions, 'function plugin_wsEnabled_menu()') === false) {
+    fwrite(STDERR, "Menu services must be enabled through Geeklog plugin_wsEnabled API\n");
+    exit(1);
+}
+
 foreach (array('group_id', 'owner_id', 'perm_owner', 'perm_group', 'perm_members', 'perm_anon') as $privateField) {
     if (strpos($services, "'{$privateField}' =>") !== false) {
         fwrite(STDERR, "Menu service must not expose ACL field: {$privateField}\n");
