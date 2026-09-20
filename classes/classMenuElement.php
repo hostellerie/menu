@@ -267,7 +267,7 @@ class mbElement {
         return;
     }
 
-    function showTree( $depth,$ulclass='',$liclass='',$parentaclass='',$lastclass,$selected='' ) {
+    function showTree( $depth,$ulclass='',$liclass='',$parentaclass='',$lastclass='',$selected='' ) {
         global $_SP_CONF,$_USER, $_TABLES, $LANG01, $LANG29, $_CONF,$meLevel,
                $_DB_dbms,$_GROUPS, $config,$Menus, $_TOPICS, $_PLUGINS;
 
