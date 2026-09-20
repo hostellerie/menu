@@ -98,13 +98,14 @@ jobs:
         run: |
           set -euo pipefail
 
-          if git diff --quiet -- dist/menu-1.5.0.zip; then
+          git add dist/menu-1.5.0.zip
+
+          if git diff --cached --quiet -- dist/menu-1.5.0.zip; then
             echo "dist/menu-1.5.0.zip is already current."
             exit 0
           fi
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add dist/menu-1.5.0.zip
           git commit -m "build: update Menu 1.5.0 installable archive"
           git push origin HEAD:develop-1.5.0
