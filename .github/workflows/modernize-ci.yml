@@ -2,11 +2,11 @@ name: Menu CI
 
 on:
   push:
-    branches: [modernize-1.4.0]
+    branches: [develop-1.5.0]
     paths-ignore:
       - 'dist/**'
   pull_request:
-    branches: [modernize-1.4.0]
+    branches: [develop-1.5.0]
   workflow_dispatch:
 
 concurrency:
@@ -75,19 +75,19 @@ jobs:
             --exclude='dist/' \
             --exclude='ROADMAP.md'
 
-          rm -f dist/menu-1.4.0.zip
-          (cd package && zip -qr ../dist/menu-1.4.0.zip menu)
+          rm -f dist/menu-1.5.0.zip
+          (cd package && zip -qr ../dist/menu-1.5.0.zip menu)
           rm -rf package
 
-          test -s dist/menu-1.4.0.zip
-          unzip -tq dist/menu-1.4.0.zip
-          echo "Archive size: $(stat -c%s dist/menu-1.4.0.zip) bytes"
+          test -s dist/menu-1.5.0.zip
+          unzip -tq dist/menu-1.5.0.zip
+          echo "Archive size: $(stat -c%s dist/menu-1.5.0.zip) bytes"
 
       - name: Upload archive
         uses: actions/upload-artifact@v4
         with:
-          name: menu-1.4.0
-          path: dist/menu-1.4.0.zip
+          name: menu-1.5.0
+          path: dist/menu-1.5.0.zip
           if-no-files-found: error
           retention-days: 30
           compression-level: 0
@@ -98,13 +98,13 @@ jobs:
         run: |
           set -euo pipefail
 
-          if git diff --quiet -- dist/menu-1.4.0.zip; then
-            echo "dist/menu-1.4.0.zip is already current."
+          if git diff --quiet -- dist/menu-1.5.0.zip; then
+            echo "dist/menu-1.5.0.zip is already current."
             exit 0
           fi
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add dist/menu-1.4.0.zip
+          git add dist/menu-1.5.0.zip
           git commit -m "build: update Menu 1.4.0 installable archive"
-          git push origin HEAD:modernize-1.4.0
+          git push origin HEAD:develop-1.5.0
