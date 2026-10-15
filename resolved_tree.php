@@ -246,7 +246,7 @@ function MENU_resolveElementNode($menuId, $elementId)
             if (!MENU_resolvedTopicAvailable($subtype)) {
                 return null;
             }
-            $url = $_CONF['site_url'] . '/index.php?topic=' . rawurlencode((string) $subtype);
+            $url = TOPIC_getUrl((string) $subtype);
             break;
     }
 
@@ -453,7 +453,7 @@ function MENU_resolveGeeklogCoreChildren($subtype)
             while ($row = DB_fetchArray($result)) {
                 $children[] = MENU_resolvedSyntheticNode(
                     stripslashes($row['topic']),
-                    $_CONF['site_url'] . '/index.php?topic=' . rawurlencode($row['tid']),
+                    TOPIC_getUrl($row['tid']),
                     9,
                     $row['tid']
                 );
