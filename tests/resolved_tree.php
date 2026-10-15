@@ -42,6 +42,7 @@ function COM_getLanguageId() { return ''; }
 function COM_applyFilter($value) { return $value; }
 function COM_isAnonUser() { return false; }
 function COM_buildURL($url) { return $url; }
+function TOPIC_getUrl($tid) { return 'https://example.test/index.php/topic/' . rawurlencode($tid); }
 function COM_getCurrentURL() { return 'https://example.test/'; }
 function COM_numberFormat($number) { return (string) $number; }
 function SEC_hasRights($rights, $mode = '') {
@@ -210,7 +211,7 @@ menu_test_assert(count($tree[1]['children']) === 1, 'submenu hierarchy was not p
 menu_test_assert($tree[1]['children'][0]['url'] === 'https://external.test/', 'nested URL was not preserved');
 menu_test_assert($tree[2]['url'] === 'https://example.test/demo/', 'plugin URL was not resolved');
 menu_test_assert($tree[3]['url'] === 'https://example.test/staticpages/index.php?page=about', 'static page URL was not resolved');
-menu_test_assert($tree[4]['url'] === 'https://example.test/index.php?topic=news', 'topic URL was not resolved');
+menu_test_assert($tree[4]['url'] === 'https://example.test/index.php/topic/news', 'topic URL must use Geeklog native URL generation');
 menu_test_assert($tree[5]['type'] === 3 && $tree[5]['resolved'] === true, 'Geeklog Admin core node must be resolved');
 menu_test_assert(count($tree[5]['children']) >= 9, 'Geeklog Admin core menu should expose structured children');
 menu_test_assert($tree[5]['children'][0]['label'] === 'Command & Control', 'admin menu must begin with Command & Control');
