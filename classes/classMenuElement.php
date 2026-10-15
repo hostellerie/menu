@@ -727,7 +727,7 @@ class mbElement {
 
                         while( $A = DB_fetchArray( $result ) ) {
                             $topicname = stripslashes( $A['topic'] );
-                            $url =  $_CONF['site_url'] . '/index.php?topic=' . $A['tid'];
+                            $url =  TOPIC_getUrl($A['tid']);
                             $label = $topicname;
                             /*
                             $countstring = '';
@@ -856,7 +856,7 @@ class mbElement {
                 }
                 break;
             case '9' : // topic
-                $this->url = $_CONF['site_url'] . '/index.php?topic=' . $this->subtype;
+                $this->url = TOPIC_getUrl($this->subtype);
                 break;
             default : // unknown
                 break;
