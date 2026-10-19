@@ -106,7 +106,7 @@ function MENU_resolveGeeklogAdminChildren()
         if ($count !== null) {
             $label .= ' (' . MENU_resolvedFormatCount($count) . ')';
         }
-        $children[] = MENU_resolvedSyntheticNode($label, $_CONF['site_admin_url'] . '/story.php', 3, 'stories');
+        $children[] = MENU_resolvedSyntheticNode($label, $_CONF['site_admin_url'] . '/article.php', 3, 'stories');
     }
 
     if (SEC_hasRights('block.edit')) {
