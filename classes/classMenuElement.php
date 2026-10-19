@@ -527,7 +527,7 @@ class mbElement {
                                 $modnum += PLG_getSubmissionCount();
 
                                 if( SEC_hasRights( 'story.edit' )) {
-                                    $url = $_CONF['site_admin_url'] . '/story.php';
+                                    $url = $_CONF['site_admin_url'] . '/article.php';
                                     $label = $LANG01[11];
                                     if( empty( $topicsql )) {
                                         $numstories = DB_count( $_TABLES['stories'] );
