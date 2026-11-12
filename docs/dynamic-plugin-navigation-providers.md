@@ -1,6 +1,6 @@
 # Dynamic Plugin Navigation Providers — Menu 1.5.0 design
 
-> **Status:** Initial provider-service resolution and persistent Menu-owned subtree anchors implemented in **develop-1.5.0**. Rich editor, before/after overlays, provider-anchor diagnostics and release acceptance remain pending. Existing Menu 1.4.0 resolved-tree contract v1 is unchanged. See [plugin author guide](plugin-navigation-provider-guide.md).
+> **Status:** Initial provider-service resolution and persistent Menu-owned subtree anchors implemented in **develop-1.5.0**. A graphical read-only provider-tree editor and inside/before/after placement are implemented. Full drag-and-drop editing, orphan-anchor diagnostics and release acceptance remain pending. Existing Menu 1.4.0 resolved-tree contract v1 is unchanged. See [plugin author guide](plugin-navigation-provider-guide.md).
 
 ## Objective and ownership
 
@@ -71,7 +71,7 @@ All paths above are examples and must be checked against implemented Example Plu
 
 The administrator selects a provider, one named provider tree, and a location in an existing Menu-managed navigation. Menu resolves the provider's live nodes at request time. The plugin returns its current hierarchy; Menu applies **stored additive overlays**, not write-back or copies of provider nodes.
 
-The current implementation stores no new overlay table: an existing Menu External URL item with `menu-provider:exampleplugin:main` embeds the tree, and one with `menu-anchor:exampleplugin:resources` appends its persisted Menu-owned children beneath that stable provider node. Future enhanced overlay storage could add:
+The current implementation stores no new overlay table: an existing Menu External URL item with `menu-provider:exampleplugin:main` embeds the tree. `menu-anchor:exampleplugin:resources` appends Menu-owned children beneath the node, while `menu-before:exampleplugin:resources` and `menu-after:exampleplugin:resources` insert Menu-owned entries immediately adjacent to that node. A graphical administration screen exposes these choices. Future enhanced overlay storage could add:
 
 - Menu ID and provider ID/tree ID.
 - A durable anchor key such as `exampleplugin:resources`.
@@ -120,4 +120,4 @@ Menu is a navigation renderer, **not an authorization boundary**. Each protected
 5. Reuse `MENU_getResolvedTree()`, legacy rendering and theme adapters for the composed tree.
 6. Test permission isolation, cache invalidation, provider availability, local custom-item persistence, and upgrade with the generated ZIP.
 
-**Current state:** initial resolver and integration tests implemented; remaining UX, full compatibility/security acceptance, placement controls and release validation are planned. See [ROADMAP](../ROADMAP.md).
+**Current state:** provider resolution, integration tests, graphical provider-tree viewing and inside/before/after custom-link placement are implemented in development. Full drag-and-drop UX, orphan-anchor diagnostics, broader compatibility/security acceptance and release validation remain planned. See [ROADMAP](../ROADMAP.md).
