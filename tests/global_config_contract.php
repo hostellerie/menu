@@ -21,8 +21,8 @@ $settings = array(
     'debug',
 );
 
-if (strpos($functions, 'global $_CONF, $_DB_table_prefix, $_TABLES, $_MENU_CONF;') === false) {
-    fwrite(STDERR, "functions.inc must keep \$_MENU_CONF in global scope\n");
+if (strpos($functions, 'global $_CONF, $_DB_table_prefix, $_TABLES, $_MENU_CONF, $_MENU_DEFAULT;') === false) {
+    fwrite(STDERR, "functions.inc must keep \$_MENU_CONF and \$_MENU_DEFAULT in global scope\n");
     exit(1);
 }
 
