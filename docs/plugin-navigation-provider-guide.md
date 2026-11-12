@@ -6,30 +6,30 @@
 
 Your plugin **owns** its navigation tree. Menu embeds that tree into an existing Menu menu, renders it in modern resolved-tree consumers and in a basic legacy HTML fallback, and can attach administrator-created Menu submenus under your stable node IDs. Menu does not import or copy your tree into its database.
 
-The integration does not depend on Family Portfolio. Any enabled Geeklog plugin may provide a tree under its own plugin identifier.
+The integration does not depend on Example Plugin. Any enabled Geeklog plugin may provide a tree under its own plugin identifier.
 
 ## Required callbacks in your plugin
 
-For a plugin whose Geeklog identifier is `portfolio`, add both functions in its loaded `functions.inc` (or ensure the second function is loaded before Menu queries it):
+For a plugin whose Geeklog identifier is `exampleplugin`, add both functions in its loaded `functions.inc` (or ensure the second function is loaded before Menu queries it):
 
 ```php
 /**
  * Geeklog 2.2.2 PLG_invokeService requires this callback.
- * This does not itself expose a remotely callable public portfolio API:
+ * This does not itself expose a remotely callable public exampleplugin API:
  * review the plugin's existing webservice access policy separately.
  */
-function plugin_wsEnabled_portfolio()
+function plugin_wsEnabled_exampleplugin()
 {
     return true;
 }
 
 /**
- * Responds to PLG_invokeService('portfolio', 'getNavigationTree', ...).
+ * Responds to PLG_invokeService('exampleplugin', 'getNavigationTree', ...).
  *
  * Do not use user identifiers supplied in $args for authorization.
  * All rules are resolved against the authenticated Geeklog session.
  */
-function service_getNavigationTree_portfolio($args, &$output, &$svc_msg)
+function service_getNavigationTree_exampleplugin($args, &$output, &$svc_msg)
 {
     global $_CONF, $_USER;
 
@@ -40,33 +40,33 @@ function service_getNavigationTree_portfolio($args, &$output, &$svc_msg)
     if ($tree !== 'main' || !isset($_USER['uid'])
         || (int) $_USER['uid'] <= 1
         || !function_exists('SEC_hasRights')
-        || !SEC_hasRights('portfolio.use')) {
+        || !SEC_hasRights('exampleplugin.view')) {
         return PLG_RET_ERROR;
     }
 
     // Example routes only: adjust to your plugin's actual public routes.
-    $base = rtrim($_CONF['site_url'], '/') . '/portfolio/';
+    $base = rtrim($_CONF['site_url'], '/') . '/exampleplugin/';
     $nodes = array(
         array(
-            'id' => 'portfolio:home',
-            'label' => 'Accueil',
+            'id' => 'exampleplugin:home',
+            'label' => 'Home',
             'url' => $base,
             'children' => array()
         ),
         array(
-            'id' => 'portfolio:family',
-            'label' => 'Famille',
-            'url' => $base . 'family/',
+            'id' => 'exampleplugin:resources',
+            'label' => 'Resources',
+            'url' => $base . 'resources/',
             'children' => array()
         )
     );
 
     // IMPORTANT: filter every nested node according to the current user's
-    // active family memberships and private resource access rules.
+    // active resources itemships and private resource access rules.
     // Translate labels using the provider's active language files.
     $output = array(
         'contract_version' => 1,
-        'provider' => 'portfolio',
+        'provider' => 'exampleplugin',
         'tree' => 'main',
         'nodes' => $nodes
     );
@@ -81,31 +81,31 @@ function service_getNavigationTree_portfolio($args, &$output, &$svc_msg)
 Return an `array` with `contract_version` exactly `1`, `provider` exactly matching the plugin identifier, `tree` exactly matching the requested tree key, and `nodes` an array of nodes.
 
 Every node must have:
-- `id`: stable globally namespaced ID of the form `portfolio:family.members`, unique within the tree. Supported suffix characters are lowercase letters, numbers, periods, underscores and dashes; first character must be a lowercase letter.
+- `id`: stable globally namespaced ID of the form `exampleplugin:resources.items`, unique within the tree. Supported suffix characters are lowercase letters, numbers, periods, underscores and dashes; first character must be a lowercase letter.
 - `label`: nonempty plain text (no HTML), maximum 255 bytes.
 - `url`: absolute HTTPS/HTTP URL, root-relative path beginning with `/`, empty string or `#`. No `javascript:`, `data:`, protocol-relative URLs or arbitrary schemes.
 - `children`: optional recursively nested array; default empty.
 
 Limit: 8 levels of nested children and 300 total nodes per provider tree. On any invalid node, Menu rejects the **entire** provider tree. Preserve node IDs across releases even when translating, renaming, moving or reordering sections.
 
-**Permission requirements:** the provider must omit all nodes unauthorized for the *current* user. Family membership, parental status, and the family-manager role do not automatically permit access to a person's private financial accounts. Every destination must independently enforce its own ACL. Do not put account balances or confidential account labels in the navigation response.
+**Permission requirements:** the provider must omit all nodes unauthorized for the *current* user. Resources itemship, parental status, and the resources-manager role do not automatically permit access to a person's private application records. Every destination must independently enforce its own ACL. Do not put account balances or confidential account labels in the navigation response.
 
 ## Configuring Menu as administrator
 
 The initial 1.5.0 implementation deliberately reuses existing **External URL** menu elements so sites do not need a database migration:
 
 1. In Menu administration, open your named menu (such as `navigation`).
-2. Add an **External URL** item with label `Family Portfolio` and destination `menu-provider:portfolio:main`. This special destination is a non-clickable marker that Menu replaces with the provider's current **top-level hierarchy** (Home, Portfolio, Family, Education, News, etc.), without inserting an artificial extra wrapper item.
-3. To add a custom menu item beneath a provider node such as `portfolio:family`, add an **External URL** item with destination `menu-anchor:portfolio:family`. Add your normal Menu items as **children of that anchor item** using the existing hierarchy editor.
+2. Add an **External URL** item with label `Example Plugin` and destination `menu-provider:exampleplugin:main`. This special destination is a non-clickable marker that Menu replaces with the provider's current **top-level hierarchy** (Home, Resources, Documentation, News, etc.), without inserting an artificial extra wrapper item.
+3. To add a custom menu item beneath a provider node such as `exampleplugin:resources`, add an **External URL** item with destination `menu-anchor:exampleplugin:resources`. Add your normal Menu items as **children of that anchor item** using the existing hierarchy editor.
 4. The anchor itself is never rendered. Its children are appended beneath the matching provider node at rendering time.
 5. To insert a custom item at the top level, add an ordinary Menu item alongside the provider marker. These additions are stored by Menu and remain intact across provider upgrades.
 
 Marker URLs are configuration syntax, **not browser links**. Valid examples:
 
 ```text
-menu-provider:portfolio:main
-menu-anchor:portfolio:family
-menu-anchor:portfolio:family.members
+menu-provider:exampleplugin:main
+menu-anchor:exampleplugin:resources
+menu-anchor:exampleplugin:resources.items
 ```
 
 The current first implementation supports appending custom entries beneath a provider node; drag-and-drop positioning *before* or *after* provider children and an enhanced visual provider-tree administration editor remain future improvements. If an anchor disappears, Menu keeps the administrator's saved nodes but omits them from the rendered tree until that node reappears.
@@ -130,6 +130,6 @@ For existing themes using `MENU_getMenu('navigation')`, provider menus use a bas
 - Menus are resolved in the authenticated request context; do not cache across users/families without a complete permission-aware cache key.
 - This integration does not grant Menu rights to change provider nodes or perform actions inside the provider.
 - No installation-time writes to Menu tables are necessary and Menu can operate without your plugin.
-- Use the included tests as a starting point for authenticated, anonymous, parent, child and cross-family scenarios.
+- Use the included tests as a starting point for authenticated, anonymous, parent, child and cross-resources scenarios.
 
 See [design document](dynamic-plugin-navigation-providers.md) and [roadmap](../ROADMAP.md).
