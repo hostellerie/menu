@@ -288,8 +288,12 @@ function MENU_resolveElementNode($menuId, $elementId)
         }
     }
 
-    if (isset($marker) && $marker !== null && $marker['kind'] === 'anchor') {
-        return array('menu_anchor' => $marker['plugin'] . ':' . $marker['key'], 'children' => $children);
+    if (isset($marker) && $marker !== null && $marker['kind'] !== 'provider') {
+        return array(
+            'menu_anchor' => $marker['plugin'] . ':' . $marker['key'],
+            'menu_placement' => $marker['kind'] === 'anchor' ? 'child' : $marker['kind'],
+            'children' => $children
+        );
     }
     if (isset($marker) && $marker !== null && $marker['kind'] === 'provider') {
         return array('menu_provider_root' => true, 'children' => $children);
