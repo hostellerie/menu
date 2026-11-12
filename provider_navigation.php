@@ -15,7 +15,7 @@ if (!defined('VERSION')) {
 function MENU_providerMarker($value)
 {
     $value = trim((string) $value);
-    if (!preg_match('/^menu-(provider|anchor):([a-z][a-z0-9_]{0,63}):([a-z][a-z0-9_.-]{0,127})$/D', $value, $m)) {
+    if (!preg_match('/^menu-(provider|anchor|before|after):([a-z][a-z0-9_]{0,63}):([a-z][a-z0-9_.-]{0,127})$/D', $value, $m)) {
         return null;
     }
     return array('kind' => $m[1], 'plugin' => $m[2], 'key' => $m[3]);
@@ -122,22 +122,38 @@ function MENU_providerCompose($nodes)
     MENU_providerCollectOverlays($nodes, $overlays);
     return MENU_providerApplyOverlays($nodes, $overlays);
 }
+
+/**
+ * Collect Menu-owned extensions without moving the stored elements.
+ * The anchor record is persisted as an ordinary Menu element and remains
+ * available if a provider disappears or a node is renamed.
+ */
 function MENU_providerCollectOverlays($nodes, &$overlays)
 {
     foreach ($nodes as $node) {
         if (isset($node['menu_anchor'])) {
             $key = $node['menu_anchor'];
+            $position = isset($node['menu_placement']) ? $node['menu_placement'] : 'child';
+            if (!in_array($position, array('child', 'before', 'after'), true)) {
+                continue;
+            }
             if (!isset($overlays[$key])) {
-                $overlays[$key] = array();
+                $overlays[$key] = array('child' => array(), 'before' => array(), 'after' => array());
             }
             foreach ($node['children'] as $child) {
-                $overlays[$key][] = $child;
+                $overlays[$key][$position][] = $child;
             }
         } elseif (!empty($node['children'])) {
             MENU_providerCollectOverlays($node['children'], $overlays);
         }
     }
 }
+
+/**
+ * Compose by stable provider node IDs. Before/after entries become siblings,
+ * whereas child entries are appended below the provider node. The caller
+ * cannot inject an item into an unrelated provider's namespace.
+ */
 function MENU_providerApplyOverlays($nodes, &$overlays)
 {
     $result = array();
@@ -145,16 +161,38 @@ function MENU_providerApplyOverlays($nodes, &$overlays)
         if (isset($node['menu_anchor'])) {
             continue;
         }
+
         if (!empty($node['children'])) {
             $node['children'] = MENU_providerApplyOverlays($node['children'], $overlays);
         }
+
         if (isset($node['provider_node_id']) && isset($overlays[$node['provider_node_id']])) {
-            $node['children'] = array_merge($node['children'], $overlays[$node['provider_node_id']]);
-            unset($overlays[$node['provider_node_id']]);
+            $key = $node['provider_node_id'];
+            $extension = $overlays[$key];
+            foreach ($extension['before'] as $custom) {
+                $result[] = MENU_providerApplyOverlayItem($custom, $overlays);
+            }
+            foreach ($extension['child'] as $custom) {
+                $node['children'][] = MENU_providerApplyOverlayItem($custom, $overlays);
+            }
+            $result[] = $node;
+            foreach ($extension['after'] as $custom) {
+                $result[] = MENU_providerApplyOverlayItem($custom, $overlays);
+            }
+            unset($overlays[$key]);
+        } else {
+            $result[] = $node;
         }
-        $result[] = $node;
     }
     return $result;
+}
+
+function MENU_providerApplyOverlayItem($node, &$overlays)
+{
+    if (!empty($node['children'])) {
+        $node['children'] = MENU_providerApplyOverlays($node['children'], $overlays);
+    }
+    return $node;
 }
 
 /** Safe HTML fallback for legacy Menu themes when provider markers are used. */
