@@ -1,0 +1,123 @@
+# Dynamic Plugin Navigation Providers — Menu 1.5.0 design
+
+> **Status:** Proposed contract for the **develop-1.5.0** branch. Not yet implemented or supported. Existing Menu 1.4.0 resolved-tree contract v1 is unchanged. Implementation must be tested on the declared Geeklog/PHP compatibility matrix before any release claim.
+
+## Objective and ownership
+
+A plugin such as [Family Portfolio](https://github.com/hostellerie/familyportfolio) is the authoritative owner of its entire application navigation hierarchy. Menu displays that hierarchy and lets an administrator insert **extra menu entries at the root, before or after provider nodes, or underneath provider nodes**, without editing the provider's tree. An update, disable or failure of the provider must **never delete the administrator's configuration**.
+
+| Concern | Owner |
+| --- | --- |
+| Application node IDs, hierarchy, route URLs, translated labels and eligibility | Provider plugin |
+| Permission checks on each protected destination | Provider plugin and Geeklog |
+| Menu placement, presentation, theme integration, administrator-defined links and inserts | Menu plugin |
+| Final permission-aware tree composition and cache | Menu plugin, with provider-denial respected |
+| User login/session/group context | Geeklog Core |
+
+## Contract proposal (not an existing API)
+
+Use native Geeklog Plugin Services, with a discoverable versioned capability: provisionally `service_getNavigationTree_<plugin>()` / `PLG_invokeService()` plus a provider-capability method or metadata. The exact PHP service signature and invoker argument shape must be verified against **Geeklog 2.2.2** and the oldest declared supported Geeklog release before coding. Do not advertise a PHP API name as stable until tests establish it.
+
+The input should carry only an authorized logical tree identifier and optional configuration scope. **Do not trust a caller-supplied user ID**; resolve current user, language, active site and permissions from the authenticated Geeklog request. The provider returns an array of **already-filtered** nodes.
+
+Illustrative output (schema to be finalized):
+
+```json
+{
+  "contract_version": 1,
+  "provider": "portfolio",
+  "tree": "main",
+  "nodes": [
+    {
+      "id": "portfolio:home",
+      "label": "Accueil",
+      "url": "/portfolio/",
+      "order": 10,
+      "children": []
+    },
+    {
+      "id": "portfolio:family",
+      "label": "Famille",
+      "url": "/portfolio/family/",
+      "order": 30,
+      "children": [
+        {
+          "id": "portfolio:family.members",
+          "label": "Membres",
+          "url": "/portfolio/family/members/",
+          "order": 10,
+          "children": []
+        }
+      ]
+    }
+  ]
+}
+```
+
+All paths above are examples and must be checked against implemented Portfolio routes.
+
+### Required validation
+
+- Namespaced stable IDs per provider, no duplicates or recursive/cyclic nesting.
+- Maximum recursion depth, node count, label lengths and payload size.
+- Valid safe internal/external URLs and explicit restrictions on script schemes; validate `target`, `rel`, `aria_label`, and any future icon/class metadata.
+- Bilingual/multilingual labels resolved by the provider for the active request language.
+- No raw HTML from plugins in node labels; presentation-neutral data only.
+- No group identifiers, private role facts, secret data or access-control details in public tree output.
+- Re-validate provider/plugin availability; unavailable or unauthorized providers must disappear from rendered trees without revealing child nodes.
+- Provider runtime errors and unsupported versions fail closed while leaving stored administrator entries intact.
+
+## Hybrid composition
+
+The administrator selects a provider, one named provider tree, and a location in an existing Menu-managed navigation. Menu resolves the provider's live nodes at request time. The plugin returns its current hierarchy; Menu applies **stored additive overlays**, not write-back or copies of provider nodes.
+
+An administrator overlay should store at least:
+
+- Menu ID and provider ID/tree ID.
+- A durable anchor key such as `portfolio:family`.
+- Placement: `before`, `after`, `first_child`, `last_child` (precise order rules to be designed).
+- A reference to the **ordinary Menu-owned** custom element/subtree.
+- Active/inactive local preference and a stable priority/tiebreaker.
+
+Administrators may add an external link, a Static Page, an article or other ordinary supported element at any depth. Provider-owned nodes are visible as **read-only** in the editor. Only locally owned entries are editable/deletable in Menu.
+
+**Conflict policy:** avoid duplicate IDs, enforce deterministic order and forbid loops. A provider can update text, URLs and ordering without breaking references anchored by stable IDs. If an anchor disappears, the associated custom elements are **preserved** as orphaned configuration, flagged in administration and temporarily withheld or shown at a documented safe fallback location; never silently attach them to a different route. Reappearance of the same anchor can restore placement after revalidation. A disabled provider cannot cause deletion of the overlay or its descendants.
+
+## Compatibility with existing Menu releases
+
+- `MENU_getResolvedTree($name)` stays the single permission-aware, presentation-neutral read model for themes. Its **v1 contract remains compatible**; add only truly additive fields unless introducing an explicitly versioned v2.
+- Existing Menu menus, manually configured plugin links, HTML rendering and autotags must continue to work unchanged.
+- Dynamic providers do not require writing their node sets to Menu database tables. Schema additions, if necessary, store only local overlay references and are upgrade-safe.
+- On conventional sites without provider support, the feature is invisible; there must be no hard dependency on Portfolio.
+- On sites without Menu, Portfolio can continue to use its native Geeklog flat-menu callback and its own local navigation.
+- Test Geeklog/PHP compatibility based on the **declared** support range. If a contract cannot support PHP 5.6, change policy explicitly and coordinate release metadata instead of quietly dropping support.
+
+## Security and caching
+
+The effective tree must use **current user, tenant/family access, active site, language, menu state and provider state**. Parent/child membership and family-manager roles do not imply visibility over private financial dashboards. A provider tree filtered for one user cannot be cached and served to another. Use request-local caching or a carefully validated key and explicit invalidation on permissions, provider changes and administrator edits; fail closed on uncertain caches.
+
+Menu is a navigation renderer, **not an authorization boundary**. Each protected destination performs its own access check even if the menu is hidden. Avoid enumeration of inaccessible nodes via debug pages, exports or API responses.
+
+## Administration acceptance scenarios
+
+1. Portfolio provides Home, Portfolio, Family, Education and News with nested items.
+2. An administrator inserts a custom Static Page under the provider's Family node and a custom external link at the root.
+3. Portfolio renames/reorders Family while preserving its node ID; the custom page remains attached correctly.
+4. A provider removes an anchor; the local item is preserved, clearly flagged, not inadvertently attached elsewhere.
+5. Disabling a provider removes its live nodes, but leaves the saved overlay ready for reactivation.
+6. Users without permission do not receive restricted nodes or infer private data through parent visibility or counts.
+7. Two different families and two separate Geeklog sites do not leak their menu trees through caches.
+8. Legacy Menu 1.4.x navigation and themes, including Eclipse, still render correctly.
+9. Repeated resolution produces deterministic trees without duplicate nodes, cycles or unexpected mutations.
+10. Installing Portfolio without Menu remains a supported fallback.
+
+## Implementation sequence for 1.5.0
+
+1. Validate Geeklog Plugin Services interoperability and versioned contract; write sanitized provider fixtures.
+2. Implement non-persistent resolution and a strict structural validator.
+3. Add overlay storage and migration with backward compatibility and restore safety.
+4. Extend Menu editor with read-only provider nodes and editable local anchors.
+5. Reuse `MENU_getResolvedTree()`, legacy rendering and theme adapters for the composed tree.
+6. Test permission isolation, cache invalidation, provider availability, local custom-item persistence, and upgrade with the generated ZIP.
+
+**Status remains planned until these steps are implemented and validated.** See [ROADMAP](../ROADMAP.md).
