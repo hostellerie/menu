@@ -4,7 +4,7 @@
 
 ## Objective and ownership
 
-A plugin such as [Family Portfolio](https://github.com/hostellerie/familyportfolio) is the authoritative owner of its entire application navigation hierarchy. Menu displays that hierarchy and lets an administrator insert **extra menu entries at the root, before or after provider nodes, or underneath provider nodes**, without editing the provider's tree. An update, disable or failure of the provider must **never delete the administrator's configuration**.
+A plugin such as a generic example plugin is the authoritative owner of its entire application navigation hierarchy. Menu displays that hierarchy and lets an administrator insert **extra menu entries at the root, before or after provider nodes, or underneath provider nodes**, without editing the provider's tree. An update, disable or failure of the provider must **never delete the administrator's configuration**.
 
 | Concern | Owner |
 | --- | --- |
@@ -25,26 +25,26 @@ Illustrative output (schema to be finalized):
 ```json
 {
   "contract_version": 1,
-  "provider": "portfolio",
+  "provider": "exampleplugin",
   "tree": "main",
   "nodes": [
     {
-      "id": "portfolio:home",
-      "label": "Accueil",
-      "url": "/portfolio/",
+      "id": "exampleplugin:home",
+      "label": "Home",
+      "url": "/exampleplugin/",
       "order": 10,
       "children": []
     },
     {
-      "id": "portfolio:family",
-      "label": "Famille",
-      "url": "/portfolio/family/",
+      "id": "exampleplugin:resources",
+      "label": "Resources",
+      "url": "/exampleplugin/resources/",
       "order": 30,
       "children": [
         {
-          "id": "portfolio:family.members",
-          "label": "Membres",
-          "url": "/portfolio/family/members/",
+          "id": "exampleplugin:resources.items",
+          "label": "Items",
+          "url": "/exampleplugin/resources/items/",
           "order": 10,
           "children": []
         }
@@ -54,7 +54,7 @@ Illustrative output (schema to be finalized):
 }
 ```
 
-All paths above are examples and must be checked against implemented Portfolio routes.
+All paths above are examples and must be checked against implemented Example Plugin routes.
 
 ### Required validation
 
@@ -71,10 +71,10 @@ All paths above are examples and must be checked against implemented Portfolio r
 
 The administrator selects a provider, one named provider tree, and a location in an existing Menu-managed navigation. Menu resolves the provider's live nodes at request time. The plugin returns its current hierarchy; Menu applies **stored additive overlays**, not write-back or copies of provider nodes.
 
-The current implementation stores no new overlay table: an existing Menu External URL item with `menu-provider:portfolio:main` embeds the tree, and one with `menu-anchor:portfolio:family` appends its persisted Menu-owned children beneath that stable provider node. Future enhanced overlay storage could add:
+The current implementation stores no new overlay table: an existing Menu External URL item with `menu-provider:exampleplugin:main` embeds the tree, and one with `menu-anchor:exampleplugin:resources` appends its persisted Menu-owned children beneath that stable provider node. Future enhanced overlay storage could add:
 
 - Menu ID and provider ID/tree ID.
-- A durable anchor key such as `portfolio:family`.
+- A durable anchor key such as `exampleplugin:resources`.
 - Placement: `before`, `after`, `first_child`, `last_child` (precise order rules to be designed).
 - A reference to the **ordinary Menu-owned** custom element/subtree.
 - Active/inactive local preference and a stable priority/tiebreaker.
@@ -88,28 +88,28 @@ Administrators may add an external link, a Static Page, an article or other ordi
 - `MENU_getResolvedTree($name)` stays the single permission-aware, presentation-neutral read model for themes. Its **v1 contract remains compatible**; add only truly additive fields unless introducing an explicitly versioned v2.
 - Existing Menu menus, manually configured plugin links, HTML rendering and autotags must continue to work unchanged.
 - Dynamic providers do not require writing their node sets to Menu database tables. Schema additions, if necessary, store only local overlay references and are upgrade-safe.
-- On conventional sites without provider support, the feature is invisible; there must be no hard dependency on Portfolio.
-- On sites without Menu, Portfolio can continue to use its native Geeklog flat-menu callback and its own local navigation.
+- On conventional sites without provider support, the feature is invisible; there must be no hard dependency on Example Plugin.
+- On sites without Menu, Example Plugin can continue to use its native Geeklog flat-menu callback and its own local navigation.
 - Test Geeklog/PHP compatibility based on the **declared** support range. If a contract cannot support PHP 5.6, change policy explicitly and coordinate release metadata instead of quietly dropping support.
 
 ## Security and caching
 
-The effective tree must use **current user, tenant/family access, active site, language, menu state and provider state**. Parent/child membership and family-manager roles do not imply visibility over private financial dashboards. A provider tree filtered for one user cannot be cached and served to another. Use request-local caching or a carefully validated key and explicit invalidation on permissions, provider changes and administrator edits; fail closed on uncertain caches.
+The effective tree must use **current user, tenant/resources access, active site, language, menu state and provider state**. Parent/child itemship and resources-manager roles do not imply visibility over private application pages. A provider tree filtered for one user cannot be cached and served to another. Use request-local caching or a carefully validated key and explicit invalidation on permissions, provider changes and administrator edits; fail closed on uncertain caches.
 
 Menu is a navigation renderer, **not an authorization boundary**. Each protected destination performs its own access check even if the menu is hidden. Avoid enumeration of inaccessible nodes via debug pages, exports or API responses.
 
 ## Administration acceptance scenarios
 
-1. Portfolio provides Home, Portfolio, Family, Education and News with nested items.
-2. An administrator inserts a custom Static Page under the provider's Family node and a custom external link at the root.
-3. Portfolio renames/reorders Family while preserving its node ID; the custom page remains attached correctly.
+1. Example Plugin provides Home, Resources, Documentation and News with nested items.
+2. An administrator inserts a custom Static Page under the provider's Resources node and a custom external link at the root.
+3. Example Plugin renames/reorders Resources while preserving its node ID; the custom page remains attached correctly.
 4. A provider removes an anchor; the local item is preserved, clearly flagged, not inadvertently attached elsewhere.
 5. Disabling a provider removes its live nodes, but leaves the saved overlay ready for reactivation.
 6. Users without permission do not receive restricted nodes or infer private data through parent visibility or counts.
 7. Two different families and two separate Geeklog sites do not leak their menu trees through caches.
 8. Legacy Menu 1.4.x navigation and themes, including Eclipse, still render correctly.
 9. Repeated resolution produces deterministic trees without duplicate nodes, cycles or unexpected mutations.
-10. Installing Portfolio without Menu remains a supported fallback.
+10. Installing Example Plugin without Menu remains a supported fallback.
 
 ## Implementation sequence for 1.5.0
 
