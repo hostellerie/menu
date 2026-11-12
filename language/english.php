@@ -321,10 +321,16 @@ $LANG_configselects['menu'] = array(
 
 
 $LANG_MENU_PROVIDER = array(
+    'none_available' => 'No compatible active plugin navigation is available.',
+    'installed' => 'Already added',
+    'install' => 'Add to this menu',
+    'sections' => 'top-level sections',
+    'discover_help' => 'Add an entire compatible plugin menu with one click. Its sections and submenus remain controlled by that plugin.',
+    'discover' => 'Available plugin navigation',
     'title' => 'Plugin navigation editor',
     'intro' => 'Browse the provider-owned navigation (read-only). Add Menu-owned links before, after or inside a provider node.',
     'back' => 'Back to menu',
-    'none' => 'No active navigation provider was found. Add an External URL menu item such as menu-provider:exampleplugin:main first.',
+    'none' => 'No provider navigation has been added yet. Choose a compatible plugin above, or configure an advanced marker manually.',
     'read_only' => 'Provider nodes cannot be edited here. Added links remain Menu-owned and survive provider updates.',
     'target' => 'Provider node',
     'placement' => 'Position',
