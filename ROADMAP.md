@@ -212,6 +212,9 @@ The 1.4.x line should prefer fixes, diagnostics and compatibility improvements o
 
 ## Dynamic Plugin Navigation Providers — priority for 1.5.0
 
+**One-click administrator workflow (implemented in development):** the Plugin navigation editor discovers compatible active plugins exposing a `main` tree and adds their entire hierarchy to the selected Menu menu through a single idempotent, CSRF-protected action. No manual provider marker is needed for the normal use case. The visual editor remains available for optional before/after/child additions; alternative named trees and richer drag-and-drop features remain future work.
+
+
 **Status (1.5.0 development):** an initial implementation now resolves versioned Geeklog provider services, composes current-user trees, and attaches administrator-created subtrees via existing External URL marker elements. The initial legacy fallback uses a basic nested-list renderer. Rich visual editor, before/after placement, broader discovery and release acceptance remain open. See the [plugin author guide](docs/plugin-navigation-provider-guide.md).
 
 **Goal:** permit a provider plugin (initial integration candidate: a generic example plugin) to **own and publish its complete hierarchical navigation**, while Menu **renders and composes** it with additional administrator-managed items. A site administrator may insert a custom entry at the top level or beneath any provider-defined node. Provider updates must not erase local additions.
