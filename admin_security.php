@@ -32,6 +32,7 @@ function MENU_adminMutationModes()
         'savecfg',
         'disablemenu',
         'provideradd',
+        'providerinstall',
     );
 }
 
