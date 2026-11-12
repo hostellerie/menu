@@ -110,6 +110,108 @@ function MENU_providerAdminValidate($source, $target, $placement, $label, $url)
     return '';
 }
 
+/**
+ * Discover available plugin trees without knowing any plugin-specific name.
+ *
+ * In v1 'main' is the standard entry point for one-click installation.
+ * Plugins exposing alternate names can still use the advanced marker editor.
+ * Tree discovery happens in the current request and never persists secrets.
+ */
+function MENU_providerAdminAvailable($menuId)
+{
+    global $_PLUGINS, $Menus;
+    $available = array();
+    if (!isset($Menus[$menuId]) || !is_array($_PLUGINS)) {
+        return $available;
+    }
+    $installed = array();
+    foreach ($Menus[$menuId]['elements'] as $element) {
+        if ((int) $element->type !== 6) {
+            continue;
+        }
+        $marker = MENU_providerMarker($element->url);
+        if ($marker !== null && $marker['kind'] === 'provider') {
+            $installed[$marker['plugin'] . ':' . $marker['key']] = true;
+        }
+    }
+    foreach ($_PLUGINS as $plugin) {
+        if (!is_string($plugin) || !preg_match('/^[a-z][a-z0-9_]{0,63}$/D', $plugin)
+            || $plugin === 'menu') {
+            continue;
+        }
+        $tree = 'main';
+        $nodes = MENU_providerGetTree($plugin, $tree);
+        if (empty($nodes)) {
+            continue;
+        }
+        $available[] = array(
+            'plugin' => $plugin,
+            'tree' => $tree,
+            'count' => count($nodes),
+            'installed' => isset($installed[$plugin . ':' . $tree])
+        );
+    }
+    return $available;
+}
+
+/**
+ * Install the full provider tree as a single Menu-owned marker.
+ * This action is idempotent, scoped to one existing Menu and never edits the
+ * underlying plugin's navigation or previously created Menu elements.
+ */
+function MENU_providerAdminInstall($post)
+{
+    global $Menus, $_TABLES;
+    $menuId = isset($post['menu']) ? (int) $post['menu'] : 0;
+    $plugin = isset($post['plugin']) ? (string) $post['plugin'] : '';
+    $tree = isset($post['tree']) ? (string) $post['tree'] : '';
+    if ($menuId <= 0 || !isset($Menus[$menuId]) || !isset($_TABLES['menu_elements'])) {
+        return 'Invalid Menu destination.';
+    }
+    if (!preg_match('/^[a-z][a-z0-9_]{0,63}$/D', $plugin)
+        || !preg_match('/^[a-z][a-z0-9_.-]{0,127}$/D', $tree)) {
+        return 'Invalid navigation provider.';
+    }
+    $selected = false;
+    foreach (MENU_providerAdminAvailable($menuId) as $candidate) {
+        if ($candidate['plugin'] === $plugin && $candidate['tree'] === $tree) {
+            if ($candidate['installed']) {
+                return ''; // Already installed; never create duplicates.
+            }
+            $selected = true;
+            break;
+        }
+    }
+    if (!$selected) {
+        return 'The requested plugin navigation is unavailable.';
+    }
+    $marker = 'menu-provider:' . $plugin . ':' . $tree;
+    $escaped = MENU_dbEscape($marker);
+    // Recheck persisted state to avoid duplicate entries after stale page load.
+    $query = DB_query("SELECT id FROM {$_TABLES['menu_elements']} WHERE menu_id="
+        . $menuId . " AND element_type=6 AND element_url='" . $escaped . "' ORDER BY id ASC");
+    if (DB_fetchArray($query)) {
+        return '';
+    }
+
+    $groupId = isset($Menus[$menuId]['group_id']) ? (int) $Menus[$menuId]['group_id'] : 0;
+    if ($groupId <= 0) {
+        return 'Cannot determine Menu visibility group.';
+    }
+    $order = MENU_providerAdminNextOrder($menuId, 0);
+    DB_save(
+        $_TABLES['menu_elements'],
+        'pid,menu_id,element_label,element_type,element_subtype,element_order,element_active,element_url,element_target,group_id',
+        '0,' . $menuId . ",'" . MENU_dbEscape($plugin . ' navigation') . "',6,'"
+        . $escaped . "'," . $order . ",1,'" . $escaped . "',''," . $groupId
+    );
+    if ((int) DB_insertId() <= 0) {
+        return 'Unable to add the plugin navigation.';
+    }
+    MENU_invalidateRuntimeCache(true);
+    return '';
+}
+
 /** Page displayed inside the existing CSRF-protected Menu administration. */
 function MENU_providerAdminPage($menuId)
 {
@@ -122,6 +224,28 @@ function MENU_providerAdminPage($menuId)
         . '<p><a href="' . $escape($_CONF['site_admin_url']) . '/plugins/menu/index.php?mode=menu&amp;menu='
         . (int) $menuId . '">' . $escape($LANG_MENU_PROVIDER['back']) . '</a></p>';
 
+    $available = MENU_providerAdminAvailable($menuId);
+    $html .= '<h3>' . $escape($LANG_MENU_PROVIDER['discover']) . '</h3>'
+        . '<p>' . $escape($LANG_MENU_PROVIDER['discover_help']) . '</p>';
+    $found = false;
+    foreach ($available as $candidate) {
+        $found = true;
+        $html .= '<form method="post" action="' . $escape($_CONF['site_admin_url'])
+            . '/plugins/menu/index.php" style="display:flex;align-items:center;gap:1rem;margin:.5rem 0">'
+            . MENU_adminTokenInput()
+            . '<input type="hidden" name="mode" value="providerinstall">'
+            . '<input type="hidden" name="menu" value="' . (int) $menuId . '">'
+            . '<input type="hidden" name="plugin" value="' . $escape($candidate['plugin']) . '">'
+            . '<input type="hidden" name="tree" value="' . $escape($candidate['tree']) . '">'
+            . '<strong>' . $escape($candidate['plugin']) . '</strong>'
+            . '<span>' . (int) $candidate['count'] . ' ' . $escape($LANG_MENU_PROVIDER['sections']) . '</span>'
+            . '<button type="submit"' . ($candidate['installed'] ? ' disabled="disabled"' : '') . '>'
+            . $escape($candidate['installed'] ? $LANG_MENU_PROVIDER['installed'] : $LANG_MENU_PROVIDER['install'])
+            . '</button></form>';
+    }
+    if (!$found) {
+        $html .= '<p>' . $escape($LANG_MENU_PROVIDER['none_available']) . '</p>';
+    }
     if (empty($sources)) {
         return $html . '<p>' . $escape($LANG_MENU_PROVIDER['none']) . '</p></section>';
     }
