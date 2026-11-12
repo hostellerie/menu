@@ -357,8 +357,11 @@ function MENU_editElement( $menu_id, $mid ) {
     }
     $plugin_select .= '</select>' . LB;
 
-    //Staticpage
-    if ( in_array('staticpages', $_PLUGINS) ) {
+    // The Static Pages plugin is optional. Always initialize its template
+    // variable, including when editing a menu on a site without Static Pages.
+    $sp_select = '';
+    if (is_array($_PLUGINS) && in_array('staticpages', $_PLUGINS, true)
+        && isset($_TABLES['staticpage'])) {
         $sp_select = '<select id="spname" name="spname">' . LB;
         $sql = "SELECT sp_id,sp_title,sp_label FROM {$_TABLES['staticpage']} WHERE draft_flag = 0 ORDER BY sp_title";
         $result = DB_query($sql);
