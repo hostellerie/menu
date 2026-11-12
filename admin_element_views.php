@@ -17,7 +17,7 @@ if (!defined('VERSION')) {
 
 function MENU_displayTree( $menu_id ) {
     global $_CONF, $LANG_MENU00, $LANG_MENU01, $LANG_MENU_ADMIN, $LANG_ADMIN,
-           $_MENU_CONF, $Menus, $_SCRIPTS;
+           $_MENU_CONF, $Menus, $_SCRIPTS, $LANG_MENU_PROVIDER;
 
     $_SCRIPTS->setJavaScriptLibrary('jquery');
     $_SCRIPTS->setJavaScriptFile('menu_tablednd', '/admin/plugins/menu/js/tablednd_0_6.js');
@@ -31,6 +31,8 @@ function MENU_displayTree( $menu_id ) {
                   'text' => $LANG_MENU01['create_element']),
             array('url'  => $_CONF['site_admin_url'] .'/plugins/menu/index.php',
                   'text' => $LANG_MENU01['menu_list']),
+            array('url'  => $_CONF['site_admin_url'] .'/plugins/menu/index.php?mode=providereditor&amp;menu='.$menu_id,
+                  'text' => $LANG_MENU_PROVIDER['title']),
     );
     $retval  .= COM_startBlock($LANG_MENU01['menu_builder'].' :: '.$safeMenuName,'', COM_getBlockTemplate('_admin_block', 'header'));
     $retval  .= ADMIN_createMenu($menu_arr, $LANG_MENU_ADMIN[3],
