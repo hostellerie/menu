@@ -318,3 +318,20 @@ $LANG_fs['menu'] = array(
 $LANG_configselects['menu'] = array(
     0 => array('No' => 0, 'Yes' => 1),
 );
+
+
+$LANG_MENU_PROVIDER = array(
+    'title' => 'Plugin navigation editor',
+    'intro' => 'Browse the provider-owned navigation (read-only). Add Menu-owned links before, after or inside a provider node.',
+    'back' => 'Back to menu',
+    'none' => 'No active navigation provider was found. Add an External URL menu item such as menu-provider:exampleplugin:main first.',
+    'read_only' => 'Provider nodes cannot be edited here. Added links remain Menu-owned and survive provider updates.',
+    'target' => 'Provider node',
+    'placement' => 'Position',
+    'child' => 'Inside (last child)',
+    'before' => 'Before this node',
+    'after' => 'After this node',
+    'label' => 'Custom link label',
+    'url' => 'Link URL',
+    'add' => 'Add custom link'
+);
