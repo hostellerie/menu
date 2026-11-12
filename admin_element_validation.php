@@ -346,13 +346,17 @@ function MENU_adminElementMutationError($mode, $post)
         return 'A menu element cannot use one of its descendants as parent.';
     }
     if ($pid > 0) {
-        $parentType = DB_getItem(
-            $_TABLES['menu_elements'],
-            'element_type',
-            'id=' . $pid . ' AND menu_id=' . $menuId
+        $parentRowResult = DB_query(
+            'SELECT element_type,element_url FROM ' . $_TABLES['menu_elements']
+            . ' WHERE id=' . $pid . ' AND menu_id=' . $menuId
         );
-        if ($parentType === '' || $parentType === null || $parentType === false || (int) $parentType !== 1) {
-            return 'The selected parent is not a submenu in this menu.';
+        $parentRow = DB_numRows($parentRowResult) > 0 ? DB_fetchArray($parentRowResult) : false;
+        $isSubmenu = is_array($parentRow) && (int) $parentRow['element_type'] === 1;
+        $isAnchor = is_array($parentRow) && (int) $parentRow['element_type'] === 6
+            && MENU_providerMarker((string) $parentRow['element_url']) !== null
+            && MENU_providerMarker((string) $parentRow['element_url'])['kind'] === 'anchor';
+        if (!$isSubmenu && !$isAnchor) {
+            return 'The selected parent is not a submenu or provider anchor in this menu.';
         }
     }
 
