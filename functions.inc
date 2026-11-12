@@ -660,7 +660,23 @@ function MENU_getMenu($name='navigation',$wrapper='',$ulclass='',$liclass='',$pa
         if ($wrapper != '') {
             $retval .= '<div class="'.$wrapper.($noid == 0 ? $menuID : '').'">' . LB;
         }
-        $retval .= $Menus[$menuID]['elements'][0]->showTree(0,$ulclass,$liclass,$parentclass,$lastclass,$selected);
+        // Provider-bearing menus use the same permission-filtered composed tree
+        // as themes, including Menu-owned entries attached to provider nodes.
+        // Plain legacy menus retain their original renderer unchanged.
+        $hasProviderMarkers = false;
+        foreach ($Menus[$menuID]['elements'] as $menuElement) {
+            if ((int) $menuElement->type === 6
+                && MENU_providerMarker((string) $menuElement->url) !== null) {
+                $hasProviderMarkers = true;
+                break;
+            }
+        }
+        if ($hasProviderMarkers) {
+            $tree = MENU_getResolvedTree($Menus[$menuID]['menu_name']);
+            $retval .= MENU_providerRenderHtml($tree);
+        } else {
+            $retval .= $Menus[$menuID]['elements'][0]->showTree(0,$ulclass,$liclass,$parentclass,$lastclass,$selected);
+        }
         if ($wrapper != '') {
             $retval .= '</div>' . LB;
         }
