@@ -69,4 +69,16 @@ if (strpos($template, 'tablednd_0_6.js') !== false
     exit(1);
 }
 
+// Editing menus without Static Pages must not reference an uninitialized
+// template variable, even when the optional plugin is inactive.
+$editStart = strpos($module, 'function MENU_editElement');
+$editEnd = strpos($module, 'function MENU_menuConfig', $editStart);
+$editBody = substr($module, $editStart, $editEnd - $editStart);
+$initPos = strpos($editBody, "\$sp_select = '';");
+$usePos = strpos($editBody, "'sp_select'         => \$sp_select");
+if ($editStart === false || $editEnd === false || $initPos === false
+    || $usePos === false || $initPos >= $usePos) {
+    fwrite(STDERR, "Edit element view must always initialize optional Static Pages select before template use\n");
+    exit(1);
+}
 echo "Admin element view module contract tests passed\n";
