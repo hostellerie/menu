@@ -354,7 +354,7 @@ function MENU_adminElementMutationError($mode, $post)
         $isSubmenu = is_array($parentRow) && (int) $parentRow['element_type'] === 1;
         $isAnchor = is_array($parentRow) && (int) $parentRow['element_type'] === 6
             && MENU_providerMarker((string) $parentRow['element_url']) !== null
-            && MENU_providerMarker((string) $parentRow['element_url'])['kind'] === 'anchor';
+            && MENU_providerMarker((string) $parentRow['element_url'])['kind'] !== 'provider';
         if (!$isSubmenu && !$isAnchor) {
             return 'The selected parent is not a submenu or provider anchor in this menu.';
         }
