@@ -17,7 +17,7 @@ class MenuProviderAdminTestElement {
     public $id = 4;
     public $group_id = 2;
 }
-$Menus = array(1 => array('elements' => array(4 => new MenuProviderAdminTestElement())));
+$Menus = array(1 => array('group_id' => 2, 'elements' => array(4 => new MenuProviderAdminTestElement())));
 require_once dirname(__DIR__) . '/provider_admin.php';
 function MENU_resolvedNodeSelected($url) { return false; }
 function PLG_invokeService($plugin, $action, $args, &$output, &$message) {
@@ -55,9 +55,10 @@ function DB_save($table, $columns, $values) {
     $lastInserted = $nextId;
     $records[$lastInserted] = array(
         'type' => strpos($values, 'menu-') !== false ? 'marker' : 'link',
-        'url' => strpos($values, 'menu-before:') !== false ? 'menu-before:exampleplugin:resources'
+        'url' => strpos($values, 'menu-provider:') !== false ? 'menu-provider:exampleplugin:main'
+            : (strpos($values, 'menu-before:') !== false ? 'menu-before:exampleplugin:resources'
             : (strpos($values, 'menu-after:') !== false ? 'menu-after:exampleplugin:resources'
-            : 'menu-anchor:exampleplugin:resources')
+            : 'menu-anchor:exampleplugin:resources'))
     );
 }
 function DB_insertId() { global $lastInserted; return $lastInserted; }
@@ -87,4 +88,16 @@ menu_admin_assert(MENU_providerAdminSave($bad) !== '', 'foreign provider marker 
 $bad = $base; $bad['placement'] = 'unknown';
 menu_admin_assert(MENU_providerAdminSave($bad) !== '', 'unknown placement denied');
 menu_admin_assert(count($records) === 3, 'invalid submissions do not create records');
+$available = MENU_providerAdminAvailable(1);
+menu_admin_assert(count($available) === 1 && $available[0]['installed'], 'existing provider is detected as installed');
+menu_admin_assert(MENU_providerAdminInstall(array('menu' => 1, 'plugin' => 'exampleplugin', 'tree' => 'main')) === '', 'duplicate one-click install is harmless');
+menu_admin_assert(count($records) === 3, 'idempotent installation changes no stored elements');
+unset($Menus[1]['elements'][4]);
+$available = MENU_providerAdminAvailable(1);
+menu_admin_assert(count($available) === 1 && !$available[0]['installed'], 'available plugin without installed marker');
+menu_admin_assert(MENU_providerAdminInstall(array('menu' => 1, 'plugin' => 'exampleplugin', 'tree' => 'main')) === '', 'one-click provider installation');
+menu_admin_assert(count($records) === 4 && $invalidations === 3, 'one marker created and cache invalidated');
+menu_admin_assert(MENU_providerAdminInstall(array('menu' => 1, 'plugin' => 'exampleplugin', 'tree' => 'main')) === '', 'retry install is safe');
+menu_admin_assert(count($records) === 4, 'repeated installation does not duplicate provider');
+menu_admin_assert(MENU_providerAdminInstall(array('menu' => 1, 'plugin' => 'bogus', 'tree' => 'main')) !== '', 'unknown plugin rejected');
 echo "Provider editor tests passed\n";
