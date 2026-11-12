@@ -212,6 +212,8 @@ The 1.4.x line should prefer fixes, diagnostics and compatibility improvements o
 
 ## Dynamic Plugin Navigation Providers — priority for 1.5.0
 
+**Status (1.5.0 development):** an initial implementation now resolves versioned Geeklog provider services, composes current-user trees, and attaches administrator-created subtrees via existing External URL marker elements. The initial legacy fallback uses a basic nested-list renderer. Rich visual editor, before/after placement, broader discovery and release acceptance remain open. See the [plugin author guide](docs/plugin-navigation-provider-guide.md).
+
 **Goal:** permit a provider plugin (initial integration candidate: [Family Portfolio](https://github.com/hostellerie/familyportfolio)) to **own and publish its complete hierarchical navigation**, while Menu **renders and composes** it with additional administrator-managed items. A site administrator may insert a custom entry at the top level or beneath any provider-defined node. Provider updates must not erase local additions.
 
 **Ownership contract:** the provider owns its node identity, labels, destinations, hierarchy, ordering hints, localization and contextual visibility. Menu owns presentation, layout, persistent administrator additions, integration points and safe composition. Geeklog Core permissions and the provider's route-level authorization remain authoritative; visibility in a menu is not permission to open its target.
@@ -219,21 +221,21 @@ The 1.4.x line should prefer fixes, diagnostics and compatibility improvements o
 ### Public provider contract (design before implementation)
 
 - [ ] Specify a **versioned, read-only, request-context-aware** Geeklog plugin-service contract (provisionally `getNavigationTree`) and capability discovery. Support existing Geeklog Plugin Services without a hard dependency on Portfolio.
-- [ ] Require stable **namespaced string node IDs** such as `portfolio:accounts`, never volatile database row IDs, together with `label`, `url`, `children`, `order` and optional `target`, `rel`, `aria_label` and visibility metadata, all validated and escaped appropriately.
-- [ ] Permit multi-level trees, translated labels and request-specific filtering. A provider's response must already be limited to the current authenticated Geeklog user; Menu must also apply its own deny-by-default checks and reject inaccessible or invalid destinations.
+- [x] Require stable **namespaced string node IDs** such as `portfolio:accounts`, never volatile database row IDs, together with `label`, `url`, `children`, `order` and optional `target`, `rel`, `aria_label` and visibility metadata, all validated and escaped appropriately.
+- [x] Permit multi-level trees and translated labels from the provider; require provider-side request-specific filtering (must be tested end-to-end). A provider's response must already be limited to the current authenticated Geeklog user; Menu must also apply its own deny-by-default checks and reject inaccessible or invalid destinations.
 - [ ] Define precedence among provider IDs, native Menu element IDs and custom administrator entries. Prevent cycles, orphaned children, duplicated entries and collisions across providers.
 - [ ] Keep `MENU_getResolvedTree()` and v1 consumers backward compatible; introduce additive node metadata or a versioned v2 only if necessary. Preserve the same permission-filtered resolved-tree interface for themes, including Eclipse.
 - [ ] Decide how to represent providers unavailable due to plugin disable/uninstall, missing services, unsupported contract versions or runtime errors; fail closed without exposing private nodes, and never delete administrator-created records merely because a provider is temporarily unavailable.
 
 ### Hybrid editing and rendering
 
-- [ ] Add a Menu element type or equivalent integration **Plugin-provided navigation**. The administrator selects a provider root/subtree and where it is inserted within a Menu-managed menu.
-- [ ] Allow administrators to add their own links, Geeklog articles, Static Pages, submenus and other supported element types **before, after or as children of provider nodes** using durable provider node IDs as anchors.
-- [ ] Store administrator additions, ordering/placement overrides and optional local hide/show policy separately from the provider's tree; never copy or mutate provider-defined nodes as though Menu owned them.
+- [x] Add an equivalent integration using native External URL marker elements (`menu-provider:plugin:tree`, `menu-anchor:plugin:node`) without schema changes. **Dedicated editor UI remains planned.** The administrator selects a provider root/subtree and where it is inserted within a Menu-managed menu.
+- [x] Allow administrator-created Menu elements as **children of provider nodes** using stable IDs via `menu-anchor:` placeholder. **Before/after placement and improved editor UX remain pending.**
+- [ ] Extend initial Menu-owned child attachment with before/after ordering and optional local hide/show policy; never copy or mutate provider-defined nodes as though Menu owned them.
 - [ ] Define clear precedence for provider changes versus local choices: preserve user-created nodes across provider releases; orphaned anchors are surfaced to administrators with a safe reattachment flow, not silently dropped or reassigned.
 - [ ] Show provider-owned nodes as read-only in Menu administration, and show local/custom nodes as editable. Distinguish provenance in previews and diagnostics.
 - [ ] Support one centrally maintained application menu with top-level Home, Portfolio, Family, Financial Education and News; permit extra custom entries at any depth without obliging Portfolio to know Menu's database schema.
-- [ ] Maintain an optional fallback when Menu is not installed: provider plugins can render their own navigation or offer native Geeklog flat links. No mutual activation dependency.
+- [x] Maintain an optional fallback when Menu is not installed: provider plugins can render their own navigation or offer native Geeklog flat links. No mutual activation dependency.
 
 ### Caching, compatibility and acceptance
 
