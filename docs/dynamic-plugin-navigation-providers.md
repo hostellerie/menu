@@ -1,6 +1,6 @@
 # Dynamic Plugin Navigation Providers — Menu 1.5.0 design
 
-> **Status:** Proposed contract for the **develop-1.5.0** branch. Not yet implemented or supported. Existing Menu 1.4.0 resolved-tree contract v1 is unchanged. Implementation must be tested on the declared Geeklog/PHP compatibility matrix before any release claim.
+> **Status:** Initial provider-service resolution and persistent Menu-owned subtree anchors implemented in **develop-1.5.0**. Rich editor, before/after overlays, provider-anchor diagnostics and release acceptance remain pending. Existing Menu 1.4.0 resolved-tree contract v1 is unchanged. See [plugin author guide](plugin-navigation-provider-guide.md).
 
 ## Objective and ownership
 
@@ -16,7 +16,7 @@ A plugin such as [Family Portfolio](https://github.com/hostellerie/familyportfol
 
 ## Contract proposal (not an existing API)
 
-Use native Geeklog Plugin Services, with a discoverable versioned capability: provisionally `service_getNavigationTree_<plugin>()` / `PLG_invokeService()` plus a provider-capability method or metadata. The exact PHP service signature and invoker argument shape must be verified against **Geeklog 2.2.2** and the oldest declared supported Geeklog release before coding. Do not advertise a PHP API name as stable until tests establish it.
+The initial implementation uses native Geeklog Plugin Services via `PLG_invokeService($plugin, 'getNavigationTree', ...)` and the callback `service_getNavigationTree_<plugin>($args, &$output, &$svc_msg)`. The provider also needs `plugin_wsEnabled_<plugin>()` under Geeklog's service dispatch rules. This callback can affect other exposed services, so audit its security implications. See the implementation guide for a working example; additional capability discovery remains future work.
 
 The input should carry only an authorized logical tree identifier and optional configuration scope. **Do not trust a caller-supplied user ID**; resolve current user, language, active site and permissions from the authenticated Geeklog request. The provider returns an array of **already-filtered** nodes.
 
@@ -71,7 +71,7 @@ All paths above are examples and must be checked against implemented Portfolio r
 
 The administrator selects a provider, one named provider tree, and a location in an existing Menu-managed navigation. Menu resolves the provider's live nodes at request time. The plugin returns its current hierarchy; Menu applies **stored additive overlays**, not write-back or copies of provider nodes.
 
-An administrator overlay should store at least:
+The current implementation stores no new overlay table: an existing Menu External URL item with `menu-provider:portfolio:main` embeds the tree, and one with `menu-anchor:portfolio:family` appends its persisted Menu-owned children beneath that stable provider node. Future enhanced overlay storage could add:
 
 - Menu ID and provider ID/tree ID.
 - A durable anchor key such as `portfolio:family`.
@@ -120,4 +120,4 @@ Menu is a navigation renderer, **not an authorization boundary**. Each protected
 5. Reuse `MENU_getResolvedTree()`, legacy rendering and theme adapters for the composed tree.
 6. Test permission isolation, cache invalidation, provider availability, local custom-item persistence, and upgrade with the generated ZIP.
 
-**Status remains planned until these steps are implemented and validated.** See [ROADMAP](../ROADMAP.md).
+**Current state:** initial resolver and integration tests implemented; remaining UX, full compatibility/security acceptance, placement controls and release validation are planned. See [ROADMAP](../ROADMAP.md).
