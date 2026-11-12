@@ -184,7 +184,7 @@ function MENU_createElement ( $menu_id ) {
 
     $parent_select = '<select name="pid" id="pid">' . LB;
     $parent_select .= '<option value="0">' . $LANG_MENU01['top_level'] . '</option>' . LB;
-    $result = DB_query("SELECT id,element_label FROM {$_TABLES['menu_elements']} WHERE menu_id='" . $menu_id . "' AND element_type=1 ORDER BY element_order ASC, id ASC");
+    $result = DB_query("SELECT id,element_label FROM {$_TABLES['menu_elements']} WHERE menu_id='" . $menu_id . "' AND (element_type=1 OR (element_type=6 AND element_url LIKE 'menu-anchor:%')) ORDER BY element_order ASC, id ASC");
     while ($row = DB_fetchArray($result)) {
         $parent_select .= '<option value="' . (int) $row['id'] . '">' . MENU_escapeStoredText($row['element_label']) . '</option>' . LB;
     }
@@ -383,7 +383,7 @@ function MENU_editElement( $menu_id, $mid ) {
         $blockedParentIds = array_flip(MENU_adminDescendantIds($menu_id, $mid));
 $parent_select = '<select id="pid" name="pid">' . LB;
     $parent_select .= '<option value="0">' . $LANG_MENU01['top_level'] . '</option>' . LB;
-    $result = DB_query("SELECT id,element_label FROM {$_TABLES['menu_elements']} WHERE menu_id='" . $menu_id . "' AND element_type=1 ORDER BY element_order ASC, id ASC");
+    $result = DB_query("SELECT id,element_label FROM {$_TABLES['menu_elements']} WHERE menu_id='" . $menu_id . "' AND (element_type=1 OR (element_type=6 AND element_url LIKE 'menu-anchor:%')) ORDER BY element_order ASC, id ASC");
     while ($row = DB_fetchArray($result)) {
         if ((int) $row['id'] === (int) $mid || isset($blockedParentIds[(int) $row['id']])) {
             continue;
