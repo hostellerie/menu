@@ -31,6 +31,7 @@ function MENU_adminMutationModes()
         'deletemenu',
         'savecfg',
         'disablemenu',
+        'provideradd',
     );
 }
 
