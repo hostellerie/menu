@@ -1,7 +1,8 @@
 # Menu Plugin Modernization Roadmap
 
-Current release line: **1.4.x**  
-Current development branch: **modernize-1.4.0**
+Current stable baseline: **1.4.x**  
+Active development target: **1.5.0** (planned, not released)  
+Current development branch: **develop-1.5.0**
 
 ## Compatibility policy
 
@@ -209,6 +210,42 @@ The 1.4.x line should prefer fixes, diagnostics and compatibility improvements o
 
 1.5.0 may introduce additive schema/API changes, but should remain backward compatible with 1.4.x consumers. Any persistent-state change must preserve shared-files staggered-upgrade safety.
 
+## Dynamic Plugin Navigation Providers — priority for 1.5.0
+
+**Goal:** permit a provider plugin (initial integration candidate: [Family Portfolio](https://github.com/hostellerie/familyportfolio)) to **own and publish its complete hierarchical navigation**, while Menu **renders and composes** it with additional administrator-managed items. A site administrator may insert a custom entry at the top level or beneath any provider-defined node. Provider updates must not erase local additions.
+
+**Ownership contract:** the provider owns its node identity, labels, destinations, hierarchy, ordering hints, localization and contextual visibility. Menu owns presentation, layout, persistent administrator additions, integration points and safe composition. Geeklog Core permissions and the provider's route-level authorization remain authoritative; visibility in a menu is not permission to open its target.
+
+### Public provider contract (design before implementation)
+
+- [ ] Specify a **versioned, read-only, request-context-aware** Geeklog plugin-service contract (provisionally `getNavigationTree`) and capability discovery. Support existing Geeklog Plugin Services without a hard dependency on Portfolio.
+- [ ] Require stable **namespaced string node IDs** such as `portfolio:accounts`, never volatile database row IDs, together with `label`, `url`, `children`, `order` and optional `target`, `rel`, `aria_label` and visibility metadata, all validated and escaped appropriately.
+- [ ] Permit multi-level trees, translated labels and request-specific filtering. A provider's response must already be limited to the current authenticated Geeklog user; Menu must also apply its own deny-by-default checks and reject inaccessible or invalid destinations.
+- [ ] Define precedence among provider IDs, native Menu element IDs and custom administrator entries. Prevent cycles, orphaned children, duplicated entries and collisions across providers.
+- [ ] Keep `MENU_getResolvedTree()` and v1 consumers backward compatible; introduce additive node metadata or a versioned v2 only if necessary. Preserve the same permission-filtered resolved-tree interface for themes, including Eclipse.
+- [ ] Decide how to represent providers unavailable due to plugin disable/uninstall, missing services, unsupported contract versions or runtime errors; fail closed without exposing private nodes, and never delete administrator-created records merely because a provider is temporarily unavailable.
+
+### Hybrid editing and rendering
+
+- [ ] Add a Menu element type or equivalent integration **Plugin-provided navigation**. The administrator selects a provider root/subtree and where it is inserted within a Menu-managed menu.
+- [ ] Allow administrators to add their own links, Geeklog articles, Static Pages, submenus and other supported element types **before, after or as children of provider nodes** using durable provider node IDs as anchors.
+- [ ] Store administrator additions, ordering/placement overrides and optional local hide/show policy separately from the provider's tree; never copy or mutate provider-defined nodes as though Menu owned them.
+- [ ] Define clear precedence for provider changes versus local choices: preserve user-created nodes across provider releases; orphaned anchors are surfaced to administrators with a safe reattachment flow, not silently dropped or reassigned.
+- [ ] Show provider-owned nodes as read-only in Menu administration, and show local/custom nodes as editable. Distinguish provenance in previews and diagnostics.
+- [ ] Support one centrally maintained application menu with top-level Home, Portfolio, Family, Financial Education and News; permit extra custom entries at any depth without obliging Portfolio to know Menu's database schema.
+- [ ] Maintain an optional fallback when Menu is not installed: provider plugins can render their own navigation or offer native Geeklog flat links. No mutual activation dependency.
+
+### Caching, compatibility and acceptance
+
+- [ ] Cache resolved navigation by site, current user/permissions and language where necessary; invalidate on provider navigation changes, plugin enable/disable, role changes and administrator edits. Prefer correctness/no-cache over sharing private navigation across sessions.
+- [ ] Verify provider service return limits, maximum depth, encoding, URLs, recursion, localization, cache isolation and non-executable metadata on Geeklog's declared compatibility matrix.
+- [ ] Test: (1) Portfolio publishes nested sections; (2) admin inserts a custom item within Portfolio > Family; (3) a provider upgrade changes labels/order while custom items persist; (4) disappeared provider node is handled without data loss; (5) unauthorized parent/child family routes are not leaked; (6) disabling Portfolio removes its live nodes safely but retains local custom records; (7) Menu absent leaves Portfolio usable; (8) Eclipse and legacy themes both render the composed tree; (9) two active sites remain isolated; (10) repeated resolution is deterministic and does not recurse.
+- [ ] Document provider-author guidance and administrator setup, plus a migration strategy that preserves existing 1.4.x menus and resolved-tree consumers.
+
+**Sequence:** contract + fixtures → safe merge resolver → admin anchor/placement UX → theme/legacy rendering → security, migration and regression gates. This is **planned 1.5.0 work**, not a current capability of the branch.
+
+See [Dynamic Plugin Navigation Providers design](docs/dynamic-plugin-navigation-providers.md).
+
 ## Modern link metadata
 
 - [ ] Support validated `target` values.
@@ -277,7 +314,7 @@ Menu is a navigation/structure plugin, not an addressable content plugin. It sho
 
 - [ ] Allow reusable menu/submenu structures without recursive inclusion loops.
 - [ ] Define explicit live-reference versus snapshot semantics.
-- [ ] Allow plugins such as Store, Documents or Videos to request contextual navigation through a generic contract.
+- [ ] Expand the 1.5.0 provider contract for richer Store, Documents or Videos contextual navigation use cases.
 - [ ] Keep plugin-specific HTML outside Menu.
 - [ ] Reuse the resolved-tree contract rather than introducing parallel renderers.
 - [ ] Define a narrow inter-plugin contract for advertising safe destinations or navigation blocks.
@@ -286,7 +323,7 @@ Menu is a navigation/structure plugin, not an addressable content plugin. It sho
 - [x] Provide service-based discovery so consumers can detect/read available Menu navigation without loading implementation-specific internals.
 - [ ] Generalize capability metadata further if multiple navigation-service families need explicit capability negotiation beyond `getMenuList` / `getMenuTree`.
 
-This phase is the appropriate place to revisit the earlier idea of a more dynamic Navigation block once its concrete use case is defined.
+Dynamic provider trees and administrator composition are now targeted for 1.5.0 above; the 1.6.0 work here concerns richer contextual/reusable navigation beyond that initial contract.
 
 ---
 
