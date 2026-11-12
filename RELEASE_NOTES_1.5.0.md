@@ -6,7 +6,9 @@
 
 Menu 1.5.0 builds upon the implemented Menu 1.4.0 hierarchy, administration improvements, theme integration and version 1 of the permission-filtered resolved-tree API. Review [1.4.0 release notes](RELEASE_NOTES_1.4.0.md) for existing behavior.
 
-## Dynamic Plugin Navigation Providers — initial implementation available in branch
+## Dynamic Plugin Navigation Providers — development implementation
+
+- **One-click menu installation:** Menu discovers compatible active plugins with a `main` tree and lets administrators add each complete navigation hierarchy through a single protected action. Repeating the action does not duplicate a provider entry.
 
 - **Implemented in development:** provider plugins may define and own full hierarchical navigation, including stable IDs, URLs, user-filtered visibility and translations.
 - **Implemented:** Menu reads provider trees through versioned Geeklog Plugin Services with validation; no provider-specific hard dependency.
