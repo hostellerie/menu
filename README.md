@@ -13,7 +13,7 @@ It lets administrators build reusable hierarchical navigation for headers, foote
 
 **1.5.0 is in development, not released.** The stable implemented baseline remains 1.4.0. The 1.5.0 plan adds a generic Dynamic Plugin Navigation Providers contract, so applications such as Family Portfolio can own a full navigation tree while Menu combines it with administrator-created entries.
 
-Read the [1.5.0 design](docs/dynamic-plugin-navigation-providers.md), [1.5.0 planned release notes](RELEASE_NOTES_1.5.0.md), and [roadmap](ROADMAP.md). No dynamic-provider feature is claimed implemented until tested.
+The first dynamic-provider **implementation is now in this branch** (provider service, safe tree validation, administrator-owned child anchors, resolved-tree integration and a basic legacy HTML fallback). [Plugin author integration guide](docs/plugin-navigation-provider-guide.md) explains the exact PHP hooks and menu markers. Read the [design](docs/dynamic-plugin-navigation-providers.md), [planned release notes](RELEASE_NOTES_1.5.0.md) and [roadmap](ROADMAP.md) for known limitations and release gates. Menu 1.5.0 has **not been released**.
 
 ## Menu 1.4.0 implemented baseline
 
