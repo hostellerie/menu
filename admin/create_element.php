@@ -11,6 +11,7 @@
 
 require_once '../../../lib-common.php';
 require_once '../../auth.inc.php';
+require_once $_CONF['path'] . 'plugins/menu/provider_navigation.php';
 require_once $_CONF['path'] . 'plugins/menu/admin_element_validation.php';
 require_once $_CONF['path'] . 'plugins/menu/cache_runtime.php';
 
@@ -81,6 +82,7 @@ switch ($type) {
         $subtype = $url;
         if ($subtype !== ''
             && strpos($subtype, 'http') !== 0
+            && MENU_providerMarker($subtype) === null
             && strpos($subtype, '%site') === false
             && $subtype[0] !== '#') {
             $subtype = 'http://' . $subtype;
@@ -96,6 +98,7 @@ switch ($type) {
 
 if ($url !== ''
     && strpos($url, 'http') !== 0
+    && MENU_providerMarker($url) === null
     && strpos($url, '%site') === false
     && $url[0] !== '#') {
     $url = 'http://' . $url;
