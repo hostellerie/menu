@@ -187,10 +187,16 @@ $LANG_configselects['menu'] = array(0 => array('Non' => 0, 'Oui' => 1));
 
 
 $LANG_MENU_PROVIDER = array(
+    'none_available' => 'Aucun plugin actif ne propose de navigation compatible.',
+    'installed' => 'Déjà ajouté',
+    'install' => 'Ajouter à ce menu',
+    'sections' => 'rubriques principales',
+    'discover_help' => 'Ajoutez l’arborescence complète d’un plugin compatible en un clic. Le plugin garde le contrôle de ses rubriques et sous-rubriques.',
+    'discover' => 'Menus des plugins disponibles',
     'title' => 'Éditeur de navigation des plugins',
     'intro' => 'Consultez l’arborescence fournie par le plugin (lecture seule). Ajoutez des liens Menu avant, après ou sous une rubrique.',
     'back' => 'Retour au menu',
-    'none' => 'Aucun fournisseur de navigation actif. Ajoutez d’abord un élément URL externe comme menu-provider:exampleplugin:main.',
+    'none' => 'Aucune navigation de plugin n’est encore ajoutée. Sélectionnez un plugin ci-dessus ou configurez un marqueur avancé.',
     'read_only' => 'Les rubriques du plugin ne sont pas modifiables ici. Les liens ajoutés restent gérés par Menu lors des mises à jour.',
     'target' => 'Rubrique du plugin',
     'placement' => 'Position',
