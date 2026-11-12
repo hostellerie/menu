@@ -243,4 +243,49 @@ menu_test_assert(strpos($helloNode['label'], '<') === false && strpos($helloNode
 menu_test_assert($tree[6]['type'] === 7 && $tree[6]['resolved'] === false, 'PHP callback must not be misrepresented as resolved data');
 menu_test_assert($tree[7]['type'] === 8 && $tree[7]['url'] === '', 'non-link item type 8 was not preserved');
 
+// 1.5.0 integration: provider marker contributes first-level nodes and Menu
+// children attached to a stable provider node survive without copying it.
+if (!defined('PLG_RET_OK')) {
+    define('PLG_RET_OK', 1);
+}
+$_PLUGINS = array('portfolio');
+function PLG_invokeService($plugin, $action, $args, &$output, &$message)
+{
+    if ($plugin !== 'portfolio' || $action !== 'getNavigationTree') {
+        return 0;
+    }
+    $output = array(
+        'contract_version' => 1, 'provider' => 'portfolio', 'tree' => 'main',
+        'nodes' => array(
+            array('id' => 'portfolio:home', 'label' => 'Portfolio Home', 'url' => '/portfolio/'),
+            array('id' => 'portfolio:family', 'label' => 'Family', 'url' => '/portfolio/family/')
+        )
+    );
+    return PLG_RET_OK;
+}
+$provider = new MenuResolvedTestElement(11, 0, 'Portfolio provider', 6, '', 100, 'menu-provider:portfolio:main');
+$anchor = new MenuResolvedTestElement(12, 0, 'Family extensions', 6, '', 110, 'menu-anchor:portfolio:family');
+$custom = new MenuResolvedTestElement(13, 12, 'Custom family guide', 6, '', 10, '/staticpages/index.php?page=guide');
+$root->addChild(11);
+$root->addChild(12);
+$anchor->addChild(13);
+$Menus[1]['elements'][11] = $provider;
+$Menus[1]['elements'][12] = $anchor;
+$Menus[1]['elements'][13] = $custom;
+$providerTree = MENU_getResolvedTree('navigation');
+$familyNode = null;
+$foundWrapper = false;
+foreach ($providerTree as $node) {
+    if ($node['label'] === 'Portfolio provider' || $node['label'] === 'Family extensions') {
+        $foundWrapper = true;
+    }
+    if (isset($node['provider_node_id']) && $node['provider_node_id'] === 'portfolio:family') {
+        $familyNode = $node;
+    }
+}
+menu_test_assert(!$foundWrapper, 'provider and anchor placeholders must not render');
+menu_test_assert(is_array($familyNode), 'provider Family is a top-level node');
+menu_test_assert(count($familyNode['children']) === 1, 'custom child is attached');
+menu_test_assert($familyNode['children'][0]['label'] === 'Custom family guide', 'custom label preserved');
+
 echo "Resolved tree tests passed" . PHP_EOL;
