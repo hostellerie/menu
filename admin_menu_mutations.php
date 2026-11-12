@@ -150,7 +150,8 @@ function MENU_saveEditMenuElement ( ) {
                 && strpos($subtype, "http") !== 0
                 && MENU_providerMarker($subtype) === null
                 && strpos($subtype, "%site") === false
-                && $subtype[0] != '#') {
+                && $subtype[0] != '#'
+                && $subtype[0] != '/') {
                 $subtype = 'http://' . $subtype;
             }
             break;
@@ -172,7 +173,8 @@ function MENU_saveEditMenuElement ( ) {
         && strpos($url, "http") !== 0
         && MENU_providerMarker($url) === null
         && strpos($url, "%site") === false
-        && $url[0] != '#') {
+        && $url[0] != '#'
+        && $url[0] != '/') {
         $url = 'http://' . $url;
     }
 
