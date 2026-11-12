@@ -184,3 +184,20 @@ $LANG_configsubgroups['menu'] = array('sg_main' => 'Paramètres généraux');
 $LANG_tab['menu'] = array('tab_main' => 'Paramètres généraux');
 $LANG_fs['menu'] = array('fs_main' => 'Paramètres du plugin Menu');
 $LANG_configselects['menu'] = array(0 => array('Non' => 0, 'Oui' => 1));
+
+
+$LANG_MENU_PROVIDER = array(
+    'title' => 'Éditeur de navigation des plugins',
+    'intro' => 'Consultez l’arborescence fournie par le plugin (lecture seule). Ajoutez des liens Menu avant, après ou sous une rubrique.',
+    'back' => 'Retour au menu',
+    'none' => 'Aucun fournisseur de navigation actif. Ajoutez d’abord un élément URL externe comme menu-provider:exampleplugin:main.',
+    'read_only' => 'Les rubriques du plugin ne sont pas modifiables ici. Les liens ajoutés restent gérés par Menu lors des mises à jour.',
+    'target' => 'Rubrique du plugin',
+    'placement' => 'Position',
+    'child' => 'Sous cette rubrique (à la fin)',
+    'before' => 'Avant cette rubrique',
+    'after' => 'Après cette rubrique',
+    'label' => 'Libellé du lien personnalisé',
+    'url' => 'URL du lien',
+    'add' => 'Ajouter le lien'
+);
