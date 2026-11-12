@@ -12,8 +12,8 @@ Menu 1.5.0 builds upon the implemented Menu 1.4.0 hierarchy, administration impr
 
 - **Implemented in development:** provider plugins may define and own full hierarchical navigation, including stable IDs, URLs, user-filtered visibility and translations.
 - **Implemented:** Menu reads provider trees through versioned Geeklog Plugin Services with validation; no provider-specific hard dependency.
-- **Implemented (initial scope):** administrators add subtrees beneath provider nodes through `menu-anchor:` External URL placeholders, or alongside them as ordinary Menu entries. Before/after placement and a graphical provider editor are not implemented.
-- **Implemented:** Menu-owned entries remain persisted if the provider or its anchor disappears; unresolved anchors are hidden, **not yet displayed in a dedicated diagnostic editor**.
+- **Implemented in development:** a graphical administration screen displays provider-owned trees read-only and lets administrators add Menu-owned links **inside, before or after** a selected provider node. The integration uses stable node IDs and `menu-anchor:`, `menu-before:` and `menu-after:` placement markers.
+- **Implemented:** Menu-owned entries remain persisted if the provider or its anchor disappears; unresolved anchors are hidden. **Pending:** a dedicated orphaned-anchor diagnostic and reattachment UI.
 - **Implemented:** composed tree integrates with the existing resolved-tree API. A basic escaped HTML fallback supports legacy rendering; full theme styling parity requires testing.
 - Sites without dynamic provider support continue to use normal Menu navigation; provider plugins can function without Menu.
 
@@ -27,7 +27,7 @@ The [plugin author guide](docs/plugin-navigation-provider-guide.md) documents th
 - Language-aware menu resolution.
 - Rich, centrally validated display conditions.
 
-All remain **unchecked roadmap items** pending implementation.
+These additional items remain **unchecked roadmap items** pending implementation. The graphical provider editor and inside/before/after placement described above are implemented in the development branch, but are not equivalent to a drag-and-drop menu builder.
 
 ## Compatibility and release gates
 
