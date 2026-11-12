@@ -88,27 +88,34 @@ Every node must have:
 
 Limit: 8 levels of nested children and 300 total nodes per provider tree. On any invalid node, Menu rejects the **entire** provider tree. Preserve node IDs across releases even when translating, renaming, moving or reordering sections.
 
-**Permission requirements:** the provider must omit all nodes unauthorized for the *current* user. Resources itemship, parental status, and the resources-manager role do not automatically permit access to a person's private application records. Every destination must independently enforce its own ACL. Do not put account balances or confidential account labels in the navigation response.
+**Permission requirements:** the provider must omit all nodes unauthorized for the *current* user. Provider nodes must be filtered for the current user. Roles or membership in a plugin-specific group must not grant access to other users' private records. Every destination must independently enforce its own ACL. Do not put account balances or confidential account labels in the navigation response.
 
 ## Configuring Menu as administrator
 
-The initial 1.5.0 implementation deliberately reuses existing **External URL** menu elements so sites do not need a database migration:
+**New in the 1.5.0 development branch:** the Menu administration now includes a **Plugin navigation editor** link in the menu builder. It presents each active provider tree as a read-only hierarchical outline and lets administrators add their own links through a validated form.
 
-1. In Menu administration, open your named menu (such as `navigation`).
-2. Add an **External URL** item with label `Example Plugin` and destination `menu-provider:exampleplugin:main`. This special destination is a non-clickable marker that Menu replaces with the provider's current **top-level hierarchy** (Home, Resources, Documentation, News, etc.), without inserting an artificial extra wrapper item.
-3. To add a custom menu item beneath a provider node such as `exampleplugin:resources`, add an **External URL** item with destination `menu-anchor:exampleplugin:resources`. Add your normal Menu items as **children of that anchor item** using the existing hierarchy editor.
-4. The anchor itself is never rendered. Its children are appended beneath the matching provider node at rendering time.
-5. To insert a custom item at the top level, add an ordinary Menu item alongside the provider marker. These additions are stored by Menu and remain intact across provider upgrades.
+1. Open Menu administration and choose a menu such as `navigation`.
+2. Add one **External URL** element with the destination `menu-provider:exampleplugin:main`, using the plugin identifier and the tree name supported by your provider. This places its entire top-level navigation into the selected Menu menu.
+3. Return to that Menu menu and select **Plugin navigation editor**.
+4. Select the provider node to extend. Choose **Inside**, **Before**, or **After**, then enter a custom link label and a root-relative or HTTP(S) URL.
+5. Submit. Menu creates (or reuses) a hidden placement anchor and saves the custom link as a normal Menu-owned item. Edit/remove that link later through the regular element editor, including its group-based visibility settings.
 
-Marker URLs are configuration syntax, **not browser links**. Valid examples:
+The provider's nodes remain read-only. Only the administrator's own entries are stored in Menu. Labels and routes supplied by the provider are re-read on every request, using the current visitor's permissions. A missing or disabled provider does not delete any saved customizations.
+
+**No new database table is required.** For scripted or advanced setups, these existing External URL marker forms remain supported:
 
 ```text
 menu-provider:exampleplugin:main
 menu-anchor:exampleplugin:resources
-menu-anchor:exampleplugin:resources.items
+menu-before:exampleplugin:resources
+menu-after:exampleplugin:resources
 ```
 
-The current first implementation supports appending custom entries beneath a provider node; drag-and-drop positioning *before* or *after* provider children and an enhanced visual provider-tree administration editor remain future improvements. If an anchor disappears, Menu keeps the administrator's saved nodes but omits them from the rendered tree until that node reappears.
+`menu-provider` expands the provider's top-level tree at that location. An `anchor` places its ordinary Menu-owned children **inside** the specified provider node, while `before` and `after` place those children as siblings immediately adjacent to the target node. Placement anchors are never navigable browser links or provider-owned records. The marker item's own parent menu and group permissions still apply.
+
+Provider node IDs, such as `exampleplugin:resources`, must remain stable across plugin upgrades. If a target ID disappears, its local custom entries remain stored but are hidden until that ID returns; the plugin's access rules must not be bypassed by the marker. A future version may add more visual diagnostics for orphaned anchors and drag-and-drop reordering.
+
+**Limitations:** the editor currently adds URL links; custom Static Pages, Geeklog actions and submenus can be added by using the ordinary Menu element editor beneath a placement anchor. The legacy theme renderer uses a basic nested-list HTML fallback for provider menus. Styling and browser testing are required before a stable 1.5.0 release.
 
 ### Theme integration
 
@@ -130,6 +137,6 @@ For existing themes using `MENU_getMenu('navigation')`, provider menus use a bas
 - Menus are resolved in the authenticated request context; do not cache across users/families without a complete permission-aware cache key.
 - This integration does not grant Menu rights to change provider nodes or perform actions inside the provider.
 - No installation-time writes to Menu tables are necessary and Menu can operate without your plugin.
-- Use the included tests as a starting point for authenticated, anonymous, parent, child and cross-resources scenarios.
+- Use the included tests as a starting point for authenticated, anonymous, role-scoped and cross-tenant scenarios.
 
 See [design document](dynamic-plugin-navigation-providers.md) and [roadmap](../ROADMAP.md).
