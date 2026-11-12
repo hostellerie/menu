@@ -48,6 +48,7 @@ require_once $_CONF['path'].'plugins/menu/admin_menu_views.php';
 require_once $_CONF['path'].'plugins/menu/admin_menu_mutations.php';
 require_once $_CONF['path'].'plugins/menu/color_utils.php';
 require_once $_CONF['path'].'plugins/menu/admin_element_views.php';
+require_once $_CONF['path'].'plugins/menu/provider_admin.php';
 
 $display = '';
 
@@ -80,6 +81,16 @@ if ( (isset($_POST['execute']) || $mode != '') && !isset($_POST['cancel']) && !i
         case 'clone' :
             $menu = (int) Geeklog\Input::fGet('id');
             $content = MENU_cloneMenu($menu);
+            break;
+        case 'providereditor':
+            $content = MENU_providerAdminPage($menu_id);
+            break;
+        case 'provideradd':
+            $error = MENU_providerAdminSave($_POST);
+            if ($error !== '') {
+                MENU_adminRejectInvalidRequest($error);
+            }
+            COM_redirect($_CONF['site_admin_url'] . '/plugins/menu/index.php?mode=providereditor&menu=' . $menu_id);
             break;
         case 'menu' :
             // display the tree
