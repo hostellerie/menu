@@ -57,6 +57,21 @@ $composed = MENU_providerCompose(array($nodes[0], $nodes[1], $overlay));
 menu_provider_assert(count($composed) === 2, 'marker omitted from root');
 menu_provider_assert(count($composed[1]['children']) === 2, 'custom entry attached');
 menu_provider_assert($composed[1]['children'][1]['id'] === 15, 'custom element remains intact');
+// Relative positioning must be applied to the provider's sibling array.
+$before = array('menu_anchor' => 'exampleplugin:resources', 'menu_placement' => 'before', 'children' => array(
+    array('id' => 16, 'label' => 'Before resources', 'url' => '/before', 'children' => array())
+));
+$after = array('menu_anchor' => 'exampleplugin:resources', 'menu_placement' => 'after', 'children' => array(
+    array('id' => 17, 'label' => 'After resources', 'url' => '/after', 'children' => array())
+));
+$ordered = MENU_providerCompose(array($nodes[0], $nodes[1], $overlay, $before, $after));
+menu_provider_assert(count($ordered) === 4, 'provider siblings plus before and after');
+menu_provider_assert($ordered[1]['id'] === 16, 'before placement');
+menu_provider_assert($ordered[2]['provider_node_id'] === 'exampleplugin:resources', 'provider remains at anchor');
+menu_provider_assert($ordered[3]['id'] === 17, 'after placement');
+menu_provider_assert(count($ordered[2]['children']) === 2, 'original and custom children retained');
+menu_provider_assert(MENU_providerMarker('menu-before:exampleplugin:resources')['kind'] === 'before', 'before marker');
+menu_provider_assert(MENU_providerMarker('menu-after:exampleplugin:resources')['kind'] === 'after', 'after marker');
 $orphan = MENU_providerCompose(array($overlay));
 menu_provider_assert(count($orphan) === 0, 'orphan anchor hidden, not exposed');
 
