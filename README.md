@@ -7,9 +7,15 @@ Menu is a navigation management plugin for the [Geeklog CMS](https://www.geeklog
 It lets administrators build reusable hierarchical navigation for headers, footers, blocks and content areas while preserving compatibility with existing Geeklog sites and exposing cleaner structural APIs for modern themes.
 
 > Development repository: https://github.com/hostellerie/menu  
-> Current development branch: `modernize-1.4.0`
+> Current development branch: `develop-1.5.0`
 
-## Menu 1.4.0 development line
+## Menu 1.5.0 development line
+
+**1.5.0 is in development, not released.** The stable implemented baseline remains 1.4.0. The 1.5.0 plan adds a generic Dynamic Plugin Navigation Providers contract, so applications such as Family Portfolio can own a full navigation tree while Menu combines it with administrator-created entries.
+
+Read the [1.5.0 design](docs/dynamic-plugin-navigation-providers.md), [1.5.0 planned release notes](RELEASE_NOTES_1.5.0.md), and [roadmap](ROADMAP.md). No dynamic-provider feature is claimed implemented until tested.
+
+## Menu 1.4.0 implemented baseline
 
 Menu 1.4.0 builds on the compatibility and modernization work completed for 1.3.0. The current branch focuses on safer administration, clearer separation of responsibilities, stronger localization, improved theme integration, more predictable frontend asset loading and a more reliable development/release workflow.
 
@@ -153,7 +159,7 @@ Temporary debugging/patch workflows are not part of the retained development wor
 
 ## Release notes
 
-See [`RELEASE_NOTES_1.4.0.md`](RELEASE_NOTES_1.4.0.md) for the 1.4.0 changes and upgrade notes.
+See [`RELEASE_NOTES_1.5.0.md`](RELEASE_NOTES_1.5.0.md) for **planned** 1.5.0 scope and gates; [`RELEASE_NOTES_1.4.0.md`](RELEASE_NOTES_1.4.0.md) records the implemented 1.4.0 baseline.
 
 ## Development principles
 
@@ -167,7 +173,7 @@ See [`RELEASE_NOTES_1.4.0.md`](RELEASE_NOTES_1.4.0.md) for the 1.4.0 changes and
 
 ## Roadmap
 
-See [`ROADMAP.md`](ROADMAP.md) for completed 1.4.0 foundations, remaining release work and longer-term capabilities such as destination diagnostics, active state, JSON portability, multilingual menu resolution, contextual menus and external APIs.
+See [`ROADMAP.md`](ROADMAP.md) for completed 1.4.0 foundations, the 1.5.0 dynamic-navigation contract and longer-term capabilities such as destination diagnostics, active state, JSON portability, multilingual menu resolution, contextual menus and external APIs.
 
 ## Bugs and feature requests
 
