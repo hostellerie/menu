@@ -6,16 +6,16 @@
 
 Menu 1.5.0 builds upon the implemented Menu 1.4.0 hierarchy, administration improvements, theme integration and version 1 of the permission-filtered resolved-tree API. Review [1.4.0 release notes](RELEASE_NOTES_1.4.0.md) for existing behavior.
 
-## Planned major capability: Dynamic Plugin Navigation Providers
+## Dynamic Plugin Navigation Providers — initial implementation available in branch
 
-- Provider plugins (first use case: Family Portfolio) define and own full hierarchical navigation, including stable IDs, URLs, user-specific visibility and translations.
-- Menu reads these trees through a versioned Geeklog-native inter-plugin contract; no provider-specific hard dependency.
-- Administrators can add their own entries at any level, including **inside provider-defined submenus**, or alongside them, without altering the provider's source hierarchy.
-- An overlay model preserves manual entries across provider upgrades or temporary unavailability; invalid/missing anchors are flagged, not deleted.
-- Final composed tree remains permission-aware, compatible with the Menu resolved-tree API and available to modern/legacy themes.
+- **Implemented in development:** provider plugins may define and own full hierarchical navigation, including stable IDs, URLs, user-filtered visibility and translations.
+- **Implemented:** Menu reads provider trees through versioned Geeklog Plugin Services with validation; no provider-specific hard dependency.
+- **Implemented (initial scope):** administrators add subtrees beneath provider nodes through `menu-anchor:` External URL placeholders, or alongside them as ordinary Menu entries. Before/after placement and a graphical provider editor are not implemented.
+- **Implemented:** Menu-owned entries remain persisted if the provider or its anchor disappears; unresolved anchors are hidden, **not yet displayed in a dedicated diagnostic editor**.
+- **Implemented:** composed tree integrates with the existing resolved-tree API. A basic escaped HTML fallback supports legacy rendering; full theme styling parity requires testing.
 - Sites without dynamic provider support continue to use normal Menu navigation; provider plugins can function without Menu.
 
-The detailed specification and testing criteria are in [docs/dynamic-plugin-navigation-providers.md](docs/dynamic-plugin-navigation-providers.md).
+The [plugin author guide](docs/plugin-navigation-provider-guide.md) documents the required Geeklog callbacks and administrator setup. The [design](docs/dynamic-plugin-navigation-providers.md) records the full roadmap, remaining work and security constraints.
 
 ## Other planned 1.5.0 items
 
