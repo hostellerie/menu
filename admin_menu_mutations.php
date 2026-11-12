@@ -148,6 +148,7 @@ function MENU_saveEditMenuElement ( ) {
             $subtype = trim(Geeklog\Input::fPost('menuurl'));
             if ($subtype !== ''
                 && strpos($subtype, "http") !== 0
+                && MENU_providerMarker($subtype) === null
                 && strpos($subtype, "%site") === false
                 && $subtype[0] != '#') {
                 $subtype = 'http://' . $subtype;
@@ -169,6 +170,7 @@ function MENU_saveEditMenuElement ( ) {
 
     if ($url !== ''
         && strpos($url, "http") !== 0
+        && MENU_providerMarker($url) === null
         && strpos($url, "%site") === false
         && $url[0] != '#') {
         $url = 'http://' . $url;
