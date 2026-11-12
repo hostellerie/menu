@@ -154,7 +154,16 @@ function MENU_getResolvedTree($name = 'navigation')
         }
         $node = MENU_resolveElementNode($menuId, $childId);
         if ($node !== null) {
-            $tree[] = $node;
+            // A provider marker at the menu root contributes its full
+            // application navigation as first-level siblings, not as an
+            // extra artificial "plugin" submenu.
+            if (isset($node['menu_provider_root'])) {
+                foreach ($node['children'] as $provided) {
+                    $tree[] = $provided;
+                }
+            } else {
+                $tree[] = $node;
+            }
         }
     }
 
@@ -281,6 +290,9 @@ function MENU_resolveElementNode($menuId, $elementId)
 
     if (isset($marker) && $marker !== null && $marker['kind'] === 'anchor') {
         return array('menu_anchor' => $marker['plugin'] . ':' . $marker['key'], 'children' => $children);
+    }
+    if (isset($marker) && $marker !== null && $marker['kind'] === 'provider') {
+        return array('menu_provider_root' => true, 'children' => $children);
     }
 
     return array(
