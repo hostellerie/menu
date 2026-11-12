@@ -85,6 +85,13 @@ if ( (isset($_POST['execute']) || $mode != '') && !isset($_POST['cancel']) && !i
         case 'providereditor':
             $content = MENU_providerAdminPage($menu_id);
             break;
+        case 'providerinstall':
+            $error = MENU_providerAdminInstall($_POST);
+            if ($error !== '') {
+                MENU_adminRejectInvalidRequest($error);
+            }
+            COM_redirect($_CONF['site_admin_url'] . '/plugins/menu/index.php?mode=providereditor&menu=' . $menu_id);
+            break;
         case 'provideradd':
             $error = MENU_providerAdminSave($_POST);
             if ($error !== '') {
