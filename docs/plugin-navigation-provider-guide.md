@@ -90,19 +90,23 @@ Limit: 8 levels of nested children and 300 total nodes per provider tree. On any
 
 **Permission requirements:** the provider must omit all nodes unauthorized for the *current* user. Provider nodes must be filtered for the current user. Roles or membership in a plugin-specific group must not grant access to other users' private records. Every destination must independently enforce its own ACL. Do not put account balances or confidential account labels in the navigation response.
 
-## Configuring Menu as administrator
+## One-click installation in Menu administration
 
-**New in the 1.5.0 development branch:** the Menu administration now includes a **Plugin navigation editor** link in the menu builder. It presents each active provider tree as a read-only hierarchical outline and lets administrators add their own links through a validated form.
+**Recommended workflow for Menu 1.5.0:** plugin authors expose the native Geeklog `getNavigationTree` service described above, with a `main` tree. No Menu SQL writes, dependencies, or installation hooks are required from the provider.
 
-1. Open Menu administration and choose a menu such as `navigation`.
-2. Add one **External URL** element with the destination `menu-provider:exampleplugin:main`, using the plugin identifier and the tree name supported by your provider. This places its entire top-level navigation into the selected Menu menu.
-3. Return to that Menu menu and select **Plugin navigation editor**.
-4. Select the provider node to extend. Choose **Inside**, **Before**, or **After**, then enter a custom link label and a root-relative or HTTP(S) URL.
-5. Submit. Menu creates (or reuses) a hidden placement anchor and saves the custom link as a normal Menu-owned item. Edit/remove that link later through the regular element editor, including its group-based visibility settings.
+1. An administrator opens Menu administration and selects a menu such as `navigation`.
+2. The administrator opens **Plugin navigation editor**.
+3. Menu discovers active, compatible plugins that return a valid `main` navigation tree for the current request. Each is shown with an **Add to this menu** button.
+4. One click inserts the plugin's **entire top-level hierarchy and all submenus**, using one Menu-owned provider marker. The button then reads **Already added**.
+5. Later provider upgrades update the displayed tree dynamically without recreating or duplicating menu items. Local Menu additions are preserved.
 
-The provider's nodes remain read-only. Only the administrator's own entries are stored in Menu. Labels and routes supplied by the provider are re-read on every request, using the current visitor's permissions. A missing or disabled provider does not delete any saved customizations.
+**This is the default path.** The provider needs no knowledge of Menu's database or administrative UI. The integration is optional: plugins can still function without Menu. Other named trees can be configured through the advanced marker workflow until automatic discovery beyond `main` is implemented.
 
-**No new database table is required.** For scripted or advanced setups, these existing External URL marker forms remain supported:
+### Optional custom entries and advanced administration
+
+After the one-click installation, the same graphical editor displays the provider tree as a read-only hierarchy. The administrator may select a node and add a custom link **Inside**, **Before**, or **After** it. Menu validates the destination, creates or reuses a placement anchor, and stores the new link independently of the provider. Its label and access settings can subsequently be edited using the ordinary Menu editor.
+
+Administrators can still use existing External URL markers manually for advanced setups:
 
 ```text
 menu-provider:exampleplugin:main
@@ -111,11 +115,9 @@ menu-before:exampleplugin:resources
 menu-after:exampleplugin:resources
 ```
 
-`menu-provider` expands the provider's top-level tree at that location. An `anchor` places its ordinary Menu-owned children **inside** the specified provider node, while `before` and `after` place those children as siblings immediately adjacent to the target node. Placement anchors are never navigable browser links or provider-owned records. The marker item's own parent menu and group permissions still apply.
+`menu-provider` inserts the entire provider tree. `anchor` adds Menu-owned children inside a provider node; `before` and `after` place them immediately alongside it. The provider's node IDs must remain stable. If a node disappears or becomes unavailable, saved additions remain in storage without leaking the restricted node. The markers are internal configuration, not browser URLs.
 
-Provider node IDs, such as `exampleplugin:resources`, must remain stable across plugin upgrades. If a target ID disappears, its local custom entries remain stored but are hidden until that ID returns; the plugin's access rules must not be bypassed by the marker. A future version may add more visual diagnostics for orphaned anchors and drag-and-drop reordering.
-
-**Limitations:** the editor currently adds URL links; custom Static Pages, Geeklog actions and submenus can be added by using the ordinary Menu element editor beneath a placement anchor. The legacy theme renderer uses a basic nested-list HTML fallback for provider menus. Styling and browser testing are required before a stable 1.5.0 release.
+The current graphical editor adds ordinary URL links. For Static Pages and other Menu element types, add elements to a placement anchor via the standard editor. Richer drag-and-drop positioning and diagnostics for orphaned anchors remain future improvements.
 
 ### Theme integration
 
