@@ -248,24 +248,24 @@ menu_test_assert($tree[7]['type'] === 8 && $tree[7]['url'] === '', 'non-link ite
 if (!defined('PLG_RET_OK')) {
     define('PLG_RET_OK', 1);
 }
-$_PLUGINS = array('portfolio');
+$_PLUGINS = array('exampleplugin');
 function PLG_invokeService($plugin, $action, $args, &$output, &$message)
 {
-    if ($plugin !== 'portfolio' || $action !== 'getNavigationTree') {
+    if ($plugin !== 'exampleplugin' || $action !== 'getNavigationTree') {
         return 0;
     }
     $output = array(
-        'contract_version' => 1, 'provider' => 'portfolio', 'tree' => 'main',
+        'contract_version' => 1, 'provider' => 'exampleplugin', 'tree' => 'main',
         'nodes' => array(
-            array('id' => 'portfolio:home', 'label' => 'Portfolio Home', 'url' => '/portfolio/'),
-            array('id' => 'portfolio:family', 'label' => 'Family', 'url' => '/portfolio/family/')
+            array('id' => 'exampleplugin:home', 'label' => 'Example Home', 'url' => '/exampleplugin/'),
+            array('id' => 'exampleplugin:resources', 'label' => 'Resources', 'url' => '/exampleplugin/resources/')
         )
     );
     return PLG_RET_OK;
 }
-$provider = new MenuResolvedTestElement(11, 0, 'Portfolio provider', 6, '', 100, 'menu-provider:portfolio:main');
-$anchor = new MenuResolvedTestElement(12, 0, 'Family extensions', 6, '', 110, 'menu-anchor:portfolio:family');
-$custom = new MenuResolvedTestElement(13, 12, 'Custom family guide', 6, '', 10, '/staticpages/index.php?page=guide');
+$provider = new MenuResolvedTestElement(11, 0, 'Example provider', 6, '', 100, 'menu-provider:exampleplugin:main');
+$anchor = new MenuResolvedTestElement(12, 0, 'Resources extensions', 6, '', 110, 'menu-anchor:exampleplugin:resources');
+$custom = new MenuResolvedTestElement(13, 12, 'Custom resources guide', 6, '', 10, '/staticpages/index.php?page=guide');
 $root->addChild(11);
 $root->addChild(12);
 $anchor->addChild(13);
@@ -273,19 +273,19 @@ $Menus[1]['elements'][11] = $provider;
 $Menus[1]['elements'][12] = $anchor;
 $Menus[1]['elements'][13] = $custom;
 $providerTree = MENU_getResolvedTree('navigation');
-$familyNode = null;
+$resourcesNode = null;
 $foundWrapper = false;
 foreach ($providerTree as $node) {
-    if ($node['label'] === 'Portfolio provider' || $node['label'] === 'Family extensions') {
+    if ($node['label'] === 'Example provider' || $node['label'] === 'Resources extensions') {
         $foundWrapper = true;
     }
-    if (isset($node['provider_node_id']) && $node['provider_node_id'] === 'portfolio:family') {
-        $familyNode = $node;
+    if (isset($node['provider_node_id']) && $node['provider_node_id'] === 'exampleplugin:resources') {
+        $resourcesNode = $node;
     }
 }
 menu_test_assert(!$foundWrapper, 'provider and anchor placeholders must not render');
-menu_test_assert(is_array($familyNode), 'provider Family is a top-level node');
-menu_test_assert(count($familyNode['children']) === 1, 'custom child is attached');
-menu_test_assert($familyNode['children'][0]['label'] === 'Custom family guide', 'custom label preserved');
+menu_test_assert(is_array($resourcesNode), 'provider Resources is a top-level node');
+menu_test_assert(count($resourcesNode['children']) === 1, 'custom child is attached');
+menu_test_assert($resourcesNode['children'][0]['label'] === 'Custom resources guide', 'custom label preserved');
 
 echo "Resolved tree tests passed" . PHP_EOL;
