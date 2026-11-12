@@ -20,6 +20,8 @@ if (!defined('MENU_RESOLVED_TREE_CONTRACT_VERSION')) {
 require_once __DIR__ . '/runtime_config.php';
 require_once __DIR__ . '/resolved_admin.php';
 
+require_once __DIR__ . '/provider_navigation.php';
+
 /**
  * Return the public resolved-tree contract version.
  *
@@ -162,7 +164,7 @@ function MENU_getResolvedTree($name = 'navigation')
         . ' top-level node(s) from ' . count($childIds) . ' runtime child(ren).'
     );
 
-    return $tree;
+    return MENU_providerCompose($tree);
 }
 
 function MENU_resolveElementNode($menuId, $elementId)
@@ -222,7 +224,20 @@ function MENU_resolveElementNode($menuId, $elementId)
             break;
 
         case 6:
-            $url = MENU_resolveMacros($url !== '' ? $url : (string) $subtype);
+            $marker = MENU_providerMarker($url !== '' ? $url : (string) $subtype);
+            if ($marker !== null) {
+                if ($marker['kind'] === 'provider') {
+                    $dynamicChildren = MENU_providerGetTree($marker['plugin'], $marker['key']);
+                    if (empty($dynamicChildren)) {
+                        return null;
+                    }
+                    $url = '#';
+                } else {
+                    $url = '';
+                }
+            } else {
+                $url = MENU_resolveMacros($url !== '' ? $url : (string) $subtype);
+            }
             break;
 
         case 7:
@@ -262,6 +277,10 @@ function MENU_resolveElementNode($menuId, $elementId)
                 $children[] = $child;
             }
         }
+    }
+
+    if (isset($marker) && $marker !== null && $marker['kind'] === 'anchor') {
+        return array('menu_anchor' => $marker['plugin'] . ':' . $marker['key'], 'children' => $children);
     }
 
     return array(
