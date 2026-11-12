@@ -215,7 +215,7 @@ The 1.4.x line should prefer fixes, diagnostics and compatibility improvements o
 **One-click administrator workflow (implemented in development):** the Plugin navigation editor discovers compatible active plugins exposing a `main` tree and adds their entire hierarchy to the selected Menu menu through a single idempotent, CSRF-protected action. No manual provider marker is needed for the normal use case. The visual editor remains available for optional before/after/child additions; alternative named trees and richer drag-and-drop features remain future work.
 
 
-**Status (1.5.0 development):** an initial implementation now resolves versioned Geeklog provider services, composes current-user trees, and attaches administrator-created subtrees via existing External URL marker elements. The initial legacy fallback uses a basic nested-list renderer. Rich visual editor, before/after placement, broader discovery and release acceptance remain open. See the [plugin author guide](docs/plugin-navigation-provider-guide.md).
+**Status (1.5.0 development):** an initial implementation now resolves versioned Geeklog provider services, composes current-user trees, and attaches administrator-created subtrees via existing External URL marker elements. The initial legacy fallback uses a basic nested-list renderer. Full drag-and-drop editing, orphan-anchor diagnostics, broader discovery and release acceptance remain open; graphical provider-tree viewing and inside/before/after link placement are implemented. See the [plugin author guide](docs/plugin-navigation-provider-guide.md).
 
 **Goal:** permit a provider plugin (initial integration candidate: a generic example plugin) to **own and publish its complete hierarchical navigation**, while Menu **renders and composes** it with additional administrator-managed items. A site administrator may insert a custom entry at the top level or beneath any provider-defined node. Provider updates must not erase local additions.
 
@@ -232,9 +232,10 @@ The 1.4.x line should prefer fixes, diagnostics and compatibility improvements o
 
 ### Hybrid editing and rendering
 
-- [x] Add an equivalent integration using native External URL marker elements (`menu-provider:plugin:tree`, `menu-anchor:plugin:node`) without schema changes. **Dedicated editor UI remains planned.** The administrator selects a provider root/subtree and where it is inserted within a Menu-managed menu.
-- [x] Allow administrator-created Menu elements as **children of provider nodes** using stable IDs via `menu-anchor:` placeholder. **Before/after placement and improved editor UX remain pending.**
-- [ ] Extend initial Menu-owned child attachment with before/after ordering and optional local hide/show policy; never copy or mutate provider-defined nodes as though Menu owned them.
+- [x] Add an equivalent integration using native External URL marker elements (`menu-provider:plugin:tree`, `menu-anchor:plugin:node`) without schema changes. **The graphical provider editor is implemented for read-only tree inspection and creation of custom links.** The administrator selects a provider root/subtree and where it is inserted within a Menu-managed menu.
+- [x] Allow administrator-created Menu elements as **children of provider nodes** using stable IDs via `menu-anchor:` placeholder. **Before/after placement is implemented via `menu-before:` and `menu-after:` markers; drag-and-drop editing remains pending.**
+- [x] Support Menu-owned links inside, before and after provider nodes with stable IDs, without copying or mutating provider-defined nodes.
+- [ ] Add drag-and-drop ordering and optional local hide/show policy for provider node placement.
 - [ ] Define clear precedence for provider changes versus local choices: preserve user-created nodes across provider releases; orphaned anchors are surfaced to administrators with a safe reattachment flow, not silently dropped or reassigned.
 - [ ] Show provider-owned nodes as read-only in Menu administration, and show local/custom nodes as editable. Distinguish provenance in previews and diagnostics.
 - [ ] Support one centrally maintained application menu with top-level Home, Resources, Documentation and News; permit extra custom entries at any depth without obliging Example Plugin to know Menu's database schema.
@@ -247,7 +248,7 @@ The 1.4.x line should prefer fixes, diagnostics and compatibility improvements o
 - [ ] Test: (1) Example Plugin publishes nested sections; (2) admin inserts a custom item within Example Plugin > Resources; (3) a provider upgrade changes labels/order while custom items persist; (4) disappeared provider node is handled without data loss; (5) unauthorized private user routes are not leaked; (6) disabling Example Plugin removes its live nodes safely but retains local custom records; (7) Menu absent leaves Example Plugin usable; (8) Eclipse and legacy themes both render the composed tree; (9) two active sites remain isolated; (10) repeated resolution is deterministic and does not recurse.
 - [ ] Document provider-author guidance and administrator setup, plus a migration strategy that preserves existing 1.4.x menus and resolved-tree consumers.
 
-**Sequence:** contract + fixtures → safe merge resolver → admin anchor/placement UX → theme/legacy rendering → security, migration and regression gates. This is **planned 1.5.0 work**, not a current capability of the branch.
+**Sequence:** contract + fixtures → safe merge resolver → admin anchor/placement UX → theme/legacy rendering → security, migration and regression gates. The initial provider editor and inside/before/after placement are **implemented on the development branch**, not yet validated as a stable 1.5.0 release.
 
 See [Dynamic Plugin Navigation Providers design](docs/dynamic-plugin-navigation-providers.md).
 
