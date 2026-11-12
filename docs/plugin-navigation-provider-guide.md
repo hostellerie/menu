@@ -95,7 +95,7 @@ Limit: 8 levels of nested children and 300 total nodes per provider tree. On any
 The initial 1.5.0 implementation deliberately reuses existing **External URL** menu elements so sites do not need a database migration:
 
 1. In Menu administration, open your named menu (such as `navigation`).
-2. Add an **External URL** item with label `Family Portfolio` and destination `menu-provider:portfolio:main`. This special destination is a non-clickable marker that Menu replaces with the provider's current hierarchy.
+2. Add an **External URL** item with label `Family Portfolio` and destination `menu-provider:portfolio:main`. This special destination is a non-clickable marker that Menu replaces with the provider's current **top-level hierarchy** (Home, Portfolio, Family, Education, News, etc.), without inserting an artificial extra wrapper item.
 3. To add a custom menu item beneath a provider node such as `portfolio:family`, add an **External URL** item with destination `menu-anchor:portfolio:family`. Add your normal Menu items as **children of that anchor item** using the existing hierarchy editor.
 4. The anchor itself is never rendered. Its children are appended beneath the matching provider node at rendering time.
 5. To insert a custom item at the top level, add an ordinary Menu item alongside the provider marker. These additions are stored by Menu and remain intact across provider upgrades.
