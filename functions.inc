@@ -37,7 +37,7 @@
 // |                                                                           |
 // +---------------------------------------------------------------------------+
 
-global $_CONF, $_DB_table_prefix, $_TABLES, $_MENU_CONF;
+global $_CONF, $_DB_table_prefix, $_TABLES, $_MENU_CONF, $_MENU_DEFAULT;
 
 /**
 * @package Menu
@@ -119,6 +119,13 @@ unset($menuEnglishLanguage, $menuEnglishConfigLanguage);
  * configuration wins.
  */
 require_once __DIR__ . '/config.php';
+// Geeklog may include functions.inc inside its installer function after
+// config.php was loaded elsewhere. require_once then does not import local
+// variables, so explicitly use the global defaults and rehydrate only when
+// an earlier include did not initialize them.
+if (!isset($_MENU_DEFAULT) || !is_array($_MENU_DEFAULT)) {
+    require __DIR__ . '/config.php';
+}
 require_once $_CONF['path_system'] . 'classes/config.class.php';
 
 $menu_config = config::get_instance();
