@@ -86,11 +86,11 @@ function plugin_compatible_with_this_version_menu($pi_name)
         return false;
     }
 
-    if (defined('VERSION') && version_compare(VERSION, '2.1.1', '<')) {
+    if (defined('VERSION') && version_compare(VERSION, '2.2.2', '<')) {
         return false;
     }
 
-    if (version_compare(PHP_VERSION, '5.6.0', '<')) {
+    if (version_compare(PHP_VERSION, '5.6.40', '<')) {
         return false;
     }
 
