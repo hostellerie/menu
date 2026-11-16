@@ -2,7 +2,7 @@
 $view = file_get_contents(dirname(__DIR__) . '/admin_element_views.php');
 $js = file_get_contents(dirname(__DIR__) . '/admin/js/element-editor.js');
 
-if (substr_count($view, "setJavaScriptFile('menu_element_editor', '/admin/plugins/menu/js/element-editor.js')") !== 2) {
+if (substr_count($view, "setJavaScriptFile('menu_element_editor', MENU_versionedAssetUrl('/admin/plugins/menu/js/element-editor.js'))") !== 2) {
     fwrite(STDERR, "Element editor asset is not loaded by both create/edit views\n");
     exit(1);
 }
