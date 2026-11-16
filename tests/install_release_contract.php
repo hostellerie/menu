@@ -30,8 +30,8 @@ $requiredAutoinstall = array(
     'MENU_ensureImageDir()',
     'MENU_ensureDataDirs()',
     'menu_update_Database_1_3_0()',
-    "version_compare(VERSION, '2.1.1', '<')",
-    "version_compare(PHP_VERSION, '5.6.0', '<')",
+    "version_compare(VERSION, '2.2.2', '<')",
+    "version_compare(PHP_VERSION, '5.6.40', '<')",
 );
 
 foreach ($requiredAutoinstall as $snippet) {
