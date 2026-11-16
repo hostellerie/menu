@@ -20,8 +20,8 @@ function MENU_displayTree( $menu_id ) {
            $_MENU_CONF, $Menus, $_SCRIPTS, $LANG_MENU_PROVIDER;
 
     $_SCRIPTS->setJavaScriptLibrary('jquery');
-    $_SCRIPTS->setJavaScriptFile('menu_tablednd', '/admin/plugins/menu/js/tablednd_0_6.js');
-    $_SCRIPTS->setJavaScriptFile('menu_order_handle', '/admin/plugins/menu/js/menu-order-handle.js');
+    $_SCRIPTS->setJavaScriptFile('menu_tablednd', MENU_versionedAssetUrl('/admin/plugins/menu/js/tablednd_0_6.js'));
+    $_SCRIPTS->setJavaScriptFile('menu_order_handle', MENU_versionedAssetUrl('/admin/plugins/menu/js/menu-order-handle.js'));
 
     $retval = '';
     $safeMenuName = MENU_escapeStoredText($Menus[$menu_id]['menu_name']);
@@ -54,6 +54,7 @@ function MENU_displayTree( $menu_id ) {
 
     $T->set_var(array(
         'site_admin_url'    => $_CONF['site_admin_url'],
+        'menu_tree_script_url' => MENU_versionedAssetUrl('/admin/plugins/menu/js/menu-tree-actions-1.4.0.js'),
         'site_url'          => $_CONF['site_url'],
         'birdseed'          => '<a href="' . MENU_escapeHTML($_CONF['site_admin_url']) . '/plugins/menu/index.php">' . MENU_escapeHTML($LANG_MENU01['menu_list']) . '</a> :: ' . $safeMenuName . ' :: ' . MENU_escapeHTML($LANG_MENU01['elements']),
         'lang_admin'        => $LANG_MENU00['admin'],
@@ -87,7 +88,7 @@ function MENU_createElement ( $menu_id ) {
            $_SCRIPTS, $_PLUGINS;
 
     $_SCRIPTS->setJavaScriptLibrary('jquery');
-    $_SCRIPTS->setJavaScriptFile('menu_element_editor', '/admin/plugins/menu/js/element-editor.js');
+    $_SCRIPTS->setJavaScriptFile('menu_element_editor', MENU_versionedAssetUrl('/admin/plugins/menu/js/element-editor.js'));
     
     
     $retval = '';
@@ -284,7 +285,7 @@ function MENU_editElement( $menu_id, $mid ) {
            $LANG_MENU_GLFUNCTION, $_SCRIPTS, $_PLUGINS;
 
     $_SCRIPTS->setJavaScriptLibrary('jquery');
-    $_SCRIPTS->setJavaScriptFile('menu_element_editor', '/admin/plugins/menu/js/element-editor.js');
+    $_SCRIPTS->setJavaScriptFile('menu_element_editor', MENU_versionedAssetUrl('/admin/plugins/menu/js/element-editor.js'));
     
     
     $retval = '';
@@ -525,8 +526,8 @@ function MENU_menuConfig( $mid ) {
     $_SCRIPTS->setJavaScriptLibrary('jquery');
     $_SCRIPTS->setJavaScript($js, true);
         
-    $_SCRIPTS->setJavaScriptFile('menu_colorpicker', '/admin/plugins/menu/js/colorpicker.js',true);
-    $_SCRIPTS->setCSSFile('colorpicker', '/admin/plugins/menu/css/colorPicker.css',true);
+    $_SCRIPTS->setJavaScriptFile('menu_colorpicker', MENU_versionedAssetUrl('/admin/plugins/menu/js/colorpicker.js'),true);
+    $_SCRIPTS->setCSSFile('colorpicker', MENU_versionedAssetUrl('/admin/plugins/menu/css/colorPicker.css'),true);
 
     /* define the active attributes for each menu type */
 
