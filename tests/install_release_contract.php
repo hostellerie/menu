@@ -11,8 +11,8 @@ if ($autoinstall === false || $functions === false || $config === false) {
 }
 
 $metadataPatterns = array(
-    "/'pi_version'\s*=>\s*'1\\.4\\.0'/",
-    "/'gl_version'\s*=>\s*'2\\.1\\.1'/",
+    "/'pi_version'\s*=>\s*'1\\.5\\.0'/",
+    "/'gl_version'\s*=>\s*'2\\.2\\.2'/",
 );
 
 foreach ($metadataPatterns as $pattern) {
