@@ -77,7 +77,7 @@ $treeStart = strpos($module, 'function MENU_displayTree');
 $treeEnd = strpos($module, 'function MENU_createElement', $treeStart);
 $treeBody = substr($module, $treeStart, $treeEnd - $treeStart);
 $jqueryPos = strpos($treeBody, "setJavaScriptLibrary('jquery')");
-$libraryPos = strpos($treeBody, "setJavaScriptFile('menu_tablednd', '/admin/plugins/menu/js/tablednd_0_6.js')");
+$libraryPos = strpos($treeBody, "setJavaScriptFile('menu_tablednd', MENU_versionedAssetUrl('/admin/plugins/menu/js/tablednd_0_6.js'))");
 if ($jqueryPos === false || $libraryPos === false || $jqueryPos >= $libraryPos) {
     fwrite(STDERR, "Ordering assets must be registered after jQuery and in dependency order\n");
     exit(1);
@@ -86,7 +86,8 @@ if ($jqueryPos === false || $libraryPos === false || $jqueryPos >= $libraryPos) 
 if (strpos($template, 'id="menu-order-token"') === false
     || strpos($template, 'data-menuid="{menuid}"') === false
     || strpos($template, 'data-tree-action-url=') === false
-    || strpos($template, 'menu-tree-actions-1.4.0.js') === false) {
+    || strpos($template, '{menu_tree_script_url}') === false
+    || strpos($treeBody, "MENU_versionedAssetUrl('/admin/plugins/menu/js/menu-tree-actions-1.4.0.js')") === false) {
     fwrite(STDERR, "Ordering template metadata is incomplete\n");
     exit(1);
 }
