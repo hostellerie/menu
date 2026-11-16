@@ -54,7 +54,7 @@ function MENU_displayTree( $menu_id ) {
 
     $T->set_var(array(
         'site_admin_url'    => $_CONF['site_admin_url'],
-        'menu_tree_script_url' => MENU_versionedAssetUrl('/admin/plugins/menu/js/menu-tree-actions-1.4.0.js'),
+        'menu_tree_script_url' => MENU_versionedAssetUrl('/admin/plugins/menu/js/menu-tree-actions.js'),
         'site_url'          => $_CONF['site_url'],
         'birdseed'          => '<a href="' . MENU_escapeHTML($_CONF['site_admin_url']) . '/plugins/menu/index.php">' . MENU_escapeHTML($LANG_MENU01['menu_list']) . '</a> :: ' . $safeMenuName . ' :: ' . MENU_escapeHTML($LANG_MENU01['elements']),
         'lang_admin'        => $LANG_MENU00['admin'],
