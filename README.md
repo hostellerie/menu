@@ -152,12 +152,12 @@ Always back up the database and site files before upgrading a production install
 
 ## Build and CI
 
-The branch contains two permanent GitHub Actions workflows:
+The branch contains one permanent GitHub Actions workflow with testing and packaging jobs:
 
 - **Menu CI** for compatibility/security/test checks;
-- **Build installable archive** for producing `menu-1.4.0.zip`.
+- **Build installable archive** for producing `menu-1.5.0.zip`.
 
-The CI matrix runs the PHP-compatible test suite on PHP 5.6 and PHP 8.1. Demand-loading tests cover modern request registration, canonical late-render fallback, footer/navigation combinations, unused menus, theme-owned presentation, legacy configuration switches, Geeklog 2.1.1 lifecycle fallback and Geeklog 2.2.2 template detection.
+The CI matrix runs the PHP-compatible test suite on PHP 5.6, PHP 8.1 and PHP 8.3. Demand-loading tests cover request registration, footer/navigation combinations, unused menus, theme-owned presentation, legacy configuration switches and Geeklog 2.2.2 template detection. Historical 2.1.1 fixtures remain for migration regression only.
 
 The build validates the language contract, creates the Geeklog installable archive, verifies the ZIP and publishes it as a downloadable GitHub Actions artifact. The generated archive is also committed under `dist/` for branch testing and is regenerated automatically when release-source files change.
 
@@ -169,8 +169,8 @@ See [`RELEASE_NOTES_1.5.0.md`](RELEASE_NOTES_1.5.0.md) for **planned** 1.5.0 sco
 
 ## Development principles
 
-- preserve Geeklog 2.1.1 → 2.2.2 compatibility unless the policy is explicitly changed;
-- preserve PHP 5.6 → 8.1 compatibility while that remains the declared target;
+- target Geeklog 2.2.2+ while preserving historical data during upgrades;
+- preserve PHP 5.6.40+ compatibility and test on maintained PHP 8.x versions;
 - prefer small compatibility helpers over separate old/new source trees;
 - keep upgrades non-destructive and idempotent;
 - keep menu structure separate from theme presentation;
