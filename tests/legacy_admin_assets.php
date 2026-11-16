@@ -59,8 +59,8 @@ $treeEnd = strpos($views, 'function MENU_createElement', $treeStart);
 $treeBody = substr($views, $treeStart, $treeEnd - $treeStart);
 
 $jqueryPos = strpos($treeBody, "setJavaScriptLibrary('jquery')");
-$tableDnDPos = strpos($treeBody, "setJavaScriptFile('menu_tablednd', '/admin/plugins/menu/js/tablednd_0_6.js')");
-$adapterPos = strpos($treeBody, "setJavaScriptFile('menu_order_handle', '/admin/plugins/menu/js/menu-order-handle.js')");
+$tableDnDPos = strpos($treeBody, "setJavaScriptFile('menu_tablednd', MENU_versionedAssetUrl('/admin/plugins/menu/js/tablednd_0_6.js'))");
+$adapterPos = strpos($treeBody, "setJavaScriptFile('menu_order_handle', MENU_versionedAssetUrl('/admin/plugins/menu/js/menu-order-handle.js'))");
 if ($jqueryPos === false || $tableDnDPos === false || $adapterPos === false
     || !($jqueryPos < $tableDnDPos && $tableDnDPos < $adapterPos)) {
     fwrite(STDERR, "Ordering assets must be registered after jQuery and in dependency order\n");
