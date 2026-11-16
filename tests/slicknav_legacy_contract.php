@@ -27,8 +27,8 @@ $requiredFunctionSnippets = array(
     "MENU_runtimeConfigEnabled('load_legacy_css', true)",
     "MENU_runtimeConfigEnabled('load_legacy_js', true)",
     "MENU_menuNeedsLegacyJs(\$menu['menu_id'])",
-    "setCSSFile('menu_slicknav', '/menu/css/slicknav.css')",
-    "setJavaScriptFile('slicknav', '/menu/js/jquery.slicknav.js')",
+    "setCSSFile('menu_slicknav', MENU_versionedAssetUrl('/menu/css/slicknav.css'))",
+    "setJavaScriptFile('slicknav', MENU_versionedAssetUrl('/menu/js/jquery.slicknav.js'))",
 );
 
 foreach ($requiredFunctionSnippets as $snippet) {
