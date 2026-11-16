@@ -1,7 +1,7 @@
 <?php
 
 $root = dirname(__DIR__);
-$script = file_get_contents($root . '/admin/js/menu-tree-actions-1.4.0.js');
+$script = file_get_contents($root . '/admin/js/menu-tree-actions.js');
 $template = file_get_contents($root . '/templates/default/menutree.thtml');
 $module = file_get_contents($root . '/admin_element_views.php');
 $library = file_get_contents($root . '/admin/js/tablednd_0_6.js');
@@ -87,7 +87,7 @@ if (strpos($template, 'id="menu-order-token"') === false
     || strpos($template, 'data-menuid="{menuid}"') === false
     || strpos($template, 'data-tree-action-url=') === false
     || strpos($template, '{menu_tree_script_url}') === false
-    || strpos($treeBody, "MENU_versionedAssetUrl('/admin/plugins/menu/js/menu-tree-actions-1.4.0.js')") === false) {
+    || strpos($treeBody, "MENU_versionedAssetUrl('/admin/plugins/menu/js/menu-tree-actions.js')") === false) {
     fwrite(STDERR, "Ordering template metadata is incomplete\n");
     exit(1);
 }
