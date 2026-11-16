@@ -453,7 +453,7 @@ function MENU_resolveGeeklogAction($subtype)
 
 function MENU_resolveGeeklogCoreChildren($subtype)
 {
-    global $_CONF, $_TABLES, $_USER, $_PLUGINS, $_SP_CONF;
+    global $_CONF, $_TABLES, $_USER, $_PLUGINS, $_SP_CONF, $LANG01;
 
     $children = array();
     $resolved = true;
@@ -469,10 +469,10 @@ function MENU_resolveGeeklogCoreChildren($subtype)
                         }
                     }
                 }
-                $children[] = MENU_resolvedSyntheticNode('Preferences', $_CONF['site_url'] . '/usersettings.php?mode=edit');
-                $children[] = MENU_resolvedSyntheticNode('Logout', $_CONF['site_url'] . '/users.php?mode=logout');
+                $children[] = MENU_resolvedSyntheticNode(isset($LANG01[48]) ? $LANG01[48] : 'My Account', $_CONF['site_url'] . '/usersettings.php?mode=edit');
+                $children[] = MENU_resolvedSyntheticNode(isset($LANG01[19]) ? $LANG01[19] : 'Log Out', $_CONF['site_url'] . '/users.php?mode=logout');
             } else {
-                $children[] = MENU_resolvedSyntheticNode('Login', $_CONF['site_url'] . '/users.php?mode=login');
+                $children[] = MENU_resolvedSyntheticNode(isset($LANG01[58]) ? $LANG01[58] : 'Login', $_CONF['site_url'] . '/users.php?mode=login');
             }
             break;
 
