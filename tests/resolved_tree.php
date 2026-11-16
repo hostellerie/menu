@@ -29,7 +29,7 @@ $_TABLES = array(
     'commentsubmissions' => 'gl_commentsubmissions',
 );
 $_USER = array('uid' => 2);
-$LANG01 = array(10 => 'Submissions', 11 => 'Stories', 12 => 'Blocks', 13 => 'Topics', 17 => 'Users');
+$LANG01 = array(10 => 'Submissions', 11 => 'Stories', 12 => 'Blocks', 13 => 'Topics', 17 => 'Users', 19 => 'Log Out', 48 => 'My Account', 58 => 'Login');
 $LANG29 = array(34 => 'Command & Control');
 $_MENU_CONF = array(
     'allow_php_elements' => true,
@@ -287,5 +287,19 @@ menu_test_assert(!$foundWrapper, 'provider and anchor placeholders must not rend
 menu_test_assert(is_array($resourcesNode), 'provider Resources is a top-level node');
 menu_test_assert(count($resourcesNode['children']) === 1, 'custom child is attached');
 menu_test_assert($resourcesNode['children'][0]['label'] === 'Custom resources guide', 'custom label preserved');
+
+// The user menu follows the active Geeklog translations.
+$englishUserChildren = MENU_resolveGeeklogCoreChildren(1)[0];
+menu_test_assert($englishUserChildren[0]['label'] === 'My Account', 'English account label');
+menu_test_assert($englishUserChildren[1]['label'] === 'Log Out', 'English logout label');
+$LANG01[48] = 'Mon compte';
+$LANG01[19] = 'Déconnexion';
+$LANG01[58] = 'Connexion';
+$frenchUserChildren = MENU_resolveGeeklogCoreChildren(1)[0];
+menu_test_assert($frenchUserChildren[0]['label'] === 'Mon compte', 'French account label');
+menu_test_assert($frenchUserChildren[1]['label'] === 'Déconnexion', 'French logout label');
+$_USER['uid'] = 1;
+$frenchAnonChildren = MENU_resolveGeeklogCoreChildren(1)[0];
+menu_test_assert($frenchAnonChildren[0]['label'] === 'Connexion', 'French login label');
 
 echo "Resolved tree tests passed" . PHP_EOL;
