@@ -20,6 +20,7 @@ User-reported validation on **Geeklog 2.2.2 / PHP 8.3**:
 - [x] Upgrade using the installable Menu 1.5.0 archive.
 - [x] Fresh installation using the installable Menu 1.5.0 archive.
 - [x] Geeklog user menu displayed in French.
+- [x] Deactivating a navigation-provider plugin removes its dynamic menu entries (user-reported test).
 
 These confirmations do not establish PHP 5.6/8.1 compatibility, multisite isolation,
 permission-matrix coverage or complete provider-navigation acceptance. CI and the
