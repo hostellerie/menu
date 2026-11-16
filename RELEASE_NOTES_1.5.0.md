@@ -32,7 +32,7 @@ These additional items remain **unchecked roadmap items** pending implementation
 ## Compatibility and release gates
 
 - Preserve existing 1.4.x persisted menus, public rendering, native Geeklog hooks, themes and resolved-tree v1 consumers.
-- Test declared Geeklog 2.1.1–2.2.2 and PHP 5.6–8.1 compatibility; do not revise these ranges without an explicit policy decision and updated metadata.
+- Test Geeklog 2.2.2+ and PHP 5.6.40+ compatibility (CI: PHP 5.6, 8.1 and 8.3), consistent with the Memorandum runtime policy. Historical 2.1.1 data must remain safely upgradeable.
 - Ensure migration paths are reversible/recoverable, idempotent and safe on shared-files multisite installations.
 - Verify permissions for authenticated/anonymous users and private tenant/family navigation.
 - Test installation/upgrade/disable on the final generated archive, not just a development checkout.
