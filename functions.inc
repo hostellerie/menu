@@ -142,6 +142,39 @@ if (is_array($info) && isset($info['info']['pi_version'])) {
     $_MENU_CONF['pi_version'] = $info['info']['pi_version'];
 }
 unset($info, $menuStoredConfig);
+
+/**
+ * Append the Menu release and UTC file modification date to an owned asset URL.
+ *
+ * @param string $url Site-relative Menu CSS/JavaScript URL.
+ * @return string Versioned URL, unchanged if the file cannot be located.
+ */
+function MENU_versionedAssetUrl($url)
+{
+    global $_MENU_CONF;
+
+    $prefixes = array(
+        '/admin/plugins/menu/' => 'admin/',
+        '/menu/' => 'public_html/',
+    );
+    foreach ($prefixes as $prefix => $directory) {
+        if (strpos($url, $prefix) !== 0) {
+            continue;
+        }
+        $relative = substr($url, strlen($prefix));
+        if ($relative === '' || strpos($relative, '..') !== false
+            || !preg_match('~^(?:css|js)/[A-Za-z0-9_.-]+\.(?:css|js)$~D', $relative)) {
+            return $url;
+        }
+        $file = __DIR__ . '/' . $directory . $relative;
+        if (!is_file($file)) {
+            return $url;
+        }
+        $version = isset($_MENU_CONF['pi_version']) ? $_MENU_CONF['pi_version'] : '1.5.0';
+        return $url . '?v=' . rawurlencode($version . '-' . gmdate('YmdHis', filemtime($file)));
+    }
+    return $url;
+}
 /**
  * Menu plugin table(s)
  */
@@ -403,7 +436,10 @@ function MENU_publishCssAsset($menuId, $css)
         }
     }
 
-    return $baseUrl . '/css/' . $filename;
+    global $_MENU_CONF;
+    $version = isset($_MENU_CONF['pi_version']) ? $_MENU_CONF['pi_version'] : '1.5.0';
+    return $baseUrl . '/css/' . $filename . '?v='
+        . rawurlencode($version . '-' . gmdate('YmdHis', filemtime($path)));
 }
 
 /**
@@ -453,10 +489,10 @@ function plugin_getheadercode_menu() {
     }
 
     if ($needsSlickNav && $loadLegacyCss) {
-        $_SCRIPTS->setCSSFile('menu_slicknav', '/menu/css/slicknav.css');
+        $_SCRIPTS->setCSSFile('menu_slicknav', MENU_versionedAssetUrl('/menu/css/slicknav.css'));
     }
     if ($needsSlickNav && $loadLegacyJs) {
-        $_SCRIPTS->setJavaScriptFile('slicknav', '/menu/js/jquery.slicknav.js');
+        $_SCRIPTS->setJavaScriptFile('slicknav', MENU_versionedAssetUrl('/menu/js/jquery.slicknav.js'));
     }
 
     $this_dir = basename(dirname($_SERVER['SCRIPT_NAME']));
