@@ -6,7 +6,14 @@ Current development branch: **develop-1.5.0**
 
 ## Compatibility policy
 
-Menu 1.4.x preserves the established compatibility target:
+Menu **1.5.0** follows the binding `Geeklog-Plugins/memorandum` runtime policy:
+
+- Geeklog **2.2.2 and later**, without 2.1.1 runtime/CI support;
+- PHP **5.6.40 minimum**, tested on PHP 5.6, 8.1 and 8.3;
+- MySQL / MariaDB and single-site/multisite deployments;
+- non-destructive upgrades from historical Menu data, including shared-files staggered upgrades.
+
+The historical 1.4.x compatibility target was:
 
 - Geeklog **2.1.1 through 2.2.2**;
 - PHP **5.6 through 8.1**;
@@ -373,10 +380,11 @@ The internal/inter-plugin service facade is implemented in 1.4.0. Public remote/
 
 Every stable release must validate the surface it claims to support.
 
-- [ ] Geeklog 2.1.1 compatibility verified when still declared supported.
+- [ ] Geeklog 2.2.2 minimum enforced by installer and metadata.
 - [ ] Geeklog 2.2.2 compatibility verified when still declared supported.
 - [ ] PHP 5.6 lint/tests verified while still declared supported.
 - [ ] PHP 8.1 lint/tests verified.
+- [ ] PHP 8.3 lint/tests verified.
 - [ ] Existing menus upgrade without destructive changes.
 - [ ] Legacy rendering remains functional while supported.
 - [ ] Resolved-tree consumers remain backward compatible or receive an explicitly versioned contract.
