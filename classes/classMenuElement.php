@@ -423,7 +423,7 @@ class mbElement {
                             $menu .= '<li><a href="' . MENU_safeHref($url) . '">' . MENU_escapeStoredText($label) . '</a></li>' . LB;
                         } else {
                             $url = $_CONF['site_url'] . '/users.php?mode=login';
-                            $label = 'Login';
+                            $label = isset($LANG01[58]) ? $LANG01[58] : 'Login';
                             $menu .= '<li><a href="' . MENU_safeHref($url) . '">' . MENU_escapeStoredText($label) . '</a></li>' . LB;
                         }
                         $menu .= '</ul>' . LB . '</li>' . LB;
