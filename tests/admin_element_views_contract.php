@@ -53,8 +53,8 @@ $treeEnd = strpos($module, 'function MENU_createElement', $treeStart);
 $treeBody = substr($module, $treeStart, $treeEnd - $treeStart);
 $requirements = array(
     "setJavaScriptLibrary('jquery')",
-    "setJavaScriptFile('menu_tablednd', '/admin/plugins/menu/js/tablednd_0_6.js')",
-    "setJavaScriptFile('menu_order_handle', '/admin/plugins/menu/js/menu-order-handle.js')",
+    "setJavaScriptFile('menu_tablednd', MENU_versionedAssetUrl('/admin/plugins/menu/js/tablednd_0_6.js'))",
+    "setJavaScriptFile('menu_order_handle', MENU_versionedAssetUrl('/admin/plugins/menu/js/menu-order-handle.js'))",
 );
 foreach ($requirements as $needle) {
     if (strpos($treeBody, $needle) === false) {
