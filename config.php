@@ -22,8 +22,8 @@ global $_MENU_PLUGIN, $_MENU_DEFAULT;
 
 $_MENU_PLUGIN = array(
     'pi_name'       => 'menu',
-    'pi_version'    => '1.4.0',
-    'gl_version'    => '2.1.1',
+    'pi_version'    => '1.5.0',
+    'gl_version'    => '2.2.2',
     'pi_url'        => 'https://github.com/Geeklog-Plugins/menu',
     'GROUPS'        => array(
         'Menu Admin' => 'Users in this group can administer the Menu plugin',
