@@ -19,7 +19,7 @@ A **one-click Add to this menu workflow** is now available in the plugin navigat
 
 Menu 1.4.0 builds on the compatibility and modernization work completed for 1.3.0. The current branch focuses on safer administration, clearer separation of responsibilities, stronger localization, improved theme integration, more predictable frontend asset loading and a more reliable development/release workflow.
 
-### Compatibility target
+### Historical 1.4.0 compatibility target
 
 - Geeklog **2.1.1 through 2.2.2**
 - PHP **5.6 through 8.1**
@@ -27,7 +27,13 @@ Menu 1.4.0 builds on the compatibility and modernization work completed for 1.3.
 - single-site and multisite installations
 - upgrades from legacy Menu installations supported by the 1.3.0 migration path
 
-The goal remains one shared codebase across the supported Geeklog and PHP range.
+The historical goal was one shared codebase across the supported Geeklog and PHP range.
+
+**Menu 1.5.0 development policy:** Geeklog **2.2.2+**, PHP **5.6.40+**.
+CI targets PHP 5.6, 8.1 and 8.3. Geeklog 2.1.1 compatibility is historical;
+existing menus and persisted state must still migrate safely. An archive upgrade
+was reported successful on Geeklog 2.2.2 / PHP 8.3; fresh-install, multisite
+and full regression acceptance remain pending.
 
 ## Main features
 
